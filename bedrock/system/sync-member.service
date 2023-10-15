@@ -1,0 +1,11 @@
+[Unit]
+Description=Sync allow-list and permissions from Spreadsheet
+RefuseManualStart=no
+RefuseManualStop=yes
+
+[Service]
+Type=oneshot
+ExecStart=/root/script/sync-member.pl
+StandardOutput=file:/var/log/sync-member.log
+StandardError=file:/var/log/sync-member.error.log
+
