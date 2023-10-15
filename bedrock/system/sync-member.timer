@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync allow-list and permissions from Spreadsheet
+
+[Timer]
+OnBootSec=1s
+OnUnitActiveSec=5m
+ 
+[Install]
+WantedBy=timers.target
+

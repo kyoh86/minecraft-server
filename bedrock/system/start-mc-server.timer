@@ -1,0 +1,10 @@
+[Unit]
+Description=Start server everyday
+
+[Timer]
+OnCalendar=*-*-* 19:00:00
+OnCalendar=*-*-* 06:00:00
+Persistent=true
+ 
+[Install]
+WantedBy=timers.target
