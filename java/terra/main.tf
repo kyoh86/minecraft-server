@@ -11,56 +11,16 @@ terraform {
   }
 }
 
-resource "aws_vpc" "minecraft" {
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-  cidr_block           = "10.0.0.0/16"
-  tags = {
-    Name = "minecraft_vpc"
-  }
-}
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
 
-resource "aws_subnet" "public_subnet_ap_northeast_1a" {
-  availability_zone    = "ap-northeast-1a"
-  availability_zone_id = data.aws_availability_zone.a.id
-  vpc_id               = aws_vpc.minecraft.id
-  cidr_block           = "10.0.1.0/24"
-  tags = {
-    Name = "minecraft_public_subnet_ap_northeast_1a"
-  }
-}
+  name = "minecraft-java"
+  cidr = "10.0.0.0/16"
 
-resource "aws_subnet" "private_subnet_ap_northeast_1a" {
-  availability_zone    = "ap-northeast-1a"
-  availability_zone_id = data.aws_availability_zone.a.id
-  vpc_id               = aws_vpc.minecraft.id
-  cidr_block           = "10.0.0.0/24"
-  tags = {
-    Name = "minecraft_private_subnet_ap_northeast_1a"
-  }
-}
+  azs            = ["ap-northeast-1a"]
+  public_subnets = ["10.0.101.0/24"]
 
-resource "aws_internet_gateway" "main_gw" {
-  vpc_id = aws_vpc.minecraft.id
-  tags = {
-    Name = "minecraft_main_gw"
-  }
-}
-
-resource "aws_route_table" "rtb_public" {
-  vpc_id = aws_vpc.minecraft.id
-  route = [{
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main-gw.id
-  }]
-  tags = {
-    Name = "minecraft_route_table"
-  }
-}
-
-resource "aws_route_table_association" "rtb_assoc_ap_northeast_1a" {
-  subnet_id      = aws_subnet.public-subnet-ap-northeast-1a.id
-  route_table_id = aws_route_table.rtb-public
+  create_igw = true
 }
 
 resource "aws_security_group" "sg_java_server" {
@@ -74,19 +34,29 @@ resource "aws_vpc_security_group_ingress_rule" "allow_java_client" {
   to_port           = "25565"
   security_group_id = aws_security_group.sg-java-server.id
   tags = {
-    Name = "minecraft_sg_ingress_allow_java_client"
+    Name = "minecraft_sg__allow_java_client_ingress"
+  }
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_egress_all" {
+  ip_protocol       = "-1"
+  security_group_id = aws_security_group.sg-java-server.id
+  tags = {
+    Name = "minecraft_sg_allow_egress_all"
   }
 }
 
 resource "aws_instance" "minecraft_java" {
-  subnet_id = aws_subnet.public-subnet-ap-northeast-1a.id
+  subnet_id = module.vpc.public_subnets[0]
   security_groups = [
-    aws_security_group.aws_security_group.sg_java_server
+    module.vpc.default_security_group_id,
+    aws_security_group.aws_security_group.sg_java_server.id
   ]
   tags = {
     Name = "minecraft_java"
   }
 }
+
 // - EBSの割り当て
 // - EBSのバックアップ設定
 // - Instance Profileを作成、SSM許可のロールをアタッチ、Instanceにプロファイルを設定
