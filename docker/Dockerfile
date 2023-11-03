@@ -8,7 +8,7 @@ RUN yum update -y \
 
 ARG MINECRAFT_VERSION=1.20.2
 
-WORKDIR /minecraft-bin
+WORKDIR /minecraft
 
 # Expose ports (NOTE: equal it with server-port in server.properties)
 EXPOSE 25565
@@ -41,33 +41,17 @@ RUN mkdir -p ./mods \
 # Initialize Fabric server settings
 RUN timeout java -Xmx2G -jar fabric-server-mc.jar --nogui --initSetting || :
 
-# Put linker
-ADD ./mount.sh .
-RUN chmod +x ./mount.sh
-
 # Configure Minecraft Server
-ADD ./data/eula.txt /data/eula.txt
-RUN ./mount.sh eula.txt
-
-ADD ./data/server.properties /data/server.properties
-RUN ./mount.sh server.properties
-
-ADD ./data/ops.json /data/ops.json
-RUN ./mount.sh ops.json
-
-ADD ./data/whitelist.json /data/whitelist.json
-RUN ./mount.sh whitelist.json
-
-ADD ./data/start.sh /data/start.sh
-RUN chmod +x /data/start.sh
-RUN ./mount.sh start.sh
+ADD ./data/eula.txt .
+ADD ./data/server.properties .
+ADD ./data/ops.json .
+ADD ./data/whitelist.json .
+ADD ./start.sh .
 
 # Configure GeyserMC
-ADD ./data/config/Geyser-Fabric/config.yml /data/config/Geyser-Fabric/config.yml
-RUN ./mount.sh config/Geyser-Fabric/config.yml
+ADD ./data/config/Geyser-Fabric/config.yml ./config/Geyser-Fabric/config.yml
 
 # Configure DiscordIntegration
-ADD ./data/config/discord_integration.toml /data/config/Discord-Integration.toml
-RUN ./mount.sh config/Discord-Integration.toml
+ADD ./data/config/Discord-Integration.toml ./config/Discord-Integration.toml
 
 CMD /minecraft/start.sh
