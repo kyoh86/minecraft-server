@@ -46,12 +46,13 @@ ADD ./data/eula.txt .
 ADD ./data/server.properties .
 ADD ./data/ops.json .
 ADD ./data/whitelist.json .
-ADD ./start.sh .
 
 # Configure GeyserMC
 ADD ./data/config/Geyser-Fabric/config.yml ./config/Geyser-Fabric/config.yml
 
 # Configure DiscordIntegration
+ADD ./data/DiscordIntegration-Data ./DiscordIntegration-Data
 ADD ./data/config/Discord-Integration.toml ./config/Discord-Integration.toml
 
+ADD ./start.sh .
 CMD /minecraft/start.sh
