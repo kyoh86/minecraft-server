@@ -13,4 +13,4 @@ services:
       - "19132:19132"
       - "19132:19132/udp"
     volumes:
-      - './data:/data'
+      - './data:/minecraft_data'

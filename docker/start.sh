@@ -1,5 +1,5 @@
 link_data() {
-  local mounted="/data/$1"
+  local mounted="/minecraft_data/$1"
   if [ -e $mounted ]; then
     rm -rf "./$1"
     mkdir -p "$(dirname $1)"
@@ -7,7 +7,7 @@ link_data() {
   fi
 }
 
-if [ -e /data ]; then
+if [ -e /minecraft_data ]; then
   link_data eula.txt
   link_data server.properties
   link_data ops.json
@@ -24,8 +24,8 @@ if [ -e /data ]; then
 
   # Link world data
   rm -rf world
-  mkdir -p /data/world
-  ln -s /data/world world
+  mkdir -p /minecraft_data/world
+  ln -s /minecraft_data/world world
 fi
 
 java -Xmx2G -jar fabric-server-mc.jar --nogui
