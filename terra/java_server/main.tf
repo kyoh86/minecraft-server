@@ -67,7 +67,7 @@ resource "aws_instance" "minecraft_java" {
   ami                  = data.aws_ssm_parameter.amzn2_ami.value
   iam_instance_profile = data.terraform_remote_state.iam.outputs.java_server_profile_name
   availability_zone    = local.availability_zone
-  instance_type        = "t2.micro"
+  instance_type        = "t3.medium"
   subnet_id            = data.terraform_remote_state.vpc.outputs.vpc_public_subnet
   vpc_security_group_ids = [
     aws_security_group.sg_java.id
