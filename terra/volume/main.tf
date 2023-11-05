@@ -1,6 +1,5 @@
 provider "aws" {
-  region  = local.region
-  profile = "kyoh86-admin"
+  region = local.region
 }
 
 terraform {
@@ -14,7 +13,7 @@ terraform {
     organization = "kyoh86-org"
     workspaces {
       project = "minecraft"
-      name    = "minecraft-iam"
+      name    = "minecraft-volume"
     }
   }
 }

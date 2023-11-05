@@ -7,10 +7,12 @@ services:
   java:
     container_name: java
     build: .
+    image: 111990515695.dkr.ecr.ap-northeast-1.amazonaws.com/minecraft-java-server
     ports:
       - "25565:25565"
       - "25565:25565/udp"
       - "19132:19132"
       - "19132:19132/udp"
+      - "80:8123"
     volumes:
       - './data:/minecraft_data'

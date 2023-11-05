@@ -11,8 +11,12 @@ ARG MINECRAFT_VERSION=1.20.2
 WORKDIR /minecraft
 
 # Expose ports (NOTE: equal it with server-port in server.properties)
+# Java
 EXPOSE 25565
+# Bedrock
 EXPOSE 19132
+# Dynmap
+EXPOSE 8123
 
 # Install "FabricMC" as a Minecraft Server
 ARG FABRIC_LOADER_VERSION=0.14.24
@@ -38,8 +42,12 @@ RUN mkdir -p ./mods \
 RUN mkdir -p ./mods \
   && curl -Lo ./mods/floodgate-fabric.jar https://ci.opencollab.dev/job/GeyserMC/job/Floodgate-Fabric/job/master/lastSuccessfulBuild/artifact/build/libs/floodgate-fabric.jar
 
+# Install "Dynmap" to show world map
+RUN mkdir -p ./mods \
+  && curl -Lo ./mods/Dynmap-fabric.jar https://www.curseforge.com/api/v1/mods/59433/files/4765921/download
+
 # Initialize Fabric server settings
-RUN timeout java -Xmx2G -jar fabric-server-mc.jar --nogui --initSetting || :
+RUN timeout 1m java -Xmx2G -jar fabric-server-mc.jar --nogui --initSetting || :
 
 # Configure Minecraft Server
 ADD ./data/eula.txt .
