@@ -1,10 +1,11 @@
 link_data() {
   local mounted="/minecraft_data/$1"
-  if [ -e $mounted ]; then
-    rm -rf "./$1"
-    mkdir -p "$(dirname $1)"
-    ln -s "$mounted" "./$1"
+  if [ ! -e $mounted ]; then
+    cp -r "./$1" "$mounted"
   fi
+  rm -rf "./$1"
+  mkdir -p "$(dirname $1)"
+  ln -s "$mounted" "./$1"
 }
 
 if [ -e /minecraft_data ]; then
@@ -28,4 +29,4 @@ if [ -e /minecraft_data ]; then
   ln -s /minecraft_data/world world
 fi
 
-java -Xmx2G -jar fabric-server-mc.jar --nogui
+java -Xmx3G -jar fabric-server-mc.jar --nogui
