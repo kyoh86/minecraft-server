@@ -1,29 +1,68 @@
+# Minecraft server
+
+## AWSの準備
+
+AWS内はTerraformで構成している。
+
+- `terra/volume` EBSのストレージを作っている。データの永続化に関わるので、消すとデータ全部消えるので注意。
+- `terra/instance` EC2のインスタンスを建てている。インストールなんかの手順は吹き飛ぶので、これも注意。
+- `terra/iam` IAMのロール類。
+
+## インスタンスへの接続
+
+./find-instance.zsh でInstance IDがわかるので、`aws ssm start-session --target "Instance ID"`でつなぐ
+
+## インスタンスの整備
+
+インスタンス内は手でセットアップしている。
+
+### 基本的なツールの準備
+
+```
 sudo su - ec2-user
 
 sudo yum update -y
-sudo yum install -y xfsprogs
+sudo yum install -y xfsprogs udev java-17-amazon-corretto
 sudo yum clean all
-
-sudo mkfs -t xfs /dev/sdh
 
 sudo amazon-linux-extras install -y nginx1
 sudo cp -a /etc/nginx/nginx.conf /etc/nginx/nginx.conf.back
 sudo systemctl enable nginx
+```
 
-# -----
+### EBSの初期化
 
+ファイルシステム作るやつ。当然データ消えるので注意。
+
+```
 sudo su - ec2-user
 
-sudo yum update -y
-sudo yum install -y udev java-17-amazon-corretto
-sudo yum clean all
+sudo mkfs -t xfs /dev/sdh
+```
+
+### Minecraft実行用ユーザーの準備
+
+```
+sudo su - ec2-user
 
 sudo adduser minecraft --gid wheel
+```
+
+### Minecraft格納用領域のマウント
+
+Minecraft実行用ユーザーの所有として領域を作る
+
+```
+sudo su - ec2-user
+
 sudo mkdir -p /minecraft
 sudo mount /dev/sdh /minecraft
 sudo chown minecraft:wheel /minecraft
+```
 
-# ----
+### Minecraft本体、Modのインストール
+
+```
 sudo su - minecraft
 
 cd /minecraft
@@ -57,5 +96,17 @@ curl -Lo ./mods/Dynmap-fabric.jar https://www.curseforge.com/api/v1/mods/59433/f
 
 # Initialize Fabric server settings
 timeout 1m java -Xmx2G -jar fabric-server-mc.jar --nogui --initSetting || :
+```
 
-java -Xmx3G -jar fabric-server-mc.jar --nogui
+### 設定系
+
+以下ファイルをどうにかして置く。まあVimで開いてコピペで良いと思う。
+SSHとかはリスク無駄にでかいのでやらない。
+
+- nginx.conf → /etc/nginx/nginx.conf
+- docker/data/ 下の色々 → /minecraft下のファイルに一つ一つ上書きしていく
+
+## 動かす
+
+screenで充分。
+detachは`<C-a>+d`
