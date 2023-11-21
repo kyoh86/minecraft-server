@@ -6,7 +6,7 @@ resource "aws_instance" "instance" {
   ami                  = data.aws_ssm_parameter.amzn2_ami.value
   iam_instance_profile = data.terraform_remote_state.iam.outputs.instance_profile_name
   availability_zone    = local.availability_zone
-  instance_type        = "t3.medium"
+  instance_type        = "t3.large"
   subnet_id            = module.vpc.public_subnets[0]
   vpc_security_group_ids = [
     aws_security_group.instance.id

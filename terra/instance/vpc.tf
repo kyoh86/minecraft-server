@@ -46,6 +46,17 @@ resource "aws_vpc_security_group_ingress_rule" "allow_java_client" {
   }
 }
 
+resource "aws_vpc_security_group_ingress_rule" "allow_bedrock_connect" {
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+  from_port         = "53"
+  to_port           = "53"
+  security_group_id = aws_security_group.instance.id
+  tags = {
+    Name = "sg_allow_bedrock_client_ingress"
+  }
+}
+
 resource "aws_vpc_security_group_ingress_rule" "allow_bedrock_client" {
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "udp"
