@@ -106,6 +106,42 @@ SSHとかはリスク無駄にでかいのでやらない。
 - nginx.conf → /etc/nginx/nginx.conf
 - docker/data/ 下の色々 → /minecraft下のファイルに一つ一つ上書きしていく
 
+## ファイルのコピー
+
+file copy over SSM
+
+https://gist.github.com/lukeplausin/4b412d83fb1246b0bed6507b5083b3a7 より少し改変
+
+Step 1: Run command on machine to install netcat and dump from port to filename
+
+```console
+$ aws ssm start-session --target $INSTANCE_ID
+```
+
+Step 2: Install nc (On target machine)
+
+```console
+$ cd && sudo yum install nc -y
+```
+
+Step 3: Start nc to accept file  (On target machine)
+
+```console
+$ sudo nc -l -p 1234 > the_file.tar.gz
+```
+
+# Step 3: On another shell, open a port-forwarding session from your machine to the target machine
+
+```console
+$ aws ssm start-session --target $INSTANCE_ID --document-name AWS-StartPortForwardingSession --parameters '{"portNumber":["1234"],"localPortNumber":["1234"]}'
+```
+
+# Step 4: On yet another shell, cat the source file into the transfer port on localhost over the tunnel
+nc -w 3 127.0.0.1 1234 < the_file.tar.gz
+
+# Step 5: Once the command in step 3 finishes, close all of the other shell sessions. Your file should be on the target now.
+```
+
 ## 動かす
 
 screenで充分。
