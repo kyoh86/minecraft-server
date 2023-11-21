@@ -3,6 +3,6 @@
     "md-pug-to-html": "^2.3.0"
   },
   "scripts": {
-    "build": "md-pug-to-html --output ./guide/dist ./guide/src"
+    "build": "md-pug-to-html --out ./guide/dest ./guide/src"
   }
 }
