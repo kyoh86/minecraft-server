@@ -46,14 +46,25 @@ resource "aws_vpc_security_group_ingress_rule" "allow_java_client" {
   }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "allow_bedrock_connect" {
+resource "aws_vpc_security_group_ingress_rule" "allow_bedrock_connect_udp" {
   cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1"
+  ip_protocol       = "udp"
   from_port         = "53"
   to_port           = "53"
   security_group_id = aws_security_group.instance.id
   tags = {
-    Name = "sg_allow_bedrock_client_ingress"
+    Name = "sg_allow_bedrock_connect_ingress_udp"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_bedrock_connect_tcp" {
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = "53"
+  to_port           = "53"
+  security_group_id = aws_security_group.instance.id
+  tags = {
+    Name = "sg_allow_bedrock_connect_ingress_tcp"
   }
 }
 
