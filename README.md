@@ -137,7 +137,10 @@ $ aws ssm start-session --target $INSTANCE_ID --document-name AWS-StartPortForwa
 ```
 
 # Step 4: On yet another shell, cat the source file into the transfer port on localhost over the tunnel
-nc -w 3 127.0.0.1 1234 < the_file.tar.gz
+
+```console
+$ nc -w 3 127.0.0.1 1234 < the_file.tar.gz
+```
 
 # Step 5: Once the command in step 3 finishes, close all of the other shell sessions. Your file should be on the target now.
 ```
