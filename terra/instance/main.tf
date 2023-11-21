@@ -28,6 +28,16 @@ data "terraform_remote_state" "iam" {
   }
 }
 
+data "terraform_remote_state" "instance" {
+  backend = "remote"
+  config = {
+    organization = "kyoh86-org"
+    workspaces = {
+      name = "minecraft-iam"
+    }
+  }
+}
+
 data "terraform_remote_state" "volume" {
   backend = "remote"
   config = {
