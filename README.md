@@ -146,8 +146,9 @@ $ ls /minecraft
 `ssh -i ~/.ssh/minecraft_instance "${INSTANCE_ID}"` でつないでやる
 
 ```console
-$ sudo systemctl enable nginx
 $ sudo systemctl daemon-reload
+$ sudo systemctl enable nginx
+$ sudo systemctl start nginx
 $ sudo systemctl enable minecraft
 $ sudo systemctl start minecraft
 ```
