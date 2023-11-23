@@ -2,6 +2,31 @@
 #   name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 # }
 
+locals {
+  key_name = "minecraft_instance"
+  key_dir  = pathexpand("~/.ssh")
+}
+
+resource "null_resource" "ssh_keygen" {
+  provisioner "local-exec" {
+    // ssh-keygenコマンドは、キーファイルが既に存在する場合、上書きしないが、エラーで終わるのでexit 0を追加している。
+    command    = "ssh-keygen -m PEM  -C '' -N '' -f ${local.key_dir}/${local.key_name}"
+    on_failure = continue
+  }
+}
+
+// local_file (Data Source)にて公開キーの内容を取得。content属性にて確認できる
+// file("ファイル名")によるファイル内容取得は、apply実行時点でファイルが存在しないとエラーとなってしまい使用できなかった。
+data "local_file" "ssh_keygen" {
+  filename   = "${local.key_dir}/${local.key_name}.pub"
+  depends_on = [null_resource.ssh_keygen]
+}
+
+resource "aws_key_pair" "instance_key" {
+  key_name   = local.key_name
+  public_key = data.local_file.ssh_keygen.content
+}
+
 resource "aws_instance" "instance" {
   ami                  = "ami-0220a6b98b70e1279" # data.aws_ssm_parameter.amzn2_ami.value
   iam_instance_profile = data.terraform_remote_state.iam.outputs.instance_profile_name
@@ -11,6 +36,7 @@ resource "aws_instance" "instance" {
   vpc_security_group_ids = [
     aws_security_group.instance.id
   ]
+  key_name                             = aws_key_pair.instance_key.key_name
   hibernation                          = false
   instance_initiated_shutdown_behavior = "stop"
   ipv6_address_count                   = 0
@@ -30,19 +56,6 @@ resource "aws_instance" "instance" {
 
   credit_specification {
     cpu_credits = "unlimited"
-  }
-
-  ebs_block_device {
-    delete_on_termination = false
-    device_name           = "/dev/sdh"
-    encrypted             = false
-    iops                  = 100
-    tags = {
-      "Name" = "instance_data"
-    }
-    throughput  = 0
-    volume_size = 16
-    volume_type = "gp2"
   }
 
   enclave_options {
@@ -70,7 +83,6 @@ resource "aws_instance" "instance" {
   root_block_device {
     delete_on_termination = true
     encrypted             = false
-    iops                  = 100
     tags                  = {}
     throughput            = 0
     volume_size           = 8
