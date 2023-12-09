@@ -152,3 +152,11 @@ $ sudo systemctl start nginx
 $ sudo systemctl enable minecraft
 $ sudo systemctl start minecraft
 ```
+
+## インスタンスへの接続
+
+```console
+$ aws sso login
+$ export INSTANCE_ID="$(terraform -chdir=./terra/instance/ output -json | jq -r '.instance.value')"
+$ ssh -i ~/.ssh/minecraft_instance "${INSTANCE_ID}"
+```
