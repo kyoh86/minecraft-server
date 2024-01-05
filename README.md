@@ -77,18 +77,18 @@ $ sudo su - minecraft
 
 $ cd /minecraft
 
-$ MINECRAFT_VERSION=1.20.2
+$ MINECRAFT_VERSION=1.20.4
 
 $ : # Install "FabricMC" as a Minecraft Server
-$ FABRIC_LOADER_VERSION=0.14.24
-$ FABRIC_INSTALLER_VERSION=0.11.1
+$ FABRIC_LOADER_VERSION=0.15.3
+$ FABRIC_INSTALLER_VERSION=0.11.2
 
 $ curl -Lo ./fabric-server-mc.jar https://meta.fabricmc.net/v2/versions/loader/${MINECRAFT_VERSION}/${FABRIC_LOADER_VERSION}/${FABRIC_INSTALLER_VERSION}/server/jar
 $ java -Xmx2G -jar fabric-server-mc.jar --nogui --initSetting
 $ mkdir -p mods
 
 $ : # Install "Fabric API" to run Fabric Mods
-$ FABRIC_API_VERSION=0.90.7
+$ FABRIC_API_VERSION=0.92.0
 $ curl -Lo ./mods/fabric-api.jar https://github.com/FabricMC/fabric/releases/download/${FABRIC_API_VERSION}+${MINECRAFT_VERSION}/fabric-api-${FABRIC_API_VERSION}+${MINECRAFT_VERSION}.jar
 
 $ : # Install "GeyserMC" to cross-play between Bedrock & Java
