@@ -80,29 +80,28 @@ $ cd /minecraft
 $ MINECRAFT_VERSION=1.20.4
 
 $ : # Install "FabricMC" as a Minecraft Server
-$ FABRIC_LOADER_VERSION=0.15.3
-$ FABRIC_INSTALLER_VERSION=0.11.2
+$ FABRIC_LOADER_VERSION=0.15.6
+$ FABRIC_INSTALLER_VERSION=1.0.0
 
 $ curl -Lo ./fabric-server-mc.jar https://meta.fabricmc.net/v2/versions/loader/${MINECRAFT_VERSION}/${FABRIC_LOADER_VERSION}/${FABRIC_INSTALLER_VERSION}/server/jar
 $ java -Xmx2G -jar fabric-server-mc.jar --nogui --initSetting
 $ mkdir -p mods
 
 $ : # Install "Fabric API" to run Fabric Mods
-$ FABRIC_API_VERSION=0.92.0
+$ FABRIC_API_VERSION=0.96.0
 $ curl -Lo ./mods/fabric-api.jar https://github.com/FabricMC/fabric/releases/download/${FABRIC_API_VERSION}+${MINECRAFT_VERSION}/fabric-api-${FABRIC_API_VERSION}+${MINECRAFT_VERSION}.jar
 
 $ : # Install "GeyserMC" to cross-play between Bedrock & Java
 $ curl -Lo ./mods/Geyser-Fabric.jar https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/fabric
 
 $ : # Install "DiscordIntegration" to integrate with Discord
-$ DISCORD_INTEGRATION_VERSION=3.0.3
-$ curl -Lo ./mods/dcintegration-fabric.jar https://cdn.modrinth.com/data/rbJ7eS5V/versions/ZlLJC9ox/dcintegration-fabric-${DISCORD_INTEGRATION_VERSION}-${MINECRAFT_VERSION}.jar
+$ curl -Lo ./mods/dcintegration-fabric.jar https://cdn.modrinth.com/data/rbJ7eS5V/versions/t7t8BbD7/dcintegration-fabric-3.0.5-1.20.4.jar
 
 $ : # Install "Floodgate" to support login with Bedrock account
 $ curl -Lo ./mods/floodgate-fabric.jar https://ci.opencollab.dev/job/GeyserMC/job/Floodgate-Fabric/job/master/lastSuccessfulBuild/artifact/build/libs/floodgate-fabric.jar
 
 $ : # Install "Dynmap" to show world map
-$ curl -Lo ./mods/Dynmap-fabric.jar https://www.curseforge.com/api/v1/mods/59433/files/4765921/download
+$ curl -Lo ./mods/Dynmap-fabric.jar https://cdn.modrinth.com/data/fRQREgAc/versions/fOe507oy/Dynmap-3.7-beta-4-fabric-1.20.4.jar
 
 $ : # Initialize Fabric server settings
 $ timeout 1m java -Xmx2G -jar fabric-server-mc.jar --nogui --initSetting || :
