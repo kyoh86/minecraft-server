@@ -230,7 +230,7 @@ senderUUID = "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3"
   # Should discord linking be enabled?
   # If whitelist is on, this can NOT be disabled
   # DOES NOT WORK IN OFFLINE MODE!
-  enableLinking = true
+  enableLinking = false
   # Set Discord nicknames to match Minecraft usernames when linked
   shouldNickname = false
   # Enable global linking?
