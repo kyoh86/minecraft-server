@@ -153,3 +153,21 @@ $ aws sso login
 $ export INSTANCE_ID="$(terraform -chdir=./terra/instance/ output -json | jq -r '.instance.value')"
 $ ssh -i ~/.ssh/minecraft_instance "${INSTANCE_ID}"
 ```
+
+## RCONポートフォワーディング
+
+```console
+$ aws sso login
+$ export INSTANCE_ID="$(terraform -chdir=./terra/instance/ output -json | jq -r '.instance.value')"
+$ aws ssm start-session --target "${INSTANCE_ID}" --document-name AWS-StartPortForwardingSession --parameters '{"portNumber":["25575"],"localPortNumber":["25575"]}'
+```
+
+## RCON
+
+ポートフォワーディングしたうえで、localhostに向けて接続する
+
+```console
+go install github.com/kyoh86/mcrcon/cmd/mcrcon@latest
+export MCRCON_PASSWORD="minecraft"
+mcrcon
+```
