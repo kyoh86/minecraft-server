@@ -77,22 +77,22 @@ $ sudo su - minecraft
 
 $ cd /minecraft
 
-$ MINECRAFT_VERSION=1.20.4
+$ MINECRAFT_VERSION=1.20.6
 
 $ : # Install "FabricMC" as a Minecraft Server
-$ FABRIC_LOADER_VERSION=0.15.6
-$ FABRIC_INSTALLER_VERSION=1.0.0
+$ FABRIC_LOADER_VERSION=0.15.11
+$ FABRIC_INSTALLER_VERSION=1.0.1
 
 $ curl -Lo ./fabric-server-mc.jar https://meta.fabricmc.net/v2/versions/loader/${MINECRAFT_VERSION}/${FABRIC_LOADER_VERSION}/${FABRIC_INSTALLER_VERSION}/server/jar
 $ java -Xmx2G -jar fabric-server-mc.jar --nogui --initSetting
 $ mkdir -p mods
 
 $ : # Install "Fabric API" to run Fabric Mods
-$ FABRIC_API_VERSION=0.96.0
+$ FABRIC_API_VERSION=0.99.4
 $ curl -Lo ./mods/fabric-api.jar https://github.com/FabricMC/fabric/releases/download/${FABRIC_API_VERSION}+${MINECRAFT_VERSION}/fabric-api-${FABRIC_API_VERSION}+${MINECRAFT_VERSION}.jar
 
 $ : # Install "DiscordIntegration" to integrate with Discord
-$ curl -Lo ./mods/dcintegration-fabric.jar https://cdn.modrinth.com/data/rbJ7eS5V/versions/QoapHSQM/dcintegration-fabric-3.0.6-1.20.4.jar
+$ curl -Lo ./mods/dcintegration-fabric.jar https://cdn.modrinth.com/data/rbJ7eS5V/versions/QoapHSQM/dcintegration-fabric-3.0.7-1.20.6.jar
 
 $ : # Install "Dynmap" to show world map
 $ curl -Lo ./mods/Dynmap-fabric.jar https://cdn.modrinth.com/data/fRQREgAc/versions/fOe507oy/Dynmap-3.7-beta-4-fabric-1.20.4.jar
