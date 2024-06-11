@@ -41,7 +41,7 @@ $ sudo mkfs -t xfs /dev/sdh
 
 ```console
 $ sudo yum update -y
-$ sudo yum install -y java-17-amazon-corretto
+$ sudo yum install -y java-21-amazon-corretto-devel
 $ sudo yum clean all
 
 $ sudo amazon-linux-extras install -y nginx1
@@ -92,7 +92,7 @@ $ FABRIC_API_VERSION=0.99.4
 $ curl -Lo ./mods/fabric-api.jar https://github.com/FabricMC/fabric/releases/download/${FABRIC_API_VERSION}+${MINECRAFT_VERSION}/fabric-api-${FABRIC_API_VERSION}+${MINECRAFT_VERSION}.jar
 
 $ : # Install "DiscordIntegration" to integrate with Discord
-$ curl -Lo ./mods/dcintegration-fabric.jar https://cdn.modrinth.com/data/rbJ7eS5V/versions/QoapHSQM/dcintegration-fabric-3.0.7-1.20.6.jar
+$ curl -Lo ./mods/dcintegration-fabric.jar https://cdn.modrinth.com/data/rbJ7eS5V/versions/o3EbJ3MF/dcintegration-fabric-3.0.7-1.20.6.jar
 
 $ : # Install "Dynmap" to show world map
 $ curl -Lo ./mods/Dynmap-fabric.jar https://cdn.modrinth.com/data/fRQREgAc/versions/fOe507oy/Dynmap-3.7-beta-4-fabric-1.20.4.jar
