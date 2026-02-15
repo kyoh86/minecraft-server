@@ -5,7 +5,7 @@ marker_search_radius: 1.5
 
 gates:
   gate_to_survival:
-    marker_tag: gate:to_survival
+    marker_tag: gate_to_survival
     destination_server: survival
     return:
       world: world
