@@ -97,11 +97,18 @@ make restart
 ## Lobby 内部設定の再適用
 
 ロビーの内部設定（gamerule, time, difficulty, worldspawn）は  
-`setup/wsl/lobby-settings.mcfunction` に記述し、コマンドで再適用する。
+Datapack `setup/wsl/datapacks/lobby-base` の  
+`data/mcserver/functions/lobby_settings.mcfunction` に記述し、`/function` で再適用する。
 
 ```console
 make lobby-apply
 ```
+
+このコマンドは内部で以下を行う。
+
+- `make lobby-datapack-sync`（datapack を world へ同期）
+- `reload`
+- `function mcserver:lobby_settings`
 
 初期値は `1.21.11+` の gamerule 名に合わせている。
 
@@ -114,6 +121,23 @@ make lobby-apply
 - `difficulty peaceful`
 - `weather clear`
 - `setworldspawn 0 64 0`
+
+## Lobby ゲートの再適用
+
+`-8, 63, -2` 付近のゲート演出は  
+Datapack `setup/wsl/datapacks/lobby-base` の  
+`data/mcserver/functions/lobby_gate.mcfunction` に記述し、次で再適用する。
+
+```console
+make lobby-gate-apply
+```
+
+この適用では以下を実施する。
+
+- 黒曜石フレームを配置
+- ゲート内部を紫ガラスで作成
+- `area_effect_cloud` でモヤ（`minecraft:portal`）を常駐
+- `/server survival` のクリック導線を `tellraw` で表示
 
 ## 検証終了
 
@@ -156,4 +180,6 @@ make restart
 - `make op-lobby PLAYER=<id>` : lobby で一時的に `op` を付与
 - `make deop-lobby PLAYER=<id>` : lobby で `op` を剥奪
 - `make lp-admin PLAYER=<id>` : `lobby/survival` で `admin` グループ作成とユーザー割り当て
-- `make lobby-apply` : `setup/wsl/lobby-settings.mcfunction` の内容を lobby へ適用
+- `make lobby-datapack-sync` : `setup/wsl/datapacks/lobby-base` を `runtime/lobby/world/datapacks/` へ同期
+- `make lobby-apply` : `function mcserver:lobby_settings` を実行
+- `make lobby-gate-apply` : `function mcserver:lobby_gate` を実行
