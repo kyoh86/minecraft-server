@@ -29,7 +29,7 @@ services:
       ONLINE_MODE: "FALSE"
       ENABLE_RCON: "FALSE"
       CREATE_CONSOLE_IN_PIPE: "true"
-      SPIGET_RESOURCES: "28140" # LuckPerms
+      SPIGET_RESOURCES: "28140,123783" # LuckPerms, VeloSend
     volumes:
       - ./runtime/lobby:/data
     networks:

@@ -10,7 +10,8 @@
 - `velocity` : エントリポイント（外部公開ポート `25565`）
 - `lobby` : ロビー用 Paper サーバー
 - `survival` : サバイバル用 Paper サーバー
-- `lobby/survival` には `LuckPerms` を自動導入する
+- `lobby` には `LuckPerms` と `VeloSend` を自動導入する
+- `survival` には `LuckPerms` を自動導入する
 - バックエンドサーバーは外部公開しない
 
 ## 前提
@@ -98,7 +99,7 @@ make restart
 
 ロビーの内部設定（gamerule, time, difficulty, worldspawn）は  
 Datapack `setup/wsl/datapacks/lobby-base` の  
-`data/mcserver/functions/lobby_settings.mcfunction` に記述し、`/function` で再適用する。
+`data/mcserver/function/lobby_settings.mcfunction` に記述し、`/function` で再適用する。
 
 ```console
 make lobby-apply
@@ -126,7 +127,7 @@ make lobby-apply
 
 `-8, 63, -2` 付近のゲート演出は  
 Datapack `setup/wsl/datapacks/lobby-base` の  
-`data/mcserver/functions/lobby_gate.mcfunction` に記述し、次で再適用する。
+`data/mcserver/function/lobby_gate.mcfunction` に記述し、次で再適用する。
 
 ```console
 make lobby-gate-apply
@@ -137,7 +138,25 @@ make lobby-gate-apply
 - 黒曜石フレームを配置
 - ゲート内部を紫ガラスで作成
 - `area_effect_cloud` でモヤ（`minecraft:portal`）を常駐
-- `/server survival` のクリック導線を `tellraw` で表示
+- ゲート前に感圧板とコマンドブロックを配置（踏むと `survival` へ転送）
+
+## 感圧板でサーバー移動（最小プラグイン構成）
+
+`VeloSend` を使って、感圧板直下のコマンドブロックから  
+プレイヤーを `survival` へ転送する（単独検証向け）。
+
+コマンドブロック例:
+
+```mcfunction
+execute in minecraft:overworld run vsend @r survival
+```
+
+補足:
+
+- `VeloSend` は `lobby` の `SPIGET_RESOURCES` で自動導入される
+- コマンドブロックは `Impulse` + `Needs Redstone`（感圧板トリガー）で運用する
+- `vsend` はコンソール直実行だと Paper 1.21.11 で例外化しやすいため、`execute in ... run` でワールド文脈を付与して実行する
+- `@r` は「オンライン中の誰か1人」を対象にする。単独検証では踏んだ本人と一致するが、複数同時接続で厳密に踏んだ本人を保証したい場合は専用プラグイン化が必要
 
 ## 検証終了
 
