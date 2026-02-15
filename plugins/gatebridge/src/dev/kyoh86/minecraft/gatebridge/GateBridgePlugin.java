@@ -5,7 +5,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Location;
@@ -13,6 +12,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -26,10 +27,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class GateBridgePlugin extends JavaPlugin implements Listener {
   private final Map<UUID, Long> lastTriggeredAt = new ConcurrentHashMap<>();
   private final Map<UUID, Long> joinGraceUntil = new ConcurrentHashMap<>();
-  private final Map<GateKey, GateRoute> gates = new HashMap<>();
+  private final Map<String, GateRoute> gatesByMarkerTag = new HashMap<>();
 
   private long cooldownMs;
   private long joinGraceMs;
+  private Material triggerMaterial;
+  private double markerSearchRadius;
 
   @Override
   public void onEnable() {
@@ -37,7 +40,7 @@ public final class GateBridgePlugin extends JavaPlugin implements Listener {
     loadSettings();
     getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
     getServer().getPluginManager().registerEvents(this, this);
-    getLogger().info("GateBridge enabled: gates=" + gates.size());
+    getLogger().info("GateBridge enabled: routes=" + gatesByMarkerTag.size());
   }
 
   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -73,8 +76,8 @@ public final class GateBridgePlugin extends JavaPlugin implements Listener {
     joinGraceUntil.put(event.getPlayer().getUniqueId(), System.currentTimeMillis() + joinGraceMs);
   }
 
-  private void trySwitch(Player player, Block block) {
-    GateRoute route = findRoute(block);
+  private void trySwitch(Player player, Block triggerBlock) {
+    GateRoute route = findRoute(triggerBlock);
     if (route == null) {
       return;
     }
@@ -93,13 +96,43 @@ public final class GateBridgePlugin extends JavaPlugin implements Listener {
     sendToServer(player, route.destinationServer());
   }
 
-  private GateRoute findRoute(Block block) {
-    GateKey key = new GateKey(block.getWorld().getName(), block.getX(), block.getY(), block.getZ());
-    GateRoute route = gates.get(key);
-    if (route == null) {
+  private GateRoute findRoute(Block triggerBlock) {
+    if (triggerBlock.getType() != triggerMaterial) {
       return null;
     }
-    return block.getType() == route.triggerMaterial() ? route : null;
+
+    Location center = triggerBlock.getLocation().add(0.5d, 0.5d, 0.5d);
+    Entity nearestMarker = null;
+    double nearestDistanceSquared = Double.MAX_VALUE;
+    GateRoute nearestRoute = null;
+
+    for (Entity entity :
+        triggerBlock
+            .getWorld()
+            .getNearbyEntities(
+                center,
+                markerSearchRadius,
+                markerSearchRadius,
+                markerSearchRadius,
+                e -> e.getType() == EntityType.MARKER)) {
+      for (String tag : entity.getScoreboardTags()) {
+        GateRoute route = gatesByMarkerTag.get(tag);
+        if (route == null) {
+          continue;
+        }
+        double distanceSquared = entity.getLocation().distanceSquared(center);
+        if (distanceSquared < nearestDistanceSquared) {
+          nearestDistanceSquared = distanceSquared;
+          nearestMarker = entity;
+          nearestRoute = route;
+        }
+      }
+    }
+
+    if (nearestMarker == null) {
+      return null;
+    }
+    return nearestRoute;
   }
 
   private World resolveWorld(Player player, String worldName) {
@@ -148,26 +181,28 @@ public final class GateBridgePlugin extends JavaPlugin implements Listener {
     cooldownMs = getConfig().getLong("cooldown_ms", 2000L);
     joinGraceMs = getConfig().getLong("join_grace_ms", 5000L);
 
-    gates.clear();
+    String triggerBlockName = getConfig().getString("trigger_block", "POLISHED_BLACKSTONE_PRESSURE_PLATE");
+    Material loadedMaterial = Material.matchMaterial(triggerBlockName);
+    if (loadedMaterial == null) {
+      throw new IllegalArgumentException("invalid trigger_block: " + triggerBlockName);
+    }
+    triggerMaterial = loadedMaterial;
+
+    markerSearchRadius = getConfig().getDouble("marker_search_radius", 1.5d);
+
+    gatesByMarkerTag.clear();
     ConfigurationSection gatesSection = getConfig().getConfigurationSection("gates");
     if (gatesSection == null) {
       throw new IllegalArgumentException("missing section: gates");
     }
+
     for (String gateId : gatesSection.getKeys(false)) {
       ConfigurationSection routeSection = gatesSection.getConfigurationSection(gateId);
       if (routeSection == null) {
         continue;
       }
-      String world = requireString(routeSection, "world");
-      int x = routeSection.getInt("x");
-      int y = routeSection.getInt("y");
-      int z = routeSection.getInt("z");
 
-      String triggerBlockName = requireString(routeSection, "trigger_block");
-      Material triggerMaterial = Material.matchMaterial(triggerBlockName);
-      if (triggerMaterial == null) {
-        throw new IllegalArgumentException("invalid trigger_block: " + triggerBlockName);
-      }
+      String markerTag = requireString(routeSection, "marker_tag");
 
       String destinationServer = requireString(routeSection, "destination_server");
       ConfigurationSection ret = routeSection.getConfigurationSection("return");
@@ -181,18 +216,16 @@ public final class GateBridgePlugin extends JavaPlugin implements Listener {
       float returnYaw = (float) ret.getDouble("yaw", 0.0d);
       float returnPitch = (float) ret.getDouble("pitch", 0.0d);
 
-      GateKey key = new GateKey(world, x, y, z);
-      GateRoute route =
+      gatesByMarkerTag.put(
+          markerTag,
           new GateRoute(
-              triggerMaterial,
               destinationServer,
               returnWorld,
               returnX,
               returnY,
               returnZ,
               returnYaw,
-              returnPitch);
-      gates.put(key, route);
+              returnPitch));
     }
   }
 
@@ -204,14 +237,7 @@ public final class GateBridgePlugin extends JavaPlugin implements Listener {
     throw new IllegalArgumentException("missing or invalid field: " + section.getCurrentPath() + "." + fieldName);
   }
 
-  private record GateKey(String world, int x, int y, int z) {
-    private GateKey {
-      Objects.requireNonNull(world, "world");
-    }
-  }
-
   private record GateRoute(
-      Material triggerMaterial,
       String destinationServer,
       String returnWorldName,
       double returnX,

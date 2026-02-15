@@ -162,7 +162,7 @@ make lobby-gate-apply
 - 黒曜石フレームを配置
 - ゲート内部（フレーム内）を `air` に設定
 - 枠上の同一座標に、上から `感圧板 -> 黒曜石 -> 黒曜石` を重ねて配置
-- 感圧板座標（`-8,63,-2`）を踏むと `survival` へ転送（`GateBridge`）
+- marker（`gate:to_survival`）をゲート位置に配置
 
 ## 感圧板でサーバー移動（最小プラグイン構成）
 
@@ -173,7 +173,8 @@ make lobby-gate-apply
 
 - パッケージ: `dev.kyoh86.minecraft.gatebridge`
 - メインクラス: `dev.kyoh86.minecraft.gatebridge.GateBridgePlugin`
-- トリガー条件（ワールド/座標/ブロック種別）を `config.yml` で定義
+- トリガー条件（感圧板ブロック種別）を `config.yml` で定義
+- 近傍 marker のタグ（例: `gate:to_survival`）を `config.yml` でルーティング定義
 - 転送先サーバーを `config.yml` で定義
 - 転送直前テレポート座標・向きを `config.yml` で定義
 - 2秒クールダウンで多重実行を抑制
@@ -185,14 +186,12 @@ make lobby-gate-apply
 ```yaml
 cooldown_ms: 2000
 join_grace_ms: 5000
+trigger_block: POLISHED_BLACKSTONE_PRESSURE_PLATE
+marker_search_radius: 1.5
 
 gates:
   gate_to_survival:
-    world: world
-    x: -8
-    y: 63
-    z: -2
-    trigger_block: POLISHED_BLACKSTONE_PRESSURE_PLATE
+    marker_tag: gate:to_survival
     destination_server: survival
     return:
       world: world
