@@ -10,6 +10,7 @@
 - `velocity` : エントリポイント（外部公開ポート `25565`）
 - `lobby` : ロビー用 Paper サーバー
 - `survival` : サバイバル用 Paper サーバー
+- `lobby/survival` には `LuckPerms` を自動導入する
 - バックエンドサーバーは外部公開しない
 
 ## 前提
@@ -93,6 +94,27 @@ make restart
 - Velocity 経由で lobby へ入れることを確認
 - サーバー移動コマンド（例: `/server survival`）で移動確認
 
+## Lobby 内部設定の再適用
+
+ロビーの内部設定（gamerule, time, difficulty, worldspawn）は  
+`setup/wsl/lobby-settings.mcfunction` に記述し、コマンドで再適用する。
+
+```console
+make lobby-apply
+```
+
+初期値は `1.21.11+` の gamerule 名に合わせている。
+
+- `advance_time false`
+- `advance_weather false`
+- `spawn_mobs false`
+- `respawn_radius 0`
+- `pvp false`
+- `time set noon`
+- `difficulty peaceful`
+- `weather clear`
+- `setworldspawn 0 64 0`
+
 ## 検証終了
 
 ```console
@@ -131,3 +153,7 @@ make restart
 - `make sync-secret` : `forwarding.secret` の値だけを `paper-global.yml` に同期
 - `make configure-paper` : テンプレートに基づいて `paper-global.yml` を構成
 - `make bootstrap` : `init -> up -> configure-paper -> restart` を一括実行
+- `make op-lobby PLAYER=<id>` : lobby で一時的に `op` を付与
+- `make deop-lobby PLAYER=<id>` : lobby で `op` を剥奪
+- `make lp-admin PLAYER=<id>` : `lobby/survival` で `admin` グループ作成とユーザー割り当て
+- `make lobby-apply` : `setup/wsl/lobby-settings.mcfunction` の内容を lobby へ適用

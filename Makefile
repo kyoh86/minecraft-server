@@ -1,8 +1,9 @@
 COMPOSE_FILE := setup/wsl/docker-compose.yml
 INIT_SCRIPT := ./setup/wsl/init.sh
 CONFIGURE_PAPER_SCRIPT := ./setup/wsl/configure-paper.sh
+APPLY_LOBBY_SETTINGS_SCRIPT := ./setup/wsl/apply-lobby-settings.sh
 
-.PHONY: init up down restart ps logs logs-velocity logs-lobby logs-survival sync-secret configure-paper bootstrap
+.PHONY: init up down restart ps logs logs-velocity logs-lobby logs-survival sync-secret configure-paper bootstrap op-lobby deop-lobby lp-admin lobby-apply
 
 init:
 	$(INIT_SCRIPT)
@@ -42,3 +43,23 @@ bootstrap:
 	docker compose -f $(COMPOSE_FILE) up -d
 	$(CONFIGURE_PAPER_SCRIPT) all
 	docker compose -f $(COMPOSE_FILE) restart velocity lobby survival
+
+op-lobby:
+	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make op-lobby PLAYER=kyoh86" && exit 1)
+	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 lobby mc-send-to-console "op $(PLAYER)"
+
+deop-lobby:
+	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make deop-lobby PLAYER=kyoh86" && exit 1)
+	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 lobby mc-send-to-console "deop $(PLAYER)"
+
+lp-admin:
+	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make lp-admin PLAYER=kyoh86" && exit 1)
+	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 lobby mc-send-to-console "lp creategroup admin"
+	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 lobby mc-send-to-console "lp group admin permission set * true"
+	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 lobby mc-send-to-console "lp user $(PLAYER) parent set admin"
+	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 survival mc-send-to-console "lp creategroup admin"
+	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 survival mc-send-to-console "lp group admin permission set * true"
+	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 survival mc-send-to-console "lp user $(PLAYER) parent set admin"
+
+lobby-apply:
+	$(APPLY_LOBBY_SETTINGS_SCRIPT)
