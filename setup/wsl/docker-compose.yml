@@ -1,0 +1,56 @@
+services:
+  velocity:
+    image: itzg/bungeecord:latest
+    container_name: mc-velocity
+    restart: unless-stopped
+    environment:
+      TYPE: VELOCITY
+    ports:
+      - "25565:25577"
+    volumes:
+      - ./runtime/velocity:/server
+    depends_on:
+      - lobby
+      - survival
+    networks:
+      - mcnet
+
+  lobby:
+    image: itzg/minecraft-server:java21
+    container_name: mc-lobby
+    restart: unless-stopped
+    environment:
+      EULA: "TRUE"
+      TYPE: PAPER
+      VERSION: "1.21.4"
+      MEMORY: "2G"
+      SERVER_NAME: "lobby"
+      MOTD: "Lobby Server"
+      ONLINE_MODE: "FALSE"
+      ENABLE_RCON: "FALSE"
+    volumes:
+      - ./runtime/lobby:/data
+    networks:
+      - mcnet
+
+  survival:
+    image: itzg/minecraft-server:java21
+    container_name: mc-survival
+    restart: unless-stopped
+    environment:
+      EULA: "TRUE"
+      TYPE: PAPER
+      VERSION: "1.21.4"
+      MEMORY: "4G"
+      SERVER_NAME: "survival"
+      MOTD: "Survival Server"
+      ONLINE_MODE: "FALSE"
+      ENABLE_RCON: "FALSE"
+    volumes:
+      - ./runtime/survival:/data
+    networks:
+      - mcnet
+
+networks:
+  mcnet:
+    driver: bridge
