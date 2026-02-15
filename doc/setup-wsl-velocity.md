@@ -23,6 +23,8 @@
 
 ```console
 ./setup/wsl/init.sh
+# または
+make init
 ```
 
 これで以下が生成される。
@@ -36,6 +38,8 @@
 
 ```console
 docker compose -f setup/wsl/docker-compose.yml up -d
+# または
+make up
 ```
 
 状態確認:
@@ -43,6 +47,9 @@ docker compose -f setup/wsl/docker-compose.yml up -d
 ```console
 docker compose -f setup/wsl/docker-compose.yml ps
 docker compose -f setup/wsl/docker-compose.yml logs -f velocity
+# または
+make ps
+make logs-velocity
 ```
 
 ## Velocity と Paper の連携設定
@@ -69,6 +76,8 @@ docker compose -f setup/wsl/docker-compose.yml logs -f velocity
 
 ```console
 docker compose -f setup/wsl/docker-compose.yml restart lobby survival velocity
+# または
+make restart
 ```
 
 ## 接続確認
@@ -81,6 +90,20 @@ docker compose -f setup/wsl/docker-compose.yml restart lobby survival velocity
 
 ```console
 docker compose -f setup/wsl/docker-compose.yml down
+# または
+make down
 ```
 
 データを消して作り直す場合のみ、`setup/wsl/runtime/` を削除して再初期化する。
+
+## Make ターゲット一覧
+
+- `make init` : 検証用ディレクトリとテンプレートを初期化
+- `make up` : 検証構成をバックグラウンド起動
+- `make down` : 構成を停止
+- `make restart` : `velocity/lobby/survival` を再起動
+- `make ps` : コンテナ状態の確認
+- `make logs` : 全サービスのログ追跡
+- `make logs-velocity` : Velocity ログ追跡
+- `make logs-lobby` : lobby ログ追跡
+- `make logs-survival` : survival ログ追跡
