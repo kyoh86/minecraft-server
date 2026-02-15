@@ -1,4 +1,4 @@
-# Minecraft server / Arch Linux
+# Minecraft server / Ubuntu 24
 
 ## 概要
 
@@ -12,7 +12,9 @@
 ## 基盤系のインストール
 
 ```console
-$ pacman -Syyu
-$ pacman -S jre21-openjdk    # Java (JRE 21)
+$ sudo apt update --yes
+$ sudo apt upgrade --yes
+$ sudo apt install --yes \
+    make
 ```
 

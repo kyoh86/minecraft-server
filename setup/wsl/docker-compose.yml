@@ -22,7 +22,7 @@ services:
     environment:
       EULA: "TRUE"
       TYPE: PAPER
-      VERSION: "1.21.4"
+      VERSION: "1.21.11"
       MEMORY: "2G"
       SERVER_NAME: "lobby"
       MOTD: "Lobby Server"
@@ -40,7 +40,7 @@ services:
     environment:
       EULA: "TRUE"
       TYPE: PAPER
-      VERSION: "1.21.4"
+      VERSION: "1.21.11"
       MEMORY: "4G"
       SERVER_NAME: "survival"
       MOTD: "Survival Server"
