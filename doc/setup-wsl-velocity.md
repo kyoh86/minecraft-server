@@ -30,9 +30,11 @@ make init
 これで以下が生成される。
 
 - `setup/wsl/runtime/velocity/velocity.toml`
-- `setup/wsl/runtime/velocity/forwarding.secret`
+- `setup/wsl/runtime/velocity/forwarding.secret`（初回のみ安全なランダム値を自動生成）
 - `setup/wsl/runtime/lobby/`
 - `setup/wsl/runtime/survival/`
+
+`forwarding.secret` は既存ファイルがあれば上書きされない。
 
 ## 起動
 
@@ -95,6 +97,15 @@ make down
 ```
 
 データを消して作り直す場合のみ、`setup/wsl/runtime/` を削除して再初期化する。
+
+`forwarding.secret` をローテーションしたい場合は、以下を実行して再生成できる。
+
+```console
+rm setup/wsl/runtime/velocity/forwarding.secret
+make init
+```
+
+再生成後は `lobby/survival` の `paper-global.yml` に新しい値を反映して `make restart` する。
 
 ## Make ターゲット一覧
 
