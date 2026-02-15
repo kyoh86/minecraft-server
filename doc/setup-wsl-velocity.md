@@ -113,6 +113,21 @@ docker compose -f setup/wsl/docker-compose.yml restart lobby survival velocity
 make restart
 ```
 
+## 再接続時に前回サーバーへ戻す
+
+Velocity 標準設定だけでは、再接続時に `try` の先頭（この構成では `lobby`）へ接続される。  
+前回いたサーバーへ戻したい場合は、Velocity 側に `Rememberme` プラグインを導入する。
+
+```console
+make velocity-reconnect-plugin-install
+```
+
+このコマンドは以下を実施する。
+
+- Hangar API から `Rememberme` 最新版（`ichiru/Rememberme`）を取得
+- SHA-256 を検証して `setup/wsl/runtime/velocity/plugins/rememberme.jar` に配置
+- `velocity` コンテナを再起動
+
 ## 接続確認
 
 - Minecraft クライアントから `localhost:25565` へ接続
@@ -248,4 +263,5 @@ make restart
 - `make lobby-apply` : `function mcserver:lobby_settings` を実行
 - `make lobby-gate-apply` : `function mcserver:lobby_gate` を実行
 - `make gatebridge-plugin-install` : `GateBridge` をビルド・配置して `lobby` を再起動
+- `make velocity-reconnect-plugin-install` : Velocity に `Rememberme` を導入して再起動
 - `make lobby-gate-plugin-install` : 互換エイリアス（`make gatebridge-plugin-install` と同等）

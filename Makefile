@@ -5,8 +5,9 @@ APPLY_LOBBY_SETTINGS_SCRIPT := ./setup/wsl/apply-lobby-settings.sh
 APPLY_LOBBY_GATE_SCRIPT := ./setup/wsl/apply-lobby-gate.sh
 SYNC_LOBBY_DATAPACK_SCRIPT := ./setup/wsl/sync-lobby-datapack.sh
 INSTALL_GATEBRIDGE_PLUGIN_SCRIPT := ./setup/wsl/install-gatebridge-plugin.sh
+INSTALL_VELOCITY_RECONNECT_PLUGIN_SCRIPT := ./setup/wsl/install-velocity-reconnect-plugin.sh
 
-.PHONY: init up down restart ps logs logs-velocity logs-lobby logs-survival sync-secret configure-paper bootstrap op-lobby deop-lobby lp-admin lobby-datapack-sync lobby-apply lobby-gate-apply gatebridge-plugin-install lobby-gate-plugin-install
+.PHONY: init up down restart ps logs logs-velocity logs-lobby logs-survival sync-secret configure-paper bootstrap op-lobby deop-lobby lp-admin lobby-datapack-sync lobby-apply lobby-gate-apply gatebridge-plugin-install velocity-reconnect-plugin-install lobby-gate-plugin-install
 
 init:
 	$(INIT_SCRIPT)
@@ -76,6 +77,9 @@ lobby-gate-apply:
 gatebridge-plugin-install:
 	$(INSTALL_GATEBRIDGE_PLUGIN_SCRIPT)
 	docker compose -f $(COMPOSE_FILE) up -d --force-recreate lobby
+
+velocity-reconnect-plugin-install:
+	$(INSTALL_VELOCITY_RECONNECT_PLUGIN_SCRIPT)
 
 # Backward-compatible alias
 lobby-gate-plugin-install: gatebridge-plugin-install
