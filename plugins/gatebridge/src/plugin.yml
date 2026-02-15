@@ -1,0 +1,5 @@
+name: GateBridge
+version: 0.1.0
+main: dev.kyoh86.minecraft.gatebridge.GateBridgePlugin
+api-version: '1.21'
+author: kyoh86

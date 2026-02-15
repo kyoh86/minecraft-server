@@ -10,8 +10,8 @@
 - `velocity` : エントリポイント（外部公開ポート `25565`）
 - `lobby` : ロビー用 Paper サーバー
 - `survival` : サバイバル用 Paper サーバー
-- `lobby` には `LuckPerms` と `VeloSend` を自動導入する
-- `survival` には `LuckPerms` を自動導入する
+- `lobby/survival` には `LuckPerms` を自動導入する
+- `lobby` にはローカルプラグイン `GateBridge` を導入する
 - バックエンドサーバーは外部公開しない
 
 ## 前提
@@ -55,6 +55,30 @@ docker compose -f setup/wsl/docker-compose.yml logs -f velocity
 make ps
 make logs-velocity
 ```
+
+## Lobby ゲートプラグイン導入
+
+`GateBridge` はローカルソースを `javac + jar` でビルドし、  
+`setup/wsl/runtime/lobby/plugins/gatebridge.jar` に配置する。
+
+```console
+make gatebridge-plugin-install
+```
+
+このターゲットは以下を行う。
+
+- `plugins/gatebridge/src/` をビルド
+- `runtime/lobby/plugins/gatebridge.jar` へ配置
+- 旧 `VeloSend`（`123783.jar`）が残っている場合は削除
+- `lobby` コンテナを再作成して起動
+
+設定ファイルは `setup/wsl/runtime/lobby/plugins/GateBridge/config.yml` に配置される。  
+このファイルで複数ゲートを定義できる。
+
+責務分離:
+
+- 開発（ソース管理）: `plugins/gatebridge/`
+- 配備/検証（WSL実行環境）: `setup/wsl/`
 
 ## Velocity と Paper の連携設定
 
@@ -136,27 +160,48 @@ make lobby-gate-apply
 この適用では以下を実施する。
 
 - 黒曜石フレームを配置
-- ゲート内部を紫ガラスで作成
-- `area_effect_cloud` でモヤ（`minecraft:portal`）を常駐
-- ゲート前に感圧板とコマンドブロックを配置（踏むと `survival` へ転送）
+- ゲート内部（フレーム内）を `air` に設定
+- 枠上の同一座標に、上から `感圧板 -> 黒曜石 -> 黒曜石` を重ねて配置
+- 感圧板座標（`-8,63,-2`）を踏むと `survival` へ転送（`GateBridge`）
 
 ## 感圧板でサーバー移動（最小プラグイン構成）
 
-`VeloSend` を使って、感圧板直下のコマンドブロックから  
-プレイヤーを `survival` へ転送する（単独検証向け）。
+`GateBridge` が感圧板通過を検知して、  
+踏んだ本人を Plugin Messaging（`BungeeCord` チャンネル）で `survival` へ転送する。
 
-コマンドブロック例:
+仕様:
 
-```mcfunction
-execute in minecraft:overworld run vsend @r survival
+- パッケージ: `dev.kyoh86.minecraft.gatebridge`
+- メインクラス: `dev.kyoh86.minecraft.gatebridge.GateBridgePlugin`
+- トリガー条件（ワールド/座標/ブロック種別）を `config.yml` で定義
+- 転送先サーバーを `config.yml` で定義
+- 転送直前テレポート座標・向きを `config.yml` で定義
+- 2秒クールダウンで多重実行を抑制
+- `lobby` 参加直後5秒は誤再転送防止のためゲートを無効化
+- `@r` 等のランダム選択は使わない（本人保証）
+
+`config.yml` 例:
+
+```yaml
+cooldown_ms: 2000
+join_grace_ms: 5000
+
+gates:
+  gate_to_survival:
+    world: world
+    x: -8
+    y: 63
+    z: -2
+    trigger_block: POLISHED_BLACKSTONE_PRESSURE_PLATE
+    destination_server: survival
+    return:
+      world: world
+      x: -5.5
+      y: 63.0
+      z: -1.5
+      yaw: -90.0
+      pitch: 0.0
 ```
-
-補足:
-
-- `VeloSend` は `lobby` の `SPIGET_RESOURCES` で自動導入される
-- コマンドブロックは `Impulse` + `Needs Redstone`（感圧板トリガー）で運用する
-- `vsend` はコンソール直実行だと Paper 1.21.11 で例外化しやすいため、`execute in ... run` でワールド文脈を付与して実行する
-- `@r` は「オンライン中の誰か1人」を対象にする。単独検証では踏んだ本人と一致するが、複数同時接続で厳密に踏んだ本人を保証したい場合は専用プラグイン化が必要
 
 ## 検証終了
 
@@ -202,3 +247,5 @@ make restart
 - `make lobby-datapack-sync` : `setup/wsl/datapacks/lobby-base` を `runtime/lobby/world/datapacks/` へ同期
 - `make lobby-apply` : `function mcserver:lobby_settings` を実行
 - `make lobby-gate-apply` : `function mcserver:lobby_gate` を実行
+- `make gatebridge-plugin-install` : `GateBridge` をビルド・配置して `lobby` を再起動
+- `make lobby-gate-plugin-install` : 互換エイリアス（`make gatebridge-plugin-install` と同等）

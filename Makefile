@@ -4,8 +4,9 @@ CONFIGURE_PAPER_SCRIPT := ./setup/wsl/configure-paper.sh
 APPLY_LOBBY_SETTINGS_SCRIPT := ./setup/wsl/apply-lobby-settings.sh
 APPLY_LOBBY_GATE_SCRIPT := ./setup/wsl/apply-lobby-gate.sh
 SYNC_LOBBY_DATAPACK_SCRIPT := ./setup/wsl/sync-lobby-datapack.sh
+INSTALL_GATEBRIDGE_PLUGIN_SCRIPT := ./setup/wsl/install-gatebridge-plugin.sh
 
-.PHONY: init up down restart ps logs logs-velocity logs-lobby logs-survival sync-secret configure-paper bootstrap op-lobby deop-lobby lp-admin lobby-datapack-sync lobby-apply lobby-gate-apply
+.PHONY: init up down restart ps logs logs-velocity logs-lobby logs-survival sync-secret configure-paper bootstrap op-lobby deop-lobby lp-admin lobby-datapack-sync lobby-apply lobby-gate-apply gatebridge-plugin-install lobby-gate-plugin-install
 
 init:
 	$(INIT_SCRIPT)
@@ -71,3 +72,10 @@ lobby-apply:
 
 lobby-gate-apply:
 	$(APPLY_LOBBY_GATE_SCRIPT)
+
+gatebridge-plugin-install:
+	$(INSTALL_GATEBRIDGE_PLUGIN_SCRIPT)
+	docker compose -f $(COMPOSE_FILE) up -d --force-recreate lobby
+
+# Backward-compatible alias
+lobby-gate-plugin-install: gatebridge-plugin-install
