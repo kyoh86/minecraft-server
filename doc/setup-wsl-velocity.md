@@ -149,7 +149,7 @@ make lobby-apply
 
 ## Lobby ゲートの再適用
 
-`-8, 63, -2` 付近のゲート演出は  
+`x=-7` ラインの 2 ゲート演出は  
 Datapack `setup/wsl/datapacks/lobby-base` の  
 `data/mcserver/function/lobby_gate.mcfunction` に記述し、次で再適用する。
 
@@ -159,10 +159,11 @@ make lobby-gate-apply
 
 この適用では以下を実施する。
 
-- 黒曜石フレームを配置
-- ゲート内部（フレーム内）を `air` に設定
-- 枠上の同一座標に、上から `感圧板 -> 黒曜石 -> 黒曜石` を重ねて配置
-- marker（`gate_to_survival`）をゲート位置に配置
+- 右ゲート（`z=-3..-2`）と左ゲート（`z=2..3`）の黒曜石フレームを配置
+- 各ゲート内部を `air` に設定
+- 各ゲート中央に、上から `感圧板 -> 黒曜石 -> 黒曜石` を重ねて配置
+- `block_display` で `tinted_glass` の 1x3x2 パネルを各ゲートに配置
+- marker を配置（右: `gate_to_survival`, 左: `gate_to_future`）
 
 ## 感圧板でサーバー移動（最小プラグイン構成）
 
