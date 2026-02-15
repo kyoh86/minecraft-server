@@ -56,25 +56,30 @@ make logs-velocity
 
 ## Velocity と Paper の連携設定
 
-初回起動後、Paper 側に `paper-global.yml` が生成される。  
-以下を `lobby` と `survival` の両方で設定する。
+`paper-global.yml` は手編集せず、テンプレートとコマンドで反映する。
 
 対象ファイル:
 
 - `setup/wsl/runtime/lobby/config/paper-global.yml`
 - `setup/wsl/runtime/survival/config/paper-global.yml`
 
-設定値:
+管理テンプレート:
 
-- `proxies.velocity.enabled: true`
-- `proxies.velocity.online-mode: true`
-- `proxies.velocity.secret: "<forwarding.secret と同じ値>"`
+- `setup/wsl/templates/paper-global.velocity.yml`
 
-`<forwarding.secret と同じ値>` は次のファイルの値を使う。
+反映コマンド:
 
-- `setup/wsl/runtime/velocity/forwarding.secret`
+```console
+make configure-paper
+```
 
-設定変更後、再起動:
+`make configure-paper` は以下を実施する。
+
+- `proxies.velocity.enabled` をテンプレート値へ反映
+- `proxies.velocity.online-mode` をテンプレート値へ反映
+- `proxies.velocity.secret` を `setup/wsl/runtime/velocity/forwarding.secret` と同期
+
+反映後、再起動:
 
 ```console
 docker compose -f setup/wsl/docker-compose.yml restart lobby survival velocity
@@ -107,6 +112,11 @@ make init
 
 再生成後は `lobby/survival` の `paper-global.yml` に新しい値を反映して `make restart` する。
 
+```console
+make sync-secret
+make restart
+```
+
 ## Make ターゲット一覧
 
 - `make init` : 検証用ディレクトリとテンプレートを初期化
@@ -118,3 +128,6 @@ make init
 - `make logs-velocity` : Velocity ログ追跡
 - `make logs-lobby` : lobby ログ追跡
 - `make logs-survival` : survival ログ追跡
+- `make sync-secret` : `forwarding.secret` の値だけを `paper-global.yml` に同期
+- `make configure-paper` : テンプレートに基づいて `paper-global.yml` を構成
+- `make bootstrap` : `init -> up -> configure-paper -> restart` を一括実行
