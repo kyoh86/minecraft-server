@@ -1,8 +1,0 @@
-{
-  "devDependencies": {
-    "md-pug-to-html": "^2.3.0"
-  },
-  "scripts": {
-    "build": "md-pug-to-html --out ./guide/dest ./guide/src"
-  }
-}
