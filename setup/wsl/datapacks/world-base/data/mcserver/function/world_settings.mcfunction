@@ -1,2 +1,2 @@
 # Backward-compatible entrypoint for the primary world
-function mcserver:worlds/world/init
+function mcserver:worlds/residence/init

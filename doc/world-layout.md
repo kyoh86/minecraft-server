@@ -26,7 +26,7 @@
 
 - Datapack: `setup/wsl/datapacks/world-base`
 - 各ワールドの function エントリ:
-  - `mcserver:worlds/world/init`
+  - `mcserver:worlds/residence/init`
   - `mcserver:worlds/lobby/init`
   - `mcserver:worlds/resource/init`
   - `mcserver:worlds/factory/init`
@@ -54,4 +54,4 @@
 ## 補足
 
 `world_settings.mcfunction` は互換用エントリとして残し、
-`mcserver:worlds/world/init` を呼び出す。
+`mcserver:worlds/residence/init` を呼び出す。

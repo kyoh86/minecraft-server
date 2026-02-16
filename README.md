@@ -42,7 +42,7 @@ make down
 
 ## ワールド作成と初期化
 
-`world.env.yml` に従って world/lobby/resource/factory を作成/import し、
+`world.env.yml` に従って residence/lobby/resource/factory を作成/import し、
 各ワールドの `init.mcfunction` を実行する。
 
 ```console
