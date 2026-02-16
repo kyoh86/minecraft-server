@@ -15,7 +15,8 @@ services:
       ONLINE_MODE: "TRUE"
       ENABLE_RCON: "FALSE"
       CREATE_CONSOLE_IN_PIPE: "true"
-      MODRINTH_PROJECTS: "luckperms,multiverse-core,multiverse-portals"
+      HANGAR_PROJECTS: "LuckPerms"
+      MODRINTH_PROJECTS: "multiverse-core,multiverse-portals"
     volumes:
       - ./runtime/world:/data
     networks:
