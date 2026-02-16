@@ -1,7 +1,7 @@
 services:
-  lobby:
+  world:
     image: itzg/minecraft-server:java21
-    container_name: mc-lobby
+    container_name: mc-world
     restart: unless-stopped
     ports:
       - "25565:25565"
@@ -15,9 +15,9 @@ services:
       ONLINE_MODE: "TRUE"
       ENABLE_RCON: "FALSE"
       CREATE_CONSOLE_IN_PIPE: "true"
-      SPIGET_RESOURCES: "28140" # LuckPerms
+      MODRINTH_PROJECTS: "luckperms,multiverse-core,multiverse-portals"
     volumes:
-      - ./runtime/lobby:/data
+      - ./runtime/world:/data
     networks:
       - mcnet
 

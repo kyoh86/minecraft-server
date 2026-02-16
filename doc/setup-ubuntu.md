@@ -2,7 +2,7 @@
 
 ## 概要
 
-この手順は Ubuntu 上で Docker を使い、単一の Paper サーバー（lobby）を起動するためのもの。
+この手順は Ubuntu 上で Docker を使い、単一の Paper サーバー（world）を起動するためのもの。
 
 ## 前提
 
@@ -28,16 +28,16 @@ make up
 
 ```console
 make ps
-make logs-lobby
+make logs-world
 ```
 
 ## 内部設定（gamerule など）再適用
 
 ```console
-make lobby-apply
+make world-apply
 ```
 
-このコマンドは Datapack を同期し、`function mcserver:lobby_settings` を実行する。
+このコマンドは Datapack を同期し、`function mcserver:world_settings` を実行する。
 
 ## 停止
 

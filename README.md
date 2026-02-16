@@ -3,18 +3,18 @@
 このリポジトリは、`WSL2/Ubuntu` 上で Minecraft Java サーバー（Paper 1.21.11）を
 ローカル検証するための構成を管理する。
 
-現行構成は **単一サーバー（lobby）** のみ。
+現行構成は **単一サーバー（world）** のみ。
 
 ## 構成
 
 - `setup/wsl/docker-compose.yml`
-  - `lobby` コンテナ（`itzg/minecraft-server:java21`）
+  - `world` コンテナ（`itzg/minecraft-server:java21`）
   - 公開ポート `25565`
-  - `LuckPerms` 自動導入（`SPIGET_RESOURCES=28140`）
-- `setup/wsl/runtime/lobby`
+  - `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` を自動導入
+- `setup/wsl/runtime/world`
   - サーバーデータ永続化先（`make init` で作成）
-- `setup/wsl/datapacks/lobby-base`
-  - lobby 初期設定の Datapack
+- `setup/wsl/datapacks/world-base`
+  - world 初期設定の Datapack
 
 ## 使い方
 
@@ -22,7 +22,7 @@
 make init
 make up
 make ps
-make logs-lobby
+make logs-world
 ```
 
 停止:
@@ -31,18 +31,18 @@ make logs-lobby
 make down
 ```
 
-## Lobby 内部設定の再適用
+## World 内部設定の再適用
 
-Datapack を同期して `mcserver:lobby_settings` を実行する。
+Datapack を同期して `mcserver:world_settings` を実行する。
 
 ```console
-make lobby-apply
+make world-apply
 ```
 
 ## 運用補助
 
-- OP 付与: `make op-lobby PLAYER=<player>`
-- OP 剥奪: `make deop-lobby PLAYER=<player>`
+- OP 付与: `make op-world PLAYER=<player>`
+- OP 剥奪: `make deop-world PLAYER=<player>`
 - LuckPerms admin 付与: `make lp-admin PLAYER=<player>`
 
 ## ドキュメント

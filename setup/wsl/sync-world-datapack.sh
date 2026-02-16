@@ -2,9 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC_DIR="${SCRIPT_DIR}/datapacks/lobby-base"
-DST_ROOT="${SCRIPT_DIR}/runtime/lobby/world/datapacks"
-DST_DIR="${DST_ROOT}/lobby-base"
+SRC_DIR="${SCRIPT_DIR}/datapacks/world-base"
+DST_ROOT="${SCRIPT_DIR}/runtime/world/world/datapacks"
+DST_DIR="${DST_ROOT}/world-base"
 
 if [[ ! -d "${SRC_DIR}" ]]; then
   echo "missing datapack source: ${SRC_DIR}" >&2

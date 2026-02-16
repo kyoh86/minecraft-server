@@ -1,4 +1,4 @@
-# Lobby baseline settings for Minecraft Java 1.21.11+
+# World baseline settings for Minecraft Java 1.21.11+
 gamerule advance_time false
 gamerule advance_weather false
 time set noon

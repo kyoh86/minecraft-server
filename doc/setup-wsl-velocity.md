@@ -1,4 +1,4 @@
-# Minecraft server / WSL 検証構成（単一 Paper）
+# Minecraft server / WSL 検証構成（単一 Paper: world）
 
 ## 概要
 
@@ -9,8 +9,11 @@
 
 ## 構成
 
-- `lobby` : メイン Paper サーバー（外部公開ポート `25565`）
-- `lobby` には `LuckPerms` を自動導入する
+- `world` : メイン Paper サーバー（外部公開ポート `25565`）
+- `world` には以下を自動導入する
+  - `LuckPerms`
+  - `Multiverse-Core`
+  - `Multiverse-Portals`
 
 ## 前提
 
@@ -29,7 +32,7 @@ make init
 
 これで以下が生成される。
 
-- `setup/wsl/runtime/lobby/`
+- `setup/wsl/runtime/world/`
 
 ## 起動
 
@@ -43,27 +46,27 @@ make up
 
 ```console
 docker compose -f setup/wsl/docker-compose.yml ps
-docker compose -f setup/wsl/docker-compose.yml logs -f lobby
+docker compose -f setup/wsl/docker-compose.yml logs -f world
 # または
 make ps
-make logs-lobby
+make logs-world
 ```
 
-## Lobby 内部設定の再適用
+## World 内部設定の再適用
 
 内部設定（gamerule, time, difficulty, worldspawn）は
-Datapack `setup/wsl/datapacks/lobby-base` の
-`data/mcserver/function/lobby_settings.mcfunction` に記述し、`/function` で再適用する。
+Datapack `setup/wsl/datapacks/world-base` の
+`data/mcserver/function/world_settings.mcfunction` に記述し、`/function` で再適用する。
 
 ```console
-make lobby-apply
+make world-apply
 ```
 
 このコマンドは内部で以下を行う。
 
-- `make lobby-datapack-sync`（datapack を world へ同期）
+- `make world-datapack-sync`（datapack を world へ同期）
 - `reload`
-- `function mcserver:lobby_settings`
+- `function mcserver:world_settings`
 
 初期値は `1.21.11+` の gamerule 名に合わせている。
 
@@ -92,12 +95,12 @@ make down
 - `make init` : 検証用ディレクトリを初期化
 - `make up` : 構成をバックグラウンド起動（不要サービスは orphan 削除）
 - `make down` : 構成を停止
-- `make restart` : `lobby` を再起動
+- `make restart` : `world` を再起動
 - `make ps` : コンテナ状態の確認
 - `make logs` : 全サービスのログ追跡
-- `make logs-lobby` : lobby ログ追跡
-- `make op-lobby PLAYER=<id>` : lobby で一時的に `op` を付与
-- `make deop-lobby PLAYER=<id>` : lobby で `op` を剥奪
-- `make lp-admin PLAYER=<id>` : lobby で `admin` グループ作成とユーザー割り当て
-- `make lobby-datapack-sync` : `setup/wsl/datapacks/lobby-base` を `runtime/lobby/world/datapacks/` へ同期
-- `make lobby-apply` : `function mcserver:lobby_settings` を実行
+- `make logs-world` : world ログ追跡
+- `make op-world PLAYER=<id>` : world で一時的に `op` を付与
+- `make deop-world PLAYER=<id>` : world で `op` を剥奪
+- `make lp-admin PLAYER=<id>` : world で `admin` グループ作成とユーザー割り当て
+- `make world-datapack-sync` : `setup/wsl/datapacks/world-base` を `runtime/world/world/datapacks/` へ同期
+- `make world-apply` : `function mcserver:world_settings` を実行
