@@ -10,7 +10,6 @@ type worldConfig struct {
 	Environment string `yaml:"environment"`
 	WorldType   string `yaml:"world_type"`
 	Seed        any    `yaml:"seed"`
-	Function    string `yaml:"function"`
 	Deletable   bool   `yaml:"deletable"`
 }
 

@@ -14,7 +14,7 @@
 - `setup/wsl/datapacks/world-base`
   - ワールド初期化用 Datapack
 - `setup/wsl/worlds/*/world.env.yml`
-  - ワールド作成/import用の定義
+  - Multiverse 管理ワールド（`residence/resource/factory`）の作成/import用定義
 
 ## CLI 方針
 

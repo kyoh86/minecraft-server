@@ -9,7 +9,6 @@
     "environment",
     "world_type",
     "seed",
-    "function",
     "deletable"
   ],
   "properties": {
@@ -34,11 +33,6 @@
         { "type": "string", "minLength": 1 }
       ],
       "description": "Seed used by mv create -s"
-    },
-    "function": {
-      "type": "string",
-      "pattern": "^[a-z0-9_\\-]+:[a-z0-9_\\-/]+$",
-      "description": "Function to execute after world creation/import"
     },
     "deletable": {
       "type": "boolean",

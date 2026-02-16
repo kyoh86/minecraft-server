@@ -49,6 +49,9 @@ wslctl world setup
 wslctl world setup --world mainhall
 ```
 
+`mainhall` は `LEVEL` 基底ワールドのため `world.env.yml` は持たず、
+`mcserver:worlds/mainhall/init` を規則名で実行する。
+
 ## ワールド再生成
 
 `deletable: true` のワールドだけ再生成できる。

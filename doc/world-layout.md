@@ -14,8 +14,9 @@
 - `setup/wsl/worlds/schema.json`
   - `world.env.yml` 用 JSON Schema
 - `setup/wsl/worlds/<name>/world.env.yml`
+  - 対象は Multiverse 管理ワールド（`residence` / `resource` / `factory`）
   - 先頭に `# yaml-language-server: $schema=../schema.json` を記述
-  - `name` / `environment` / `world_type` / `seed` / `function` / `deletable`
+  - `name` / `environment` / `world_type` / `seed` / `deletable`
 
 ## Datapack と初期化 function
 
@@ -26,6 +27,8 @@
   - `mcserver:worlds/residence/init`
   - `mcserver:worlds/resource/init`
   - `mcserver:worlds/factory/init`
+
+初期化 function ID は `mcserver:worlds/<name>/init` の規則で決まる。
 
 `init.mcfunction` は分割可能。
 

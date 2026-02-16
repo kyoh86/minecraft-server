@@ -12,6 +12,8 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
+const primaryWorldName = "mainhall"
+
 func (a app) initRuntime() error {
 	runtimeDir := filepath.Join(a.wslDir, "runtime", "world")
 	if err := os.MkdirAll(runtimeDir, 0o755); err != nil {
@@ -73,8 +75,8 @@ func (a app) worldRegenerate(target string) error {
 	if err != nil {
 		return err
 	}
-	if target == "mainhall" {
-		return errors.New("world 'mainhall' cannot be regenerated")
+	if target == primaryWorldName {
+		return fmt.Errorf("world '%s' cannot be regenerated", primaryWorldName)
 	}
 	if !cfg.Deletable {
 		return fmt.Errorf("world '%s' is not deletable", target)
@@ -107,8 +109,8 @@ func (a app) worldDrop(target string) error {
 	if target == "" {
 		return errors.New("world name is required")
 	}
-	if target == "mainhall" {
-		return errors.New("world 'mainhall' cannot be dropped")
+	if target == primaryWorldName {
+		return fmt.Errorf("world '%s' cannot be dropped", primaryWorldName)
 	}
 	registered, err := a.worldRegisteredInMultiverse(target)
 	if err != nil {
@@ -133,8 +135,8 @@ func (a app) worldDelete(target string, yes bool) error {
 	if target == "" {
 		return errors.New("world name is required")
 	}
-	if target == "mainhall" {
-		return errors.New("world 'mainhall' cannot be deleted")
+	if target == primaryWorldName {
+		return fmt.Errorf("world '%s' cannot be deleted", primaryWorldName)
 	}
 	if !yes {
 		return errors.New("delete requires --yes")
@@ -169,16 +171,23 @@ func (a app) worldDelete(target string, yes bool) error {
 func (a app) worldSetup(target string) error {
 	target = strings.TrimSpace(target)
 	if target != "" {
-		cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
-		cfg, err := loadWorldConfig(cfgPath)
-		if err != nil {
-			return err
+		if target != primaryWorldName {
+			cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
+			cfg, err := loadWorldConfig(cfgPath)
+			if err != nil {
+				return err
+			}
+			target = cfg.Name
 		}
-		if err := a.applyWorldInitFunction(cfg); err != nil {
+		if err := a.applyWorldInitFunction(target); err != nil {
 			return err
 		}
 		fmt.Printf("setup world '%s'\n", target)
 		return nil
+	}
+
+	if err := a.applyWorldInitFunction(primaryWorldName); err != nil {
+		return err
 	}
 
 	cfgs, err := a.listWorldConfigs()
@@ -190,7 +199,10 @@ func (a app) worldSetup(target string) error {
 		if err != nil {
 			return err
 		}
-		if err := a.applyWorldInitFunction(cfg); err != nil {
+		if cfg.Name == primaryWorldName {
+			continue
+		}
+		if err := a.applyWorldInitFunction(cfg.Name); err != nil {
 			return err
 		}
 	}
@@ -236,12 +248,12 @@ func (a app) ensureWorld(cfg worldConfig, forceCreate bool) error {
 	return a.sendConsole(strings.Join(parts, " "))
 }
 
-func (a app) applyWorldInitFunction(cfg worldConfig) error {
-	fn := cfg.Function
-	if fn == "" {
-		fn = fmt.Sprintf("mcserver:worlds/%s/init", cfg.Name)
-	}
-	return a.sendConsole("function " + fn)
+func (a app) applyWorldInitFunction(worldName string) error {
+	return a.sendConsole("function " + worldInitFunctionID(worldName))
+}
+
+func worldInitFunctionID(worldName string) string {
+	return fmt.Sprintf("mcserver:worlds/%s/init", worldName)
 }
 
 func (a app) listWorldConfigs() ([]string, error) {
