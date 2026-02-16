@@ -1,4 +1,17 @@
 services:
+  postgres:
+    image: postgres:16
+    container_name: mc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: minecraft
+      POSTGRES_USER: minecraft
+      POSTGRES_PASSWORD: minecraft
+    volumes:
+      - ./runtime/postgres:/var/lib/postgresql/data
+    networks:
+      - mcnet
+
   velocity:
     image: itzg/bungeecord:latest
     container_name: mc-velocity
@@ -34,6 +47,8 @@ services:
       - ./runtime/lobby:/data
     networks:
       - mcnet
+    depends_on:
+      - postgres
 
   survival:
     image: itzg/minecraft-server:java21
@@ -54,6 +69,8 @@ services:
       - ./runtime/survival:/data
     networks:
       - mcnet
+    depends_on:
+      - postgres
 
 networks:
   mcnet:

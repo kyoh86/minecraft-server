@@ -1,0 +1,14 @@
+database:
+  jdbc_url: jdbc:postgresql://postgres:5432/minecraft
+  user: minecraft
+  password: minecraft
+  connect_timeout_seconds: 5
+
+vault:
+  source_server: lobby
+  search_radius: 4.0
+  list_limit: 20
+
+tool:
+  material: CARROT_ON_A_STICK
+  display_name: "MobVault Wand"

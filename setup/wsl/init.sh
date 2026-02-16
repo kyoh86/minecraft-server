@@ -6,7 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p \
   "${SCRIPT_DIR}/runtime/velocity" \
   "${SCRIPT_DIR}/runtime/lobby" \
-  "${SCRIPT_DIR}/runtime/survival"
+  "${SCRIPT_DIR}/runtime/survival" \
+  "${SCRIPT_DIR}/runtime/postgres"
 
 cp --update=none "${SCRIPT_DIR}/templates/velocity.toml" "${SCRIPT_DIR}/runtime/velocity/velocity.toml"
 

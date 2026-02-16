@@ -10,8 +10,10 @@
 - `velocity` : エントリポイント（外部公開ポート `25565`）
 - `lobby` : ロビー用 Paper サーバー
 - `survival` : サバイバル用 Paper サーバー
+- `postgres` : `MobVault` 用データベース
 - `lobby/survival` には `LuckPerms` を自動導入する
 - `lobby` にはローカルプラグイン `GateBridge` を導入する
+- `lobby/survival` にはローカルプラグイン `MobVault` を導入できる
 - バックエンドサーバーは外部公開しない
 
 ## 前提
@@ -78,6 +80,29 @@ make gatebridge-plugin-install
 
 - 開発（ソース管理）: `plugins/gatebridge/`
 - 配備/検証（WSL実行環境）: `setup/wsl/`
+
+## MobVault 試験導入（PostgreSQL）
+
+`MobVault` はモブの預け入れ状態を PostgreSQL に保存し、  
+`lobby/survival` のどちらでも引き出せることを狙った試験実装。
+
+仕様の詳細は `doc/mobvault-spec.md` を参照。
+
+```console
+make mobvault-plugin-install
+```
+
+このターゲットは以下を行う。
+
+- `plugins/mobvault/src/` をビルド
+- PostgreSQL JDBC ドライバを同梱した `mobvault.jar` を生成
+- `runtime/lobby/plugins/` と `runtime/survival/plugins/` に配置
+- `lobby/survival` コンテナを再作成して起動
+
+`MobVault` の設定ファイル:
+
+- `setup/wsl/runtime/lobby/plugins/MobVault/config.yml`
+- `setup/wsl/runtime/survival/plugins/MobVault/config.yml`
 
 ## Velocity と Paper の連携設定
 
@@ -264,3 +289,4 @@ make restart
 - `make lobby-gate-apply` : `function mcserver:lobby_gate` を実行
 - `make gatebridge-plugin-install` : `GateBridge` をビルド・配置して `lobby` を再起動
 - `make velocity-reconnect-plugin-install` : Velocity に `Rememberme` を導入して再起動
+- `make mobvault-plugin-install` : `MobVault` をビルド・配置して `lobby/survival` を再起動
