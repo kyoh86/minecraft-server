@@ -5,7 +5,7 @@ WSLCTL := $(GO_ENV) go run ./cmd/wslctl
 .PHONY: init up down restart ps logs logs-world bootstrap worlds-bootstrap world-reset resource-reset op-world deop-world lp-admin lp-reset world-datapack-sync world-apply
 
 init:
-	$(WSLCTL) runtime init
+	$(WSLCTL) init
 
 up:
 	docker compose -f $(COMPOSE_FILE) up -d --remove-orphans
@@ -26,7 +26,7 @@ logs-world:
 	docker compose -f $(COMPOSE_FILE) logs -f world
 
 bootstrap:
-	$(WSLCTL) runtime init
+	$(WSLCTL) init
 	docker compose -f $(COMPOSE_FILE) up -d --remove-orphans
 	docker compose -f $(COMPOSE_FILE) restart world
 
