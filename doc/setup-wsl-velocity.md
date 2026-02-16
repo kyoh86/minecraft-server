@@ -52,6 +52,9 @@ wslctl world setup --world mainhall
 `mainhall` は `LEVEL` 基底ワールドのため `world.env.yml` は持たず、
 `setup/wsl/worlds/mainhall/setup.commands` を読み込んで適用する。
 `mainhall` の MV 管理項目は `setup/wsl/worlds/mainhall/world.policy.yml` で管理する。
+`setup/wsl/worlds/mainhall/portals.yml` がある場合は runtime の
+`plugins/Multiverse-Portals/portals.yml` へ同期する。
+ポータル定義反映には `wslctl server restart` が必要。
 
 ## ワールド再生成
 

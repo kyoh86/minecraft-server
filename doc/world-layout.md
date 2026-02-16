@@ -59,6 +59,10 @@
   - 1行1コマンドで記述する
   - `wslctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
   - `mv` 系コマンドはここに書かず、`world.policy.yml` に記述する
+- `setup/wsl/worlds/mainhall/portals.yml`
+  - `Multiverse-Portals` 用のポータル定義
+  - `wslctl world setup --world mainhall` で runtime へ同期する
+  - 反映にはサーバー再起動が必要
 
 ## Datapack とセットアップ
 
@@ -87,3 +91,24 @@
 
 Datapack は最小構成として `mcserver:hello` のみを同梱している。
 現行運用のセットアップ実行経路は `wslctl world setup` のみとする。
+
+## mainhall デモ建築
+
+`mainhall` の初期スポーン付近に、導線確認用のデモ建築を配置できる。
+
+```console
+wslctl world function run mcserver:mainhall/palace_demo
+```
+
+この function は、御殿風の簡易ハブと `residence` / `resource` / `factory` 行きの
+クリック看板（`/mvtp <world>` 実行）を設置する。
+また、床下にゲート演出用の反復コマンドブロックを配置し、
+`end_rod` と `enchant` のパーティクルを各ゲート面へ常時投影する。
+各ゲートは背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
+
+`Multiverse-Portals` のポータル定義を適用する場合:
+
+```console
+wslctl world setup --world mainhall
+wslctl server restart
+```
