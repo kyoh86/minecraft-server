@@ -15,6 +15,8 @@
   - ワールド初期化用 Datapack
 - `setup/wsl/worlds/*/world.env.yml`
   - Multiverse 管理ワールド（`residence/resource/factory`）の作成/import用定義
+- `setup/wsl/worlds/*/world.policy.yml`
+  - ワールド運用ポリシー（`mv modify` で適用）
 
 ## CLI 方針
 
@@ -24,6 +26,7 @@
 - `server` : 起動・停止・ログ・reload
 - `assets` : Datapack などの配置
 - `world` : world create/import・再生成・初期化 function 実行
+  - `world.policy.yml` にある MV 管理項目も適用
 - `player` : op/admin 権限操作
 
 ## 典型フロー（初回）

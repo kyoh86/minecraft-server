@@ -15,7 +15,7 @@
   - 役割は導線専用（Hub）
   - すべてのワールド移動は一度 `mainhall` を経由する
   - `mainhall` へ来たプレイヤーは、ゲート群を置いた閉鎖空間の固定座標へ着地させる
-  - 破壊不能前提。基本ゲームモードは Adventure
+  - 破壊不能前提。基本ゲームモードは Adventure（Multiverse 設定で固定）
   - 地形は superflat、モブ湧きなし、難易度 peaceful、時間経過なし、天候変化なし
   - Overworld のみ（Nether/End なし）
 - `residence`
@@ -44,10 +44,16 @@
 
 - `setup/wsl/worlds/schema.json`
   - `world.env.yml` 用 JSON Schema
+- `setup/wsl/worlds/policy.schema.json`
+  - `world.policy.yml` 用 JSON Schema
 - `setup/wsl/worlds/<name>/world.env.yml`
   - 対象は Multiverse 管理ワールド（`residence` / `resource` / `factory`）
   - 先頭に `# yaml-language-server: $schema=../schema.json` を記述
   - `name` / `environment` / `world_type` / `seed` / `deletable`
+- `setup/wsl/worlds/<name>/world.policy.yml`
+  - 対象は全ワールド（`mainhall` を含む）
+  - 先頭に `# yaml-language-server: $schema=../policy.schema.json` を記述
+  - `mv_set` に `mv modify <world> set ...` の項目を記述する
 
 ## Datapack と初期化 function
 
@@ -80,6 +86,7 @@
   - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
 - `wslctl world setup [--world <name>]`
   - world 初期化 function を実行する
+  - `world.policy.yml` に定義された MV 管理項目を適用する
 - `wslctl world regenerate <name>`
   - world を削除して再生成する（`deletable: true` のみ）
 

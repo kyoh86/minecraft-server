@@ -51,6 +51,7 @@ wslctl world setup --world mainhall
 
 `mainhall` は `LEVEL` 基底ワールドのため `world.env.yml` は持たず、
 `mcserver:worlds/mainhall/init` を規則名で実行する。
+`mainhall` の MV 管理項目は `setup/wsl/worlds/mainhall/world.policy.yml` で管理する。
 
 ## ワールド再生成
 
@@ -73,6 +74,7 @@ wslctl world delete --yes resource
 - `mainhall` は保護され、`drop`/`delete` できない。
 - `delete` は `world.env.yml` の `deletable: true` が必要。
 - `world ensure` / `world setup --world mainhall` 実行時は、`mainhall_nether` と `mainhall_the_end` を自動で drop する。
+- `world setup --world mainhall` は `world.policy.yml` の `mv_set` を適用し、Hub の運用ポリシーを固定する。
 
 ## 任意 function 実行
 

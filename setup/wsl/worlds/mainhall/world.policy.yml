@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../policy.schema.json
+name: mainhall
+mv_set:
+  gamemode: adventure
+  pvp: false
+  difficulty: peaceful

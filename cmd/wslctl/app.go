@@ -13,6 +13,11 @@ type worldConfig struct {
 	Deletable   bool   `yaml:"deletable"`
 }
 
+type worldPolicy struct {
+	Name  string            `yaml:"name"`
+	MVSet map[string]string `yaml:"mv_set"`
+}
+
 type app struct {
 	repoRoot string
 	wslDir   string

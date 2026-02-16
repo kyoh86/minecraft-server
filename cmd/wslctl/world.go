@@ -185,6 +185,9 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldInitFunction(target); err != nil {
 			return err
 		}
+		if err := a.applyWorldPolicy(target); err != nil {
+			return err
+		}
 		if target == primaryWorldName {
 			if err := a.pruneMainhallExtraDimensions(); err != nil {
 				return err
@@ -213,6 +216,12 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldInitFunction(cfg.Name); err != nil {
 			return err
 		}
+		if err := a.applyWorldPolicy(cfg.Name); err != nil {
+			return err
+		}
+	}
+	if err := a.applyWorldPolicy(primaryWorldName); err != nil {
+		return err
 	}
 	if err := a.pruneMainhallExtraDimensions(); err != nil {
 		return err
@@ -267,6 +276,32 @@ func worldInitFunctionID(worldName string) string {
 	return fmt.Sprintf("mcserver:worlds/%s/init", worldName)
 }
 
+func (a app) applyWorldPolicy(worldName string) error {
+	policy, ok, err := a.loadWorldPolicy(worldName)
+	if err != nil {
+		return err
+	}
+	if !ok || len(policy.MVSet) == 0 {
+		return nil
+	}
+
+	var keys []string
+	for k := range policy.MVSet {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		val := strings.TrimSpace(policy.MVSet[key])
+		if val == "" {
+			continue
+		}
+		if err := a.sendConsole(fmt.Sprintf("mv modify %s set %s %s", worldName, key, val)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (a app) pruneMainhallExtraDimensions() error {
 	for _, name := range []string{primaryWorldName + "_nether", primaryWorldName + "_the_end"} {
 		if err := a.worldDrop(name); err != nil {
@@ -294,6 +329,25 @@ func (a app) listWorldConfigs() ([]string, error) {
 	}
 	sort.Strings(cfgs)
 	return cfgs, nil
+}
+
+func (a app) loadWorldPolicy(worldName string) (worldPolicy, bool, error) {
+	path := filepath.Join(a.wslDir, "worlds", worldName, "world.policy.yml")
+	if !fileExists(path) {
+		return worldPolicy{}, false, nil
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return worldPolicy{}, false, err
+	}
+	var policy worldPolicy
+	if err := yaml.Unmarshal(b, &policy); err != nil {
+		return worldPolicy{}, false, fmt.Errorf("parse world policy %s: %w", path, err)
+	}
+	if policy.Name != "" && policy.Name != worldName {
+		return worldPolicy{}, false, fmt.Errorf("world policy name mismatch: %s != %s", policy.Name, worldName)
+	}
+	return policy, true, nil
 }
 
 func loadWorldConfig(path string) (worldConfig, error) {
