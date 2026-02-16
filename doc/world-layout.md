@@ -96,12 +96,12 @@
 Datapack は最小構成として `mcserver:hello` のみを同梱している。
 現行運用のセットアップ実行経路は `wslctl world setup` のみとする。
 
-## mainhall デモ建築
+## hub_layout
 
 `mainhall` の初期スポーン付近に、導線確認用のデモ建築を配置できる。
 
 ```console
-wslctl world function run mcserver:mainhall/palace_demo
+wslctl world function run mcserver:mainhall/hub_layout
 ```
 
 この function は、御殿風の簡易ハブと `residence` / `resource` / `factory` 行きの
@@ -110,8 +110,9 @@ wslctl world function run mcserver:mainhall/palace_demo
 `end_rod` と `enchant` のパーティクルを各ゲート面へ常時投影する。
 各ゲートは背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
 
-`residence` / `resource` / `factory` では `setup.commands` により、
-初期スポーン上空へ共通の小ハブ（足場・フレーム・mainhall 帰還ゲート）を構築する。
+`residence` / `resource` / `factory` では `setup.commands` から
+`mcserver:world/hub_layout` を呼び出し、各ワールドの
+`motion_blocking_no_leaves` 高度に小ハブ（足場・フレーム・mainhall 帰還ゲート）を構築する。
 同時に `worldguard.regions.yml` の `spawn_protected` を同期し、
 スポーン周辺での建設・破壊・爆破を禁止する。
 
