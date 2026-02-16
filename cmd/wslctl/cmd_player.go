@@ -9,25 +9,53 @@ import (
 func newPlayerCmd(a app) *cobra.Command {
 	cmd := &cobra.Command{Use: "player", Short: "player operations"}
 
-	cmd.AddCommand(&cobra.Command{
-		Use:   "op <name>",
+	opCmd := &cobra.Command{Use: "op", Short: "operator permission operations"}
+	opCmd.AddCommand(&cobra.Command{
+		Use:   "grant <name>",
 		Short: "grant operator to a player",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return a.sendConsole("op " + strings.TrimSpace(args[0]))
 		},
 	})
-
-	cmd.AddCommand(&cobra.Command{
-		Use:   "deop <name>",
+	opCmd.AddCommand(&cobra.Command{
+		Use:   "revoke <name>",
 		Short: "revoke operator from a player",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return a.sendConsole("deop " + strings.TrimSpace(args[0]))
 		},
 	})
+	cmd.AddCommand(opCmd)
 
-	cmd.AddCommand(newPlayerPermsCmd(a))
+	adminCmd := &cobra.Command{Use: "admin", Short: "admin group operations"}
+	adminCmd.AddCommand(&cobra.Command{
+		Use:   "grant <name>",
+		Short: "grant admin group using LuckPerms",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			player := strings.TrimSpace(args[0])
+			for _, c := range []string{
+				"lp creategroup admin",
+				"lp group admin permission set * true",
+				"lp user " + player + " parent set admin",
+			} {
+				if err := a.sendConsole(c); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	})
+	adminCmd.AddCommand(&cobra.Command{
+		Use:   "revoke <name>",
+		Short: "revoke admin group using LuckPerms",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.sendConsole("lp user " + strings.TrimSpace(args[0]) + " parent remove admin")
+		},
+	})
+	cmd.AddCommand(adminCmd)
 
 	return cmd
 }

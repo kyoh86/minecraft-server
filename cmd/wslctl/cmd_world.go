@@ -6,29 +6,43 @@ func newWorldCmd(a app) *cobra.Command {
 	cmd := &cobra.Command{Use: "world", Short: "world operations"}
 
 	cmd.AddCommand(&cobra.Command{
-		Use:   "bootstrap",
-		Short: "create/import all worlds from setup/wsl/worlds and run each init function",
+		Use:   "ensure",
+		Short: "create/import worlds from setup/wsl/worlds definitions",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return a.worldsBootstrap()
+			return a.worldEnsure()
 		},
 	})
 
 	cmd.AddCommand(&cobra.Command{
-		Use:   "reset <name>",
-		Short: "reset one world from setup/wsl/worlds/<name>/world.env.yml when resettable=true",
+		Use:   "regenerate <name>",
+		Short: "delete and recreate one world when resettable=true",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return a.worldReset(args[0])
+			return a.worldRegenerate(args[0])
 		},
 	})
 
-	cmd.AddCommand(&cobra.Command{
-		Use:   "apply-settings",
-		Short: "reload and run function mcserver:world_settings",
+	var worldName string
+	setupCmd := &cobra.Command{
+		Use:   "setup",
+		Short: "run world init function for all worlds or one world",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return a.applyWorldSettings()
+			return a.worldSetup(worldName)
+		},
+	}
+	setupCmd.Flags().StringVar(&worldName, "world", "", "target world name")
+	cmd.AddCommand(setupCmd)
+
+	functionCmd := &cobra.Command{Use: "function", Short: "world function operations"}
+	functionCmd.AddCommand(&cobra.Command{
+		Use:   "run <id>",
+		Short: "run an arbitrary function id",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.worldFunctionRun(args[0])
 		},
 	})
+	cmd.AddCommand(functionCmd)
 
 	return cmd
 }

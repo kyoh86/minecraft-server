@@ -21,7 +21,7 @@ func (a app) initRuntime() error {
 	return nil
 }
 
-func (a app) syncWorldDatapack() error {
+func (a app) stageAssets() error {
 	srcDir := filepath.Join(a.wslDir, "datapacks", "world-base")
 	dstRoot := filepath.Join(a.wslDir, "runtime", "world", "mainhall", "datapacks")
 	dstDir := filepath.Join(dstRoot, "world-base")
@@ -39,32 +39,11 @@ func (a app) syncWorldDatapack() error {
 		return err
 	}
 
-	fmt.Printf("synced datapack to %s\n", dstDir)
+	fmt.Printf("staged assets to %s\n", dstDir)
 	return nil
 }
 
-func (a app) applyWorldSettings() error {
-	if err := a.syncWorldDatapack(); err != nil {
-		return err
-	}
-	if err := a.sendConsole("reload"); err != nil {
-		return err
-	}
-	if err := a.sendConsole("function mcserver:world_settings"); err != nil {
-		return err
-	}
-	fmt.Println("applied world settings function mcserver:world_settings")
-	return nil
-}
-
-func (a app) worldsBootstrap() error {
-	if err := a.syncWorldDatapack(); err != nil {
-		return err
-	}
-	if err := a.sendConsole("reload"); err != nil {
-		return err
-	}
-
+func (a app) worldEnsure() error {
 	cfgs, err := a.listWorldConfigs()
 	if err != nil {
 		return err
@@ -77,16 +56,13 @@ func (a app) worldsBootstrap() error {
 		if err := a.ensureWorld(cfg, false); err != nil {
 			return err
 		}
-		if err := a.applyWorldInitFunction(cfg); err != nil {
-			return err
-		}
 	}
 
-	fmt.Printf("bootstrapped worlds from %s\n", filepath.Join(a.wslDir, "worlds"))
+	fmt.Printf("ensured worlds from %s\n", filepath.Join(a.wslDir, "worlds"))
 	return nil
 }
 
-func (a app) worldReset(target string) error {
+func (a app) worldRegenerate(target string) error {
 	target = strings.TrimSpace(target)
 	if target == "" {
 		return errors.New("world name is required")
@@ -127,15 +103,49 @@ func (a app) worldReset(target string) error {
 	if err := a.ensureWorld(cfg, true); err != nil {
 		return err
 	}
-	if err := a.sendConsole("reload"); err != nil {
-		return err
-	}
-	if err := a.applyWorldInitFunction(cfg); err != nil {
-		return err
+
+	fmt.Printf("regenerated world '%s'\n", target)
+	return nil
+}
+
+func (a app) worldSetup(target string) error {
+	target = strings.TrimSpace(target)
+	if target != "" {
+		cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
+		cfg, err := loadWorldConfig(cfgPath)
+		if err != nil {
+			return err
+		}
+		if err := a.applyWorldInitFunction(cfg); err != nil {
+			return err
+		}
+		fmt.Printf("setup world '%s'\n", target)
+		return nil
 	}
 
-	fmt.Printf("reset world '%s'\n", target)
+	cfgs, err := a.listWorldConfigs()
+	if err != nil {
+		return err
+	}
+	for _, cfgPath := range cfgs {
+		cfg, err := loadWorldConfig(cfgPath)
+		if err != nil {
+			return err
+		}
+		if err := a.applyWorldInitFunction(cfg); err != nil {
+			return err
+		}
+	}
+	fmt.Printf("setup worlds from %s\n", filepath.Join(a.wslDir, "worlds"))
 	return nil
+}
+
+func (a app) worldFunctionRun(functionID string) error {
+	functionID = strings.TrimSpace(functionID)
+	if functionID == "" {
+		return errors.New("function id is required")
+	}
+	return a.sendConsole("function " + functionID)
 }
 
 func (a app) ensureWorld(cfg worldConfig, forceCreate bool) error {

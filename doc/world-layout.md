@@ -4,9 +4,9 @@
 
 以下の4ワールド構成を、手順ではなく定義ファイルで再現できるようにする。
 
-- `mainhall` : 導線・集約用
+- `mainhall` : 導線・集約用（`LEVEL`）
 - `residence` : 通常プレイ・居住用
-- `resource` : 定期リセット前提の資源用
+- `resource` : 定期再生成前提の資源用
 - `factory` : 自動化・装置用
 
 ## 定義場所
@@ -15,41 +15,36 @@
   - `world.env.yml` 用 JSON Schema
 - `setup/wsl/worlds/<name>/world.env.yml`
   - 先頭に `# yaml-language-server: $schema=../schema.json` を記述
-  - ワールド名
-  - 環境（`normal` など）
-  - ワールドタイプ（`normal`/`flat` など）
-  - seed
-  - 実行する初期化 function 名
-  - resettable フラグ
+  - `name` / `environment` / `world_type` / `seed` / `function` / `resettable`
 
-## 初期化ロジック
+## Datapack と初期化 function
 
-- Datapack: `setup/wsl/datapacks/world-base`
-- 各ワールドの function エントリ:
+- Datapack 配置元: `setup/wsl/datapacks/world-base`
+- Datapack 配置先: `setup/wsl/runtime/world/mainhall/datapacks/world-base`
+- 初期化 function 例:
   - `mcserver:worlds/mainhall/init`
   - `mcserver:worlds/residence/init`
   - `mcserver:worlds/resource/init`
   - `mcserver:worlds/factory/init`
 
-`init.mcfunction` は分割可能で、現在は以下を分離している。
+`init.mcfunction` は分割可能。
 
 - `init/gamerules.mcfunction`
 - `init/environment.mcfunction`
 - `init/spawn.mcfunction`
 
-## 実行コマンド
+## プリミティブ操作
 
-- `make worlds-bootstrap`
-  - Datapack同期
-  - reload
-  - `world.env.yml` 定義に従った作成/import
-  - 各worldの init function 実行
-
-- `make world-reset WORLD=<name>`
-  - 指定ワールドを unload
-  - ワールドディレクトリ削除
-  - 再作成/import
-  - init function 再実行
+- `wslctl assets stage`
+  - Datapack を runtime 側へ配置する
+- `wslctl server reload`
+  - Datapack/function を再読み込みする
+- `wslctl world ensure`
+  - world 定義に従って create/import する
+- `wslctl world setup [--world <name>]`
+  - world 初期化 function を実行する
+- `wslctl world regenerate <name>`
+  - world を削除して再生成する（`resettable: true` のみ）
 
 ## 補足
 

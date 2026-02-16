@@ -3,8 +3,6 @@
 このリポジトリは、`WSL2/Ubuntu` 上で Minecraft Java サーバー（Paper 1.21.11）を
 ローカル検証するための構成を管理する。
 
-現行構成は **単一サーバー（world）** のみ。
-
 ## 構成
 
 - `setup/wsl/docker-compose.yml`
@@ -12,63 +10,58 @@
   - 公開ポート `25565`
   - `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` を自動導入
 - `setup/wsl/runtime/world`
-  - サーバーデータ永続化先（`make init` で作成）
+  - サーバーデータ永続化先
 - `setup/wsl/datapacks/world-base`
-  - world初期化用 Datapack
+  - ワールド初期化用 Datapack
 - `setup/wsl/worlds/*/world.env.yml`
   - ワールド作成/import用の定義
-  - 例: `mainhall` は `world_type: flat`
 
-## 使い方
+## CLI 方針
 
-前提:
+`wslctl` は以下のプリミティブコマンドで構成する。
 
-- `docker compose`
-- `make`
-- `go`（`cmd/wslctl` 実行用）
+- `setup` : 初期ディレクトリ作成
+- `server` : 起動・停止・ログ・reload
+- `assets` : Datapack などの配置
+- `world` : world create/import・再生成・初期化 function 実行
+- `player` : op/admin 権限操作
 
-```console
-make init
-make up
-make ps
-make logs-world
-```
-
-停止:
+## 典型フロー（初回）
 
 ```console
-make down
+wslctl setup init
+wslctl server up
+wslctl assets stage
+wslctl server reload
+wslctl world ensure
+wslctl world setup
 ```
 
-## ワールド作成と初期化
-
-`world.env.yml` に従って mainhall/residence/resource/factory を作成/import し、
-各ワールドの `init.mcfunction` を実行する。
+## 典型フロー（設定変更反映）
 
 ```console
-make worlds-bootstrap
+wslctl assets stage
+wslctl server reload
+wslctl world setup --world mainhall
 ```
 
-1ワールドだけ再生成する:
+## 典型フロー（1ワールド再生成）
 
 ```console
-make world-reset WORLD=resource
+wslctl world regenerate resource
+wslctl world setup --world resource
 ```
 
-## World 設定の再適用
+## Makefile
 
-Datapack を同期して `mcserver:world_settings` を実行する。
+`Makefile` は `wslctl` の薄いショートカット。
 
-```console
-make world-apply
-```
-
-## 運用補助
-
-- OP 付与: `make op-world PLAYER=<player>`
-- OP 剥奪: `make deop-world PLAYER=<player>`
-- LuckPerms admin 付与: `make lp-admin PLAYER=<player>`
-- LuckPerms権限リセット（admin 剥奪）: `make lp-reset PLAYER=<player>`
+- `make setup-init`
+- `make server-up`
+- `make assets-stage`
+- `make world-ensure`
+- `make world-regenerate WORLD=resource`
+- `make world-setup WORLD=mainhall`
 
 ## ドキュメント
 

@@ -3,18 +3,9 @@
 ## 概要
 
 このドキュメントは、`WSL2 + Ubuntu` 上で単一 `Paper` サーバーを動かし、
-ワールド分離（建設用/工業用/資源用など）で運用するための手順をまとめたもの。
+複数ワールド（`mainhall` / `residence` / `resource` / `factory`）を運用する手順を示す。
 
-ここでの構成は検証用であり、常時運用の本番環境は Linux 実機に移行する前提。
-
-## 構成
-
-- `world` : メイン Paper サーバー（外部公開ポート `25565`）
-- `world` には以下を自動導入する
-  - `LuckPerms`
-  - `Multiverse-Core`
-  - `Multiverse-Portals`
-- ワールド定義は `setup/wsl/worlds/*/world.env.yml` で管理する
+ここでの方針は、合成コマンドではなくプリミティブな操作を明示的に実行すること。
 
 ## 前提
 
@@ -22,110 +13,86 @@
 - Docker Desktop + WSL integration 有効、または WSL 側 Docker Engine が利用可能
 - `go` コマンドが利用可能（`cmd/wslctl` 実行に使用）
 
-## 初期化
+## コマンド体系
 
-リポジトリルートで実行する。
+- `wslctl setup init`
+- `wslctl server up|down|restart|ps|logs|reload`
+- `wslctl assets stage`
+- `wslctl world ensure|regenerate|setup|function run`
+- `wslctl player op ...|admin ...`
 
-```console
-make init
-```
-
-これで以下が生成される。
-
-- `setup/wsl/runtime/world/`
-
-## 起動
+## 初回セットアップ
 
 ```console
-docker compose -f setup/wsl/docker-compose.yml up -d --remove-orphans
-# または
-make up
+wslctl setup init
+wslctl server up
+wslctl assets stage
+wslctl server reload
+wslctl world ensure
+wslctl world setup
 ```
 
-状態確認:
+## 設定変更の反映
+
+Datapack / mcfunction を更新した場合は次を実行する。
 
 ```console
-docker compose -f setup/wsl/docker-compose.yml ps
-docker compose -f setup/wsl/docker-compose.yml logs -f world
-# または
-make ps
-make logs-world
+wslctl assets stage
+wslctl server reload
+wslctl world setup
 ```
 
-## ワールド作成と初期化
-
-`make worlds-bootstrap` は以下をまとめて実行する。
-
-- Datapack 同期（`setup/wsl/datapacks/world-base`）
-- `reload`
-- `world.env.yml` から world 作成/import（Multiverse）
-- 各 world の `mcfunction` 初期化実行
-
-現在の定義では `mainhall` は `world_type: flat` で作成する。
+特定ワールドだけ初期化 function を実行したい場合:
 
 ```console
-make worlds-bootstrap
+wslctl world setup --world mainhall
 ```
 
-1ワールドだけ再生成したい場合:
+## ワールド再生成
+
+`resettable: true` のワールドだけ再生成できる。
 
 ```console
-make world-reset WORLD=resource
+wslctl world regenerate resource
+wslctl world setup --world resource
 ```
 
-## World 設定の再適用
-
-内部設定（gamerule, time, difficulty, worldspawn）は
-Datapack `setup/wsl/datapacks/world-base` の
-`data/mcserver/function/world_settings.mcfunction` に記述し、`/function` で再適用する。
+## 任意 function 実行
 
 ```console
-make world-apply
+wslctl world function run mcserver:world_settings
 ```
 
-このコマンドは内部で以下を行う。
-
-- `make world-datapack-sync`（datapack を world へ同期）
-- `reload`
-- `function mcserver:world_settings`
-
-初期値は `1.21.11+` の gamerule 名に合わせている。
-
-- `advance_time false`
-- `advance_weather false`
-- `spawn_mobs false`
-- `respawn_radius 0`
-- `pvp false`
-- `time set noon`
-- `difficulty peaceful`
-- `weather clear`
-- `setworldspawn 0 64 0`
-
-## 検証終了
+## プレイヤー権限管理
 
 ```console
-docker compose -f setup/wsl/docker-compose.yml down
-# または
-make down
+wslctl player op grant kyoh86
+wslctl player op revoke kyoh86
+wslctl player admin grant kyoh86
+wslctl player admin revoke kyoh86
 ```
 
-データを消して作り直す場合のみ、`setup/wsl/runtime/` を削除して再初期化する。
+## 停止
 
-## Make ターゲット一覧
+```console
+wslctl server down
+```
 
-- `make init` : 検証用ディレクトリを初期化
-- `make up` : 構成をバックグラウンド起動（不要サービスは orphan 削除）
-- `make down` : 構成を停止
-- `make restart` : `world` を再起動
-- `make worlds-bootstrap` : `world.env.yml` 定義に従ってワールド作成/importと初期化を実行
-- `make world-reset WORLD=<name>` : 指定ワールドを削除して再生成・再初期化（`resettable: true` のみ）
-- `make resource-reset` : `make world-reset WORLD=resource` のエイリアス
-- `make ps` : コンテナ状態の確認
-- `make logs` : 全サービスのログ追跡
-- `make logs-world` : world ログ追跡
-- `make op-world PLAYER=<id>` : world で一時的に `op` を付与
-- `make deop-world PLAYER=<id>` : world で `op` を剥奪
-- `make lp-admin PLAYER=<id>` : world で `admin` グループ作成とユーザー割り当て
-- `make lp-reset PLAYER=<id>` : world で `admin` の所属を剥奪
-- `make world-datapack-sync` : `setup/wsl/datapacks/world-base` を `runtime/world/mainhall/datapacks/` へ同期
-- `make world-apply` : `function mcserver:world_settings` を実行
+## Make ターゲット（ショートカット）
+
+- `make setup-init`
+- `make server-up`
+- `make server-down`
+- `make server-restart`
+- `make server-ps`
+- `make server-logs`
+- `make server-reload`
+- `make assets-stage`
+- `make world-ensure`
+- `make world-regenerate WORLD=<name>`
+- `make world-setup [WORLD=<name>]`
+- `make world-function FUNCTION=<id>`
+- `make player-op-grant PLAYER=<id>`
+- `make player-op-revoke PLAYER=<id>`
+- `make player-admin-grant PLAYER=<id>`
+- `make player-admin-revoke PLAYER=<id>`

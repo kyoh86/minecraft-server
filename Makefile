@@ -1,63 +1,67 @@
-COMPOSE_FILE := setup/wsl/docker-compose.yml
 GO_ENV := GOCACHE=/tmp/minecraft-server-go-cache GOPATH=/tmp/minecraft-server-go
 WSLCTL := $(GO_ENV) go run ./cmd/wslctl
 
-.PHONY: init up down restart ps logs logs-world bootstrap worlds-bootstrap world-reset resource-reset op-world deop-world lp-admin lp-reset world-datapack-sync world-apply
+.PHONY: \
+	setup-init \
+	server-up server-down server-restart server-ps server-logs server-reload \
+	assets-stage \
+	world-ensure world-regenerate world-setup world-function \
+	player-op-grant player-op-revoke player-admin-grant player-admin-revoke
 
-init:
-	$(WSLCTL) init
+setup-init:
+	$(WSLCTL) setup init
 
-up:
-	docker compose -f $(COMPOSE_FILE) up -d --remove-orphans
+server-up:
+	$(WSLCTL) server up
 
-down:
-	docker compose -f $(COMPOSE_FILE) down
+server-down:
+	$(WSLCTL) server down
 
-restart:
-	docker compose -f $(COMPOSE_FILE) restart world
+server-restart:
+	$(WSLCTL) server restart world
 
-ps:
-	docker compose -f $(COMPOSE_FILE) ps
+server-ps:
+	$(WSLCTL) server ps
 
-logs:
-	docker compose -f $(COMPOSE_FILE) logs -f
+server-logs:
+	$(WSLCTL) server logs world
 
-logs-world:
-	docker compose -f $(COMPOSE_FILE) logs -f world
+server-reload:
+	$(WSLCTL) server reload
 
-bootstrap:
-	$(WSLCTL) init
-	docker compose -f $(COMPOSE_FILE) up -d --remove-orphans
-	docker compose -f $(COMPOSE_FILE) restart world
+assets-stage:
+	$(WSLCTL) assets stage
 
-worlds-bootstrap:
-	$(WSLCTL) world bootstrap
+world-ensure:
+	$(WSLCTL) world ensure
 
-world-reset:
-	@test -n "$(WORLD)" || (echo "WORLD is required. e.g. make world-reset WORLD=resource" && exit 1)
-	$(WSLCTL) world reset $(WORLD)
+world-regenerate:
+	@test -n "$(WORLD)" || (echo "WORLD is required. e.g. make world-regenerate WORLD=resource" && exit 1)
+	$(WSLCTL) world regenerate $(WORLD)
 
-resource-reset:
-	$(WSLCTL) world reset resource
+world-setup:
+	@if [ -n "$(WORLD)" ]; then \
+		$(WSLCTL) world setup --world $(WORLD); \
+	else \
+		$(WSLCTL) world setup; \
+	fi
 
-op-world:
-	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make op-world PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) player op $(PLAYER)
+world-function:
+	@test -n "$(FUNCTION)" || (echo "FUNCTION is required. e.g. make world-function FUNCTION=mcserver:world_settings" && exit 1)
+	$(WSLCTL) world function run $(FUNCTION)
 
-deop-world:
-	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make deop-world PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) player deop $(PLAYER)
+player-op-grant:
+	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make player-op-grant PLAYER=kyoh86" && exit 1)
+	$(WSLCTL) player op grant $(PLAYER)
 
-lp-admin:
-	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make lp-admin PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) player perms grant-admin $(PLAYER)
+player-op-revoke:
+	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make player-op-revoke PLAYER=kyoh86" && exit 1)
+	$(WSLCTL) player op revoke $(PLAYER)
 
-lp-reset:
-	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make lp-reset PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) player perms revoke-admin $(PLAYER)
+player-admin-grant:
+	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make player-admin-grant PLAYER=kyoh86" && exit 1)
+	$(WSLCTL) player admin grant $(PLAYER)
 
-world-datapack-sync:
-	$(WSLCTL) datapack sync
-
-world-apply:
-	$(WSLCTL) world apply-settings
+player-admin-revoke:
+	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make player-admin-revoke PLAYER=kyoh86" && exit 1)
+	$(WSLCTL) player admin revoke $(PLAYER)

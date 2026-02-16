@@ -8,7 +8,7 @@
 
 - Ubuntu 24.04
 - Docker Engine / Docker Compose が利用可能
-- `make` が利用可能
+- `go` が利用可能
 
 ## セットアップ
 
@@ -20,39 +20,35 @@ sudo apt install -y make golang-go
 リポジトリルートで実行:
 
 ```console
-make init
-make up
+wslctl setup init
+wslctl server up
 ```
 
 ## 確認
 
 ```console
-make ps
-make logs-world
+wslctl server ps
+wslctl server logs world
 ```
 
-## 内部設定（gamerule など）再適用
+## Datapack と world 初期化
 
 ```console
-make world-apply
-```
-
-このコマンドは Datapack を同期し、`function mcserver:world_settings` を実行する。
-
-## ワールド定義の適用
-
-```console
-make worlds-bootstrap
+wslctl assets stage
+wslctl server reload
+wslctl world ensure
+wslctl world setup
 ```
 
 資源ワールド再生成:
 
 ```console
-make world-reset WORLD=resource
+wslctl world regenerate resource
+wslctl world setup --world resource
 ```
 
 ## 停止
 
 ```console
-make down
+wslctl server down
 ```
