@@ -28,11 +28,11 @@ execute in minecraft:overworld run fill -9 -59 -9 -9 -59 9 polished_deepslate
 execute in minecraft:overworld run fill -9 -59 9 9 -59 9 polished_deepslate
 
 execute in minecraft:overworld run setblock 0 -58 -7 oak_sign[rotation=0]
-execute in minecraft:overworld run data merge block 0 -58 -7 {front_text:{messages:[{text:"Residence",color:"green",bold:1b,click_event:{action:"run_command",command:"mvtp residence"}},{text:"[Click] mvtp residence",color:"gray",click_event:{action:"run_command",command:"mvtp residence"}},"",""]}}
+execute in minecraft:overworld run data merge block 0 -58 -7 {front_text:{messages:[{text:"Residence",color:"green",bold:1b},"",""]}}
 execute in minecraft:overworld run setblock 7 -58 0 oak_sign[rotation=4]
-execute in minecraft:overworld run data merge block 7 -58 0 {front_text:{messages:[{text:"Resource",color:"gold",bold:1b,click_event:{action:"run_command",command:"mvtp resource"}},{text:"[Click] mvtp resource",color:"gray",click_event:{action:"run_command",command:"mvtp resource"}},"",""]}}
+execute in minecraft:overworld run data merge block 7 -58 0 {front_text:{messages:[{text:"Resource",color:"gold",bold:1b},"",""]}}
 execute in minecraft:overworld run setblock -7 -58 0 oak_sign[rotation=12]
-execute in minecraft:overworld run data merge block -7 -58 0 {front_text:{messages:[{text:"Factory",color:"aqua",bold:1b,click_event:{action:"run_command",command:"mvtp factory"}},{text:"[Click] mvtp factory",color:"gray",click_event:{action:"run_command",command:"mvtp factory"}},"",""]}}
+execute in minecraft:overworld run data merge block -7 -58 0 {front_text:{messages:[{text:"Factory",color:"aqua",bold:1b},"",""]}}
 
 execute in minecraft:overworld run setblock 0 -59 0 lodestone
 execute in minecraft:overworld run setblock 0 -58 0 sea_lantern
