@@ -13,6 +13,5 @@ func newRootCmd(a app) *cobra.Command {
 	root.AddCommand(newDatapackCmd(a))
 	root.AddCommand(newWorldCmd(a))
 	root.AddCommand(newPlayerCmd(a))
-	root.AddCommand(newPermsCmd(a))
 	return root
 }

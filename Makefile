@@ -50,11 +50,11 @@ deop-world:
 
 lp-admin:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make lp-admin PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) perms grant-admin $(PLAYER)
+	$(WSLCTL) player perms grant-admin $(PLAYER)
 
 lp-reset:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make lp-reset PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) perms revoke-admin $(PLAYER)
+	$(WSLCTL) player perms revoke-admin $(PLAYER)
 
 world-datapack-sync:
 	$(WSLCTL) datapack sync

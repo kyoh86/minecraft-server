@@ -6,9 +6,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newPermsCmd(a app) *cobra.Command {
-	cmd := &cobra.Command{Use: "perms", Short: "LuckPerms operations"}
+func newPlayerPermsCmd(a app) *cobra.Command {
+	cmd := &cobra.Command{Use: "perms", Short: "player permission operations"}
+	return addPermsCommands(cmd, a)
+}
 
+func addPermsCommands(cmd *cobra.Command, a app) *cobra.Command {
 	cmd.AddCommand(&cobra.Command{
 		Use:   "grant-admin <name>",
 		Short: "grant admin group using LuckPerms",

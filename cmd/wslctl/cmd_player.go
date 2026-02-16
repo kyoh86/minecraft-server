@@ -27,5 +27,7 @@ func newPlayerCmd(a app) *cobra.Command {
 		},
 	})
 
+	cmd.AddCommand(newPlayerPermsCmd(a))
+
 	return cmd
 }
