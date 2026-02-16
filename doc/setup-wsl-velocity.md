@@ -54,6 +54,8 @@ wslctl world setup --world mainhall
 `mainhall` の MV 管理項目は `setup/wsl/worlds/mainhall/world.policy.yml` で管理する。
 `setup/wsl/worlds/mainhall/portals.yml` がある場合は runtime の
 `plugins/Multiverse-Portals/portals.yml` へ同期する。
+`setup/wsl/worlds/<world>/worldguard.regions.yml` がある場合は runtime の
+`plugins/WorldGuard/worlds/<world>/regions.yml` へ同期し、`wg reload` を実行する。
 ポータル定義反映には `wslctl server restart` が必要。
 
 ## ワールド再生成

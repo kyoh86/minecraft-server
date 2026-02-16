@@ -59,6 +59,10 @@
   - 1行1コマンドで記述する
   - `wslctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
   - `mv` 系コマンドはここに書かず、`world.policy.yml` に記述する
+- `setup/wsl/worlds/<name>/worldguard.regions.yml`
+  - `WorldGuard` のリージョン定義
+  - `wslctl world setup` で runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ同期する
+  - 同期後は `wg reload` を実行して反映する
 - `setup/wsl/worlds/mainhall/portals.yml`
   - `Multiverse-Portals` 用のポータル定義
   - `wslctl world setup --world mainhall` で runtime へ同期する
@@ -101,10 +105,15 @@ wslctl world function run mcserver:mainhall/palace_demo
 ```
 
 この function は、御殿風の簡易ハブと `residence` / `resource` / `factory` 行きの
-クリック看板（`/mvtp <world>` 実行）を設置する。
+案内看板を設置する。
 また、床下にゲート演出用の反復コマンドブロックを配置し、
 `end_rod` と `enchant` のパーティクルを各ゲート面へ常時投影する。
 各ゲートは背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
+
+`residence` / `resource` / `factory` では `setup.commands` により、
+初期スポーン上空へ共通の小ハブ（足場・フレーム・mainhall 帰還ゲート）を構築する。
+同時に `worldguard.regions.yml` の `spawn_protected` を同期し、
+スポーン周辺での建設・破壊・爆破を禁止する。
 
 `Multiverse-Portals` のポータル定義を適用する場合:
 

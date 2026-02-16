@@ -8,7 +8,7 @@
 - `setup/wsl/docker-compose.yml`
   - `world` コンテナ（`itzg/minecraft-server:java21`）
   - 公開ポート `25565`
-  - `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` を自動導入
+  - `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を自動導入
 - `setup/wsl/runtime/world`
   - サーバーデータ永続化先
 - `setup/wsl/datapacks/world-base`
@@ -19,6 +19,8 @@
   - ワールド運用ポリシー（`mv modify` で適用）
 - `setup/wsl/worlds/*/setup.commands`
   - ワールド初期化コマンド（1行1コマンド）
+- `setup/wsl/worlds/*/worldguard.regions.yml`
+  - スポーン周辺保護リージョン定義（WorldGuard）
 
 ## CLI 方針
 
