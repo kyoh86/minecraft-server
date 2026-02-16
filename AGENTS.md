@@ -14,3 +14,13 @@
 - Example renames to keep in mind:
   - `doDaylightCycle` -> `advance_time`
   - `doMobSpawning` -> `spawn_mobs`
+
+## Change Hygiene
+
+- Separate work into two phases: exploration (trial/error allowed) and convergence (final requirement only).
+- Before editing, define a short final requirement and keep only changes that directly satisfy it.
+- Do not keep residue from discussion or failed attempts (temporary options, negation notes, abandoned branches).
+- In docs, describe only the current accepted behavior and reproducible procedure.
+- Do not include process history such as "we considered X", "X is not used", or similar transient discussion context.
+- If historical rationale is required, place it in a dedicated decision log, not in operational setup docs.
+- Before commit, run a residue check: stale names, temporary comments, contradictory statements, and implementation/doc mismatch.
