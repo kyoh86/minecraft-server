@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./schema.json",
+  "title": "Minecraft world.env.yml schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "environment",
+    "world_type",
+    "seed",
+    "function",
+    "resettable"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9_\\-]+$",
+      "description": "Multiverse world name"
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["normal", "nether", "the_end"],
+      "description": "World environment for mv create/import"
+    },
+    "world_type": {
+      "type": "string",
+      "enum": ["normal", "flat", "amplified", "largebiomes"],
+      "description": "World type for mv create -t"
+    },
+    "seed": {
+      "oneOf": [
+        { "type": "integer" },
+        { "type": "string", "minLength": 1 }
+      ],
+      "description": "Seed used by mv create -s"
+    },
+    "function": {
+      "type": "string",
+      "pattern": "^[a-z0-9_\\-]+:[a-z0-9_\\-/]+$",
+      "description": "Function to execute after world creation/import"
+    },
+    "resettable": {
+      "type": "boolean",
+      "description": "Whether this world can be reset by world-reset workflow"
+    }
+  }
+}

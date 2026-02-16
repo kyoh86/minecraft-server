@@ -39,6 +39,18 @@ make world-apply
 
 このコマンドは Datapack を同期し、`function mcserver:world_settings` を実行する。
 
+## ワールド定義の適用
+
+```console
+make worlds-bootstrap
+```
+
+資源ワールド再生成:
+
+```console
+make world-reset WORLD=resource
+```
+
 ## 停止
 
 ```console

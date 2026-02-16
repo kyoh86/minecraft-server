@@ -14,6 +14,7 @@
   - `LuckPerms`
   - `Multiverse-Core`
   - `Multiverse-Portals`
+- ワールド定義は `setup/wsl/worlds/*/world.env.yml` で管理する
 
 ## 前提
 
@@ -52,7 +53,28 @@ make ps
 make logs-world
 ```
 
-## World 内部設定の再適用
+## ワールド作成と初期化
+
+`make worlds-bootstrap` は以下をまとめて実行する。
+
+- Datapack 同期（`setup/wsl/datapacks/world-base`）
+- `reload`
+- `world.env.yml` から world 作成/import（Multiverse）
+- 各 world の `mcfunction` 初期化実行
+
+現在の定義では `lobby` は `world_type: flat` で作成する。
+
+```console
+make worlds-bootstrap
+```
+
+1ワールドだけ再生成したい場合:
+
+```console
+make world-reset WORLD=resource
+```
+
+## World 設定の再適用
 
 内部設定（gamerule, time, difficulty, worldspawn）は
 Datapack `setup/wsl/datapacks/world-base` の
@@ -96,6 +118,9 @@ make down
 - `make up` : 構成をバックグラウンド起動（不要サービスは orphan 削除）
 - `make down` : 構成を停止
 - `make restart` : `world` を再起動
+- `make worlds-bootstrap` : `world.env.yml` 定義に従ってワールド作成/importと初期化を実行
+- `make world-reset WORLD=<name>` : 指定ワールドを削除して再生成・再初期化（`resettable: true` のみ）
+- `make resource-reset` : `make world-reset WORLD=resource` のエイリアス
 - `make ps` : コンテナ状態の確認
 - `make logs` : 全サービスのログ追跡
 - `make logs-world` : world ログ追跡

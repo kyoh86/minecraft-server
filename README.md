@@ -14,7 +14,10 @@
 - `setup/wsl/runtime/world`
   - サーバーデータ永続化先（`make init` で作成）
 - `setup/wsl/datapacks/world-base`
-  - world 初期設定の Datapack
+  - world初期化用 Datapack
+- `setup/wsl/worlds/*/world.env.yml`
+  - ワールド作成/import用の定義
+  - 例: `lobby` は `world_type: flat`
 
 ## 使い方
 
@@ -31,7 +34,22 @@ make logs-world
 make down
 ```
 
-## World 内部設定の再適用
+## ワールド作成と初期化
+
+`world.env.yml` に従って world/lobby/resource/factory を作成/import し、
+各ワールドの `init.mcfunction` を実行する。
+
+```console
+make worlds-bootstrap
+```
+
+1ワールドだけ再生成する:
+
+```console
+make world-reset WORLD=resource
+```
+
+## World 設定の再適用
 
 Datapack を同期して `mcserver:world_settings` を実行する。
 
@@ -50,3 +68,4 @@ make world-apply
 
 - WSL 手順: `doc/setup-wsl-velocity.md`
 - Ubuntu 手順: `doc/setup-ubuntu.md`
+- ワールド再現方針: `doc/world-layout.md`

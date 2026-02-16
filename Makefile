@@ -2,8 +2,10 @@ COMPOSE_FILE := setup/wsl/docker-compose.yml
 INIT_SCRIPT := ./setup/wsl/init.sh
 APPLY_WORLD_SETTINGS_SCRIPT := ./setup/wsl/apply-world-settings.sh
 SYNC_WORLD_DATAPACK_SCRIPT := ./setup/wsl/sync-world-datapack.sh
+WORLDS_BOOTSTRAP_SCRIPT := ./setup/wsl/worlds-bootstrap.sh
+WORLD_RESET_SCRIPT := ./setup/wsl/world-reset.sh
 
-.PHONY: init up down restart ps logs logs-world bootstrap op-world deop-world lp-admin lp-reset world-datapack-sync world-apply
+.PHONY: init up down restart ps logs logs-world bootstrap worlds-bootstrap world-reset resource-reset op-world deop-world lp-admin lp-reset world-datapack-sync world-apply
 
 init:
 	$(INIT_SCRIPT)
@@ -30,6 +32,15 @@ bootstrap:
 	$(INIT_SCRIPT)
 	docker compose -f $(COMPOSE_FILE) up -d --remove-orphans
 	docker compose -f $(COMPOSE_FILE) restart world
+
+worlds-bootstrap:
+	$(WORLDS_BOOTSTRAP_SCRIPT)
+
+world-reset:
+	$(WORLD_RESET_SCRIPT)
+
+resource-reset:
+	WORLD=resource $(WORLD_RESET_SCRIPT)
 
 op-world:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make op-world PLAYER=kyoh86" && exit 1)
