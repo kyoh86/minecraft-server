@@ -1,5 +1,0 @@
-proxies:
-  velocity:
-    enabled: true
-    online-mode: true
-    secret: "__FORWARDING_SECRET__"

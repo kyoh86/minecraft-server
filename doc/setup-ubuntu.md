@@ -1,20 +1,46 @@
-# Minecraft server / Ubuntu 24
+# Minecraft server / Ubuntu 24.04（単一 Paper）
 
 ## 概要
 
-マインクラフトサーバーを冒険/資材用と建築用サーバーでマルチサーバー構成で作る
+この手順は Ubuntu 上で Docker を使い、単一の Paper サーバー（lobby）を起動するためのもの。
 
-## 要件
+## 前提
 
-- サーバー間を行き来するプロキシサーバーにはVelocityを使用する
-- Server SoftwareにはPaper forkのFoliaを使用する
+- Ubuntu 24.04
+- Docker Engine / Docker Compose が利用可能
+- `make` が利用可能
 
-## 基盤系のインストール
+## セットアップ
 
 ```console
-$ sudo apt update --yes
-$ sudo apt upgrade --yes
-$ sudo apt install --yes \
-    make
+sudo apt update
+sudo apt install -y make
 ```
 
+リポジトリルートで実行:
+
+```console
+make init
+make up
+```
+
+## 確認
+
+```console
+make ps
+make logs-lobby
+```
+
+## 内部設定（gamerule など）再適用
+
+```console
+make lobby-apply
+```
+
+このコマンドは Datapack を同期し、`function mcserver:lobby_settings` を実行する。
+
+## 停止
+
+```console
+make down
+```
