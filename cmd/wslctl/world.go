@@ -73,21 +73,15 @@ func (a app) worldRegenerate(target string) error {
 	if err != nil {
 		return err
 	}
-	if !cfg.Resettable {
-		return fmt.Errorf("world '%s' is not resettable", target)
+	if target == "mainhall" {
+		return errors.New("world 'mainhall' cannot be regenerated")
+	}
+	if !cfg.Deletable {
+		return fmt.Errorf("world '%s' is not deletable", target)
 	}
 
-	registered, err := a.worldRegisteredInMultiverse(target)
-	if err != nil {
+	if err := a.worldDrop(target); err != nil {
 		return err
-	}
-	if registered {
-		if err := a.sendConsole(fmt.Sprintf("mv unload %s --remove-players", target)); err != nil {
-			return err
-		}
-		if err := a.sendConsole(fmt.Sprintf("mv remove %s", target)); err != nil {
-			return err
-		}
 	}
 
 	for _, p := range []string{
@@ -105,6 +99,70 @@ func (a app) worldRegenerate(target string) error {
 	}
 
 	fmt.Printf("regenerated world '%s'\n", target)
+	return nil
+}
+
+func (a app) worldDrop(target string) error {
+	target = strings.TrimSpace(target)
+	if target == "" {
+		return errors.New("world name is required")
+	}
+	if target == "mainhall" {
+		return errors.New("world 'mainhall' cannot be dropped")
+	}
+	registered, err := a.worldRegisteredInMultiverse(target)
+	if err != nil {
+		return err
+	}
+	if !registered {
+		fmt.Printf("world '%s' is not registered; skipped drop\n", target)
+		return nil
+	}
+	if err := a.sendConsole(fmt.Sprintf("mv unload %s --remove-players", target)); err != nil {
+		return err
+	}
+	if err := a.sendConsole(fmt.Sprintf("mv remove %s", target)); err != nil {
+		return err
+	}
+	fmt.Printf("dropped world '%s'\n", target)
+	return nil
+}
+
+func (a app) worldDelete(target string, yes bool) error {
+	target = strings.TrimSpace(target)
+	if target == "" {
+		return errors.New("world name is required")
+	}
+	if target == "mainhall" {
+		return errors.New("world 'mainhall' cannot be deleted")
+	}
+	if !yes {
+		return errors.New("delete requires --yes")
+	}
+
+	cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
+	cfg, err := loadWorldConfig(cfgPath)
+	if err != nil {
+		return err
+	}
+	if !cfg.Deletable {
+		return fmt.Errorf("world '%s' is not deletable", target)
+	}
+
+	if err := a.worldDrop(target); err != nil {
+		return err
+	}
+	paths := []string{
+		filepath.Join(a.wslDir, "runtime", "world", target),
+		filepath.Join(a.wslDir, "runtime", "world", target+"_nether"),
+		filepath.Join(a.wslDir, "runtime", "world", target+"_the_end"),
+	}
+	for _, p := range paths {
+		if err := os.RemoveAll(p); err != nil {
+			return err
+		}
+	}
+	fmt.Printf("deleted world '%s'\n", target)
 	return nil
 }
 

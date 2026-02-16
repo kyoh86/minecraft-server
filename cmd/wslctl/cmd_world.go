@@ -15,12 +15,33 @@ func newWorldCmd(a app) *cobra.Command {
 
 	cmd.AddCommand(&cobra.Command{
 		Use:   "regenerate <name>",
-		Short: "delete and recreate one world when resettable=true",
+		Short: "delete and recreate one world when deletable=true",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return a.worldRegenerate(args[0])
 		},
 	})
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "drop <name>",
+		Short: "unload and unregister one world without deleting world files",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.worldDrop(args[0])
+		},
+	})
+
+	var deleteYes bool
+	deleteCmd := &cobra.Command{
+		Use:   "delete <name>",
+		Short: "drop and delete one world files when deletable=true",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.worldDelete(args[0], deleteYes)
+		},
+	}
+	deleteCmd.Flags().BoolVar(&deleteYes, "yes", false, "confirm destructive delete")
+	cmd.AddCommand(deleteCmd)
 
 	var worldName string
 	setupCmd := &cobra.Command{

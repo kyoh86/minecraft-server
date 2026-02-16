@@ -15,7 +15,7 @@
   - `world.env.yml` 用 JSON Schema
 - `setup/wsl/worlds/<name>/world.env.yml`
   - 先頭に `# yaml-language-server: $schema=../schema.json` を記述
-  - `name` / `environment` / `world_type` / `seed` / `function` / `resettable`
+  - `name` / `environment` / `world_type` / `seed` / `function` / `deletable`
 
 ## Datapack と初期化 function
 
@@ -44,7 +44,7 @@
 - `wslctl world setup [--world <name>]`
   - world 初期化 function を実行する
 - `wslctl world regenerate <name>`
-  - world を削除して再生成する（`resettable: true` のみ）
+  - world を削除して再生成する（`deletable: true` のみ）
 
 ## 補足
 

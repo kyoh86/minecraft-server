@@ -11,7 +11,7 @@ type worldConfig struct {
 	WorldType   string `yaml:"world_type"`
 	Seed        any    `yaml:"seed"`
 	Function    string `yaml:"function"`
-	Resettable  bool   `yaml:"resettable"`
+	Deletable   bool   `yaml:"deletable"`
 }
 
 type app struct {

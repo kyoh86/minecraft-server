@@ -61,6 +61,8 @@ wslctl world setup --world resource
 - `make assets-stage`
 - `make world-ensure`
 - `make world-regenerate WORLD=resource`
+- `make world-drop WORLD=resource`
+- `make world-delete WORLD=resource`
 - `make world-setup WORLD=mainhall`
 
 ## ドキュメント

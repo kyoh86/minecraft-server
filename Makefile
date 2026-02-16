@@ -5,7 +5,7 @@ WSLCTL := $(GO_ENV) go run ./cmd/wslctl
 	setup-init \
 	server-up server-down server-restart server-ps server-logs server-reload \
 	assets-stage \
-	world-ensure world-regenerate world-setup world-function \
+	world-ensure world-regenerate world-drop world-delete world-setup world-function \
 	player-op-grant player-op-revoke player-admin-grant player-admin-revoke
 
 setup-init:
@@ -38,6 +38,14 @@ world-ensure:
 world-regenerate:
 	@test -n "$(WORLD)" || (echo "WORLD is required. e.g. make world-regenerate WORLD=resource" && exit 1)
 	$(WSLCTL) world regenerate $(WORLD)
+
+world-drop:
+	@test -n "$(WORLD)" || (echo "WORLD is required. e.g. make world-drop WORLD=resource" && exit 1)
+	$(WSLCTL) world drop $(WORLD)
+
+world-delete:
+	@test -n "$(WORLD)" || (echo "WORLD is required. e.g. make world-delete WORLD=resource" && exit 1)
+	$(WSLCTL) world delete --yes $(WORLD)
 
 world-setup:
 	@if [ -n "$(WORLD)" ]; then \

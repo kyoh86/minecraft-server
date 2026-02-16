@@ -19,6 +19,7 @@
 - `wslctl server up|down|restart|ps|logs|reload`
 - `wslctl assets stage`
 - `wslctl world ensure|regenerate|setup|function run`
+- `wslctl world drop|delete`
 - `wslctl player op ...|admin ...`
 
 ## 初回セットアップ
@@ -50,12 +51,24 @@ wslctl world setup --world mainhall
 
 ## ワールド再生成
 
-`resettable: true` のワールドだけ再生成できる。
+`deletable: true` のワールドだけ再生成できる。
 
 ```console
 wslctl world regenerate resource
 wslctl world setup --world resource
 ```
+
+## ワールド drop / delete
+
+```console
+wslctl world drop resource
+wslctl world delete --yes resource
+```
+
+- `drop` は unload + remove だけ実行し、ワールドディスクは残す。
+- `delete` は `drop` に加えてワールドディスクを削除する。
+- `mainhall` は保護され、`drop`/`delete` できない。
+- `delete` は `world.env.yml` の `deletable: true` が必要。
 
 ## 任意 function 実行
 
@@ -90,6 +103,8 @@ wslctl server down
 - `make assets-stage`
 - `make world-ensure`
 - `make world-regenerate WORLD=<name>`
+- `make world-drop WORLD=<name>`
+- `make world-delete WORLD=<name>`
 - `make world-setup [WORLD=<name>]`
 - `make world-function FUNCTION=<id>`
 - `make player-op-grant PLAYER=<id>`

@@ -10,7 +10,7 @@
     "world_type",
     "seed",
     "function",
-    "resettable"
+    "deletable"
   ],
   "properties": {
     "name": {
@@ -40,9 +40,9 @@
       "pattern": "^[a-z0-9_\\-]+:[a-z0-9_\\-/]+$",
       "description": "Function to execute after world creation/import"
     },
-    "resettable": {
+    "deletable": {
       "type": "boolean",
-      "description": "Whether this world can be reset by world-reset workflow"
+      "description": "Whether this world can be regenerated/deleted by world commands"
     }
   }
 }
