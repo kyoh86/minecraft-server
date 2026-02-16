@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -190,6 +191,9 @@ func (a app) worldSetup(target string) error {
 			return err
 		}
 		if target == primaryWorldName {
+			if _, err := a.syncMainhallPortalsConfig(); err != nil {
+				return err
+			}
 			if err := a.pruneMainhallExtraDimensions(); err != nil {
 				return err
 			}
@@ -222,6 +226,9 @@ func (a app) worldSetup(target string) error {
 		}
 	}
 	if err := a.applyWorldPolicy(primaryWorldName); err != nil {
+		return err
+	}
+	if _, err := a.syncMainhallPortalsConfig(); err != nil {
 		return err
 	}
 	if err := a.pruneMainhallExtraDimensions(); err != nil {
@@ -353,6 +360,32 @@ func (a app) pruneMainhallExtraDimensions() error {
 		}
 	}
 	return nil
+}
+
+func (a app) syncMainhallPortalsConfig() (bool, error) {
+	src := filepath.Join(a.wslDir, "worlds", primaryWorldName, "portals.yml")
+	if !fileExists(src) {
+		return false, nil
+	}
+	dst := filepath.Join(a.wslDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+		return false, err
+	}
+	in, err := os.Open(src)
+	if err != nil {
+		return false, err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		return false, err
+	}
+	defer out.Close()
+	if _, err := io.Copy(out, in); err != nil {
+		return false, err
+	}
+	fmt.Printf("synced mainhall portals config: %s -> %s\n", src, dst)
+	return true, nil
 }
 
 func (a app) listWorldConfigs() ([]string, error) {
