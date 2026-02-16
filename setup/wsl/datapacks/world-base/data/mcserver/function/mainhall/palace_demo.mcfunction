@@ -28,11 +28,11 @@ execute in minecraft:overworld run fill -9 -59 -9 -9 -59 9 polished_deepslate
 execute in minecraft:overworld run fill -9 -59 9 9 -59 9 polished_deepslate
 
 execute in minecraft:overworld run setblock 0 -58 -7 oak_sign[rotation=0]
-execute in minecraft:overworld run data merge block 0 -58 -7 {front_text:{messages:[{text:"Residence",color:"green",bold:1b},"",""]}}
+execute in minecraft:overworld run data merge block 0 -58 -7 {front_text:{messages:[{text:"Residence",color:"green",bold:1b},"","",""]}}
 execute in minecraft:overworld run setblock 7 -58 0 oak_sign[rotation=4]
-execute in minecraft:overworld run data merge block 7 -58 0 {front_text:{messages:[{text:"Resource",color:"gold",bold:1b},"",""]}}
+execute in minecraft:overworld run data merge block 7 -58 0 {front_text:{messages:[{text:"Resource",color:"gold",bold:1b},"","",""]}}
 execute in minecraft:overworld run setblock -7 -58 0 oak_sign[rotation=12]
-execute in minecraft:overworld run data merge block -7 -58 0 {front_text:{messages:[{text:"Factory",color:"aqua",bold:1b},"",""]}}
+execute in minecraft:overworld run data merge block -7 -58 0 {front_text:{messages:[{text:"Factory",color:"aqua",bold:1b},"","",""]}}
 
 execute in minecraft:overworld run setblock 0 -59 0 lodestone
 execute in minecraft:overworld run setblock 0 -58 0 sea_lantern
@@ -54,9 +54,9 @@ execute in minecraft:overworld run setblock -9 -60 0 redstone_torch
 execute in minecraft:overworld run setblock -9 -54 0 redstone_block
 
 execute in minecraft:overworld run kill @e[type=minecraft:block_display,tag=mcserver_gate_glass,distance=..64]
-execute in minecraft:overworld run summon minecraft:block_display -1.0 -58.0 -8.7 {Tags:["mcserver_gate_glass","mcserver_gate_glass_north"],block_state:{Name:"minecraft:tinted_glass"}}
-execute in minecraft:overworld run summon minecraft:block_display 9.5 -58.0 -1.0 {Tags:["mcserver_gate_glass","mcserver_gate_glass_east"],block_state:{Name:"minecraft:tinted_glass"}}
-execute in minecraft:overworld run summon minecraft:block_display -8.7 -58.0 -1.0 {Tags:["mcserver_gate_glass","mcserver_gate_glass_west"],block_state:{Name:"minecraft:tinted_glass"}}
+execute in minecraft:overworld run summon minecraft:block_display -1.0 -58.0 -8.6 {Tags:["mcserver_gate_glass","mcserver_gate_glass_north"],block_state:{Name:"minecraft:tinted_glass"}}
+execute in minecraft:overworld run summon minecraft:block_display 9.4 -58.0 -1.0 {Tags:["mcserver_gate_glass","mcserver_gate_glass_east"],block_state:{Name:"minecraft:tinted_glass"}}
+execute in minecraft:overworld run summon minecraft:block_display -8.6 -58.0 -1.0 {Tags:["mcserver_gate_glass","mcserver_gate_glass_west"],block_state:{Name:"minecraft:tinted_glass"}}
 execute in minecraft:overworld run data merge entity @e[type=minecraft:block_display,tag=mcserver_gate_glass_north,limit=1] {transformation:{scale:[3.0f,3.0f,0.2f]}}
 execute in minecraft:overworld run data merge entity @e[type=minecraft:block_display,tag=mcserver_gate_glass_east,limit=1] {transformation:{scale:[0.2f,3.0f,3.0f]}}
 execute in minecraft:overworld run data merge entity @e[type=minecraft:block_display,tag=mcserver_gate_glass_west,limit=1] {transformation:{scale:[0.2f,3.0f,3.0f]}}
