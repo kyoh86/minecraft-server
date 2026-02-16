@@ -14,6 +14,15 @@
 - Example renames to keep in mind:
   - `doDaylightCycle` -> `advance_time`
   - `doMobSpawning` -> `spawn_mobs`
+- `block_display` placement uses entity coordinates and scales from the summon origin toward positive local axes.
+- For gate-like planes, define one thin axis in `transformation.scale` (for example `0.2`) and tune summon coordinates along only that axis.
+- To center a scaled display on one block axis, apply offset `+(1 - scale) / 2` on that axis (example: `scale=0.2` -> `+0.4`).
+- If alignment differs by gate direction, adjust per-axis (`x` for east/west gates, `z` for north/south gates) in `0.1` steps and re-apply function.
+- Preferred workflow: keep a single tagged display per gate, `kill` by tag, `summon`, then `data merge` for scale to avoid stacked leftovers.
+- For sign text on Java 1.21.11+, use `front_text.messages`/`back_text.messages` JSON components, not legacy `Text1`-`Text4`.
+- In sign components, use snake_case event keys (`click_event`, `hover_event`), not camelCase (`clickEvent`).
+- Recommended sequence: `setblock ... oak_sign[...]` then `data merge block ... {front_text:{messages:[...]}}`.
+- Quick validation: run `data get block <x> <y> <z>` and confirm JSON is stored under `front_text.messages`.
 
 ## Change Hygiene
 
