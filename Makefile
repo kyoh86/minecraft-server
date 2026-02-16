@@ -5,7 +5,7 @@ WSLCTL := $(GO_ENV) go run ./cmd/wslctl
 .PHONY: init up down restart ps logs logs-world bootstrap worlds-bootstrap world-reset resource-reset op-world deop-world lp-admin lp-reset world-datapack-sync world-apply
 
 init:
-	$(WSLCTL) init
+	$(WSLCTL) runtime init
 
 up:
 	docker compose -f $(COMPOSE_FILE) up -d --remove-orphans
@@ -26,39 +26,38 @@ logs-world:
 	docker compose -f $(COMPOSE_FILE) logs -f world
 
 bootstrap:
-	$(WSLCTL) init
+	$(WSLCTL) runtime init
 	docker compose -f $(COMPOSE_FILE) up -d --remove-orphans
 	docker compose -f $(COMPOSE_FILE) restart world
 
 worlds-bootstrap:
-	$(WSLCTL) worlds-bootstrap
+	$(WSLCTL) world bootstrap
 
 world-reset:
-	$(WSLCTL) world-reset
+	@test -n "$(WORLD)" || (echo "WORLD is required. e.g. make world-reset WORLD=resource" && exit 1)
+	$(WSLCTL) world reset $(WORLD)
 
 resource-reset:
-	WORLD=resource $(WSLCTL) world-reset
+	$(WSLCTL) world reset resource
 
 op-world:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make op-world PLAYER=kyoh86" && exit 1)
-	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "op $(PLAYER)"
+	$(WSLCTL) player op $(PLAYER)
 
 deop-world:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make deop-world PLAYER=kyoh86" && exit 1)
-	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "deop $(PLAYER)"
+	$(WSLCTL) player deop $(PLAYER)
 
 lp-admin:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make lp-admin PLAYER=kyoh86" && exit 1)
-	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "lp creategroup admin"
-	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "lp group admin permission set * true"
-	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "lp user $(PLAYER) parent set admin"
+	$(WSLCTL) perms grant-admin $(PLAYER)
 
 lp-reset:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make lp-reset PLAYER=kyoh86" && exit 1)
-	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "lp user $(PLAYER) parent remove admin"
+	$(WSLCTL) perms revoke-admin $(PLAYER)
 
 world-datapack-sync:
-	$(WSLCTL) sync-world-datapack
+	$(WSLCTL) datapack sync
 
 world-apply:
-	$(WSLCTL) apply-world-settings
+	$(WSLCTL) world apply-settings

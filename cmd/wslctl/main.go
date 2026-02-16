@@ -12,7 +12,8 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
+	"github.com/spf13/cobra"
 )
 
 type worldConfig struct {
@@ -30,36 +31,153 @@ type app struct {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fatalf("usage: wslctl <init|sync-world-datapack|apply-world-settings|worlds-bootstrap|world-reset>")
+	a, err := newApp()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
+	root := newRootCmd(a)
+	if err := root.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func newRootCmd(a app) *cobra.Command {
+	root := &cobra.Command{
+		Use:   "wslctl",
+		Short: "WSL Minecraft server helper",
+		Long: "wslctl manages runtime directories, datapack sync, world bootstrap/reset, " +
+			"player operator state, and LuckPerms admin grants for this repository.",
+	}
+	root.AddCommand(newRuntimeCmd(a))
+	root.AddCommand(newDatapackCmd(a))
+	root.AddCommand(newWorldCmd(a))
+	root.AddCommand(newPlayerCmd(a))
+	root.AddCommand(newPermsCmd(a))
+	return root
+}
+
+func newRuntimeCmd(a app) *cobra.Command {
+	cmd := &cobra.Command{Use: "runtime", Short: "runtime directory operations"}
+	cmd.AddCommand(&cobra.Command{
+		Use:   "init",
+		Short: "initialize setup/wsl/runtime directories",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.initRuntime()
+		},
+	})
+	return cmd
+}
+
+func newDatapackCmd(a app) *cobra.Command {
+	cmd := &cobra.Command{Use: "datapack", Short: "datapack operations"}
+	cmd.AddCommand(&cobra.Command{
+		Use:   "sync",
+		Short: "sync setup/wsl/datapacks/world-base into runtime/world/world/datapacks",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.syncWorldDatapack()
+		},
+	})
+	return cmd
+}
+
+func newWorldCmd(a app) *cobra.Command {
+	cmd := &cobra.Command{Use: "world", Short: "world operations"}
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "bootstrap",
+		Short: "create/import all worlds from setup/wsl/worlds and run each init function",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.worldsBootstrap()
+		},
+	})
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "reset <name>",
+		Short: "reset one world from setup/wsl/worlds/<name>/world.env.yml when resettable=true",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.worldReset(args[0])
+		},
+	})
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "apply-settings",
+		Short: "reload and run function mcserver:world_settings",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.applyWorldSettings()
+		},
+	})
+
+	return cmd
+}
+
+func newPlayerCmd(a app) *cobra.Command {
+	cmd := &cobra.Command{Use: "player", Short: "player operations"}
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "op <name>",
+		Short: "grant operator to a player",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.sendConsole("op " + strings.TrimSpace(args[0]))
+		},
+	})
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "deop <name>",
+		Short: "revoke operator from a player",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.sendConsole("deop " + strings.TrimSpace(args[0]))
+		},
+	})
+
+	return cmd
+}
+
+func newPermsCmd(a app) *cobra.Command {
+	cmd := &cobra.Command{Use: "perms", Short: "LuckPerms operations"}
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "grant-admin <name>",
+		Short: "grant admin group using LuckPerms",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			player := strings.TrimSpace(args[0])
+			for _, c := range []string{
+				"lp creategroup admin",
+				"lp group admin permission set * true",
+				"lp user " + player + " parent set admin",
+			} {
+				if err := a.sendConsole(c); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	})
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "revoke-admin <name>",
+		Short: "remove admin group using LuckPerms",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.sendConsole("lp user " + strings.TrimSpace(args[0]) + " parent remove admin")
+		},
+	})
+
+	return cmd
+}
+
+func newApp() (app, error) {
 	repoRoot, err := findRepoRoot()
 	if err != nil {
-		fatal(err)
+		return app{}, err
 	}
-
-	a := app{repoRoot: repoRoot, wslDir: filepath.Join(repoRoot, "setup", "wsl")}
-
-	var runErr error
-	switch os.Args[1] {
-	case "init":
-		runErr = a.initRuntime()
-	case "sync-world-datapack":
-		runErr = a.syncWorldDatapack()
-	case "apply-world-settings":
-		runErr = a.applyWorldSettings()
-	case "worlds-bootstrap":
-		runErr = a.worldsBootstrap()
-	case "world-reset":
-		runErr = a.worldReset()
-	default:
-		runErr = fmt.Errorf("unknown subcommand: %s", os.Args[1])
-	}
-
-	if runErr != nil {
-		fatal(runErr)
-	}
+	return app{repoRoot: repoRoot, wslDir: filepath.Join(repoRoot, "setup", "wsl")}, nil
 }
 
 func findRepoRoot() (string, error) {
@@ -67,7 +185,6 @@ func findRepoRoot() (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	for dir := cwd; ; dir = filepath.Dir(dir) {
 		if fileExists(filepath.Join(dir, "setup", "wsl")) {
 			return dir, nil
@@ -96,7 +213,6 @@ func (a app) syncWorldDatapack() error {
 	if !fileExists(srcDir) {
 		return fmt.Errorf("missing datapack source: %s", srcDir)
 	}
-
 	if err := os.MkdirAll(dstRoot, 0o755); err != nil {
 		return err
 	}
@@ -154,10 +270,10 @@ func (a app) worldsBootstrap() error {
 	return nil
 }
 
-func (a app) worldReset() error {
-	target := os.Getenv("WORLD")
+func (a app) worldReset(target string) error {
+	target = strings.TrimSpace(target)
 	if target == "" {
-		target = "resource"
+		return errors.New("world name is required")
 	}
 
 	cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
@@ -250,7 +366,6 @@ func (a app) listWorldConfigs() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	var cfgs []string
 	for _, e := range entries {
 		if !e.IsDir() {
@@ -269,12 +384,10 @@ func loadWorldConfig(path string) (worldConfig, error) {
 	if !fileExists(path) {
 		return worldConfig{}, fmt.Errorf("missing world config: %s", path)
 	}
-
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return worldConfig{}, err
 	}
-
 	var cfg worldConfig
 	if err := yaml.Unmarshal(b, &cfg); err != nil {
 		return worldConfig{}, fmt.Errorf("parse world config %s: %w", path, err)
@@ -314,7 +427,6 @@ func copyDir(src, dst string) error {
 	if err := os.MkdirAll(dst, 0o755); err != nil {
 		return err
 	}
-
 	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -376,13 +488,4 @@ func formatSeed(v any) string {
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
-}
-
-func fatal(err error) {
-	fmt.Fprintln(os.Stderr, err)
-	os.Exit(1)
-}
-
-func fatalf(format string, args ...any) {
-	fatal(fmt.Errorf(format, args...))
 }
