@@ -14,7 +14,7 @@
 
 ```console
 sudo apt update
-sudo apt install -y make
+sudo apt install -y make golang-go
 ```
 
 リポジトリルートで実行:

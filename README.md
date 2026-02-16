@@ -21,6 +21,12 @@
 
 ## 使い方
 
+前提:
+
+- `docker compose`
+- `make`
+- `go`（`cmd/wslctl` 実行用）
+
 ```console
 make init
 make up

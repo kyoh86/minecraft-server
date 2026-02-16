@@ -20,14 +20,13 @@
 
 - WSL2 で Ubuntu が利用可能
 - Docker Desktop + WSL integration 有効、または WSL 側 Docker Engine が利用可能
+- `go` コマンドが利用可能（`cmd/wslctl` 実行に使用）
 
 ## 初期化
 
 リポジトリルートで実行する。
 
 ```console
-./setup/wsl/init.sh
-# または
 make init
 ```
 
