@@ -195,14 +195,8 @@ func (a app) worldSetup(target string) error {
 			return err
 		}
 		if target == primaryWorldName {
-			portalsSynced, err := a.syncMainhallPortalsConfig()
-			if err != nil {
+			if _, err := a.syncMainhallPortalsConfig(); err != nil {
 				return err
-			}
-			if portalsSynced {
-				if err := a.sendConsole("mvp reload"); err != nil {
-					return err
-				}
 			}
 			if err := a.pruneMainhallExtraDimensions(); err != nil {
 				return err
@@ -252,14 +246,8 @@ func (a app) worldSetup(target string) error {
 	if err := a.applyWorldPolicy(primaryWorldName); err != nil {
 		return err
 	}
-	portalsSynced, err := a.syncMainhallPortalsConfig()
-	if err != nil {
+	if _, err := a.syncMainhallPortalsConfig(); err != nil {
 		return err
-	}
-	if portalsSynced {
-		if err := a.sendConsole("mvp reload"); err != nil {
-			return err
-		}
 	}
 	if err := a.pruneMainhallExtraDimensions(); err != nil {
 		return err
