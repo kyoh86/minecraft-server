@@ -9,6 +9,37 @@
 - `resource` : 定期再生成前提の資源用
 - `factory` : 自動化・装置用
 
+## ワールド責務（運用合意）
+
+- `mainhall`
+  - 役割は導線専用（Hub）
+  - すべてのワールド移動は一度 `mainhall` を経由する
+  - `mainhall` へ来たプレイヤーは、ゲート群を置いた閉鎖空間の固定座標へ着地させる
+  - 破壊不能前提。基本ゲームモードは Adventure
+  - 地形は superflat、モブ湧きなし、難易度 peaceful、時間経過なし、天候変化なし
+  - Overworld のみ（Nether/End なし）
+- `residence`
+  - 生活・拠点建築の主ワールド
+  - World Border は `-5000 .. 5000` 想定
+  - Nether/End あり
+- `resource`
+  - 採掘・伐採など資源回収の主ワールド
+  - 定期再生成前提
+  - Nether/End あり
+- `factory`
+  - 自動化・高負荷装置の集約ワールド
+  - 拠点建築は自由
+  - World Border は `-5000 .. 5000` 想定
+  - Nether/End あり
+
+上記 Border は初期化 function で `worldborder set 10000`（中心 `0 0`）として適用する。
+
+## 流通導線
+
+- プレイヤー導線は `mainhall` を中心に集約する
+- アイテム流通も現時点では `mainhall` 経由を基本とする
+- 座標整合が必要な独自ゲート導線は将来対応（現時点では後回し）
+
 ## 定義場所
 
 - `setup/wsl/worlds/schema.json`
@@ -22,6 +53,7 @@
 
 - Datapack 配置元: `setup/wsl/datapacks/world-base`
 - Datapack 配置先: `setup/wsl/runtime/world/mainhall/datapacks/world-base`
+- `mainhall` の地形生成は `setup/wsl/docker-compose.yml` の `LEVEL_TYPE=FLAT` で制御する
 - 初期化 function 例:
   - `mcserver:worlds/mainhall/init`
   - `mcserver:worlds/residence/init`

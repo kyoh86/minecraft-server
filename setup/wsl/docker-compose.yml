@@ -10,6 +10,7 @@ services:
       TYPE: PAPER
       VERSION: "1.21.11"
       LEVEL: "mainhall"
+      LEVEL_TYPE: "FLAT"
       MEMORY: "4G"
       SERVER_NAME: "mainhall"
       MOTD: "Main Server"
