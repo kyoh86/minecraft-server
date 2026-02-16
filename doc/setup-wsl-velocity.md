@@ -102,5 +102,6 @@ make down
 - `make op-world PLAYER=<id>` : world で一時的に `op` を付与
 - `make deop-world PLAYER=<id>` : world で `op` を剥奪
 - `make lp-admin PLAYER=<id>` : world で `admin` グループ作成とユーザー割り当て
+- `make lp-reset PLAYER=<id>` : world で `admin` の所属を剥奪
 - `make world-datapack-sync` : `setup/wsl/datapacks/world-base` を `runtime/world/world/datapacks/` へ同期
 - `make world-apply` : `function mcserver:world_settings` を実行

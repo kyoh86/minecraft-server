@@ -3,7 +3,7 @@ INIT_SCRIPT := ./setup/wsl/init.sh
 APPLY_WORLD_SETTINGS_SCRIPT := ./setup/wsl/apply-world-settings.sh
 SYNC_WORLD_DATAPACK_SCRIPT := ./setup/wsl/sync-world-datapack.sh
 
-.PHONY: init up down restart ps logs logs-world bootstrap op-world deop-world lp-admin world-datapack-sync world-apply
+.PHONY: init up down restart ps logs logs-world bootstrap op-world deop-world lp-admin lp-reset world-datapack-sync world-apply
 
 init:
 	$(INIT_SCRIPT)
@@ -44,6 +44,10 @@ lp-admin:
 	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "lp creategroup admin"
 	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "lp group admin permission set * true"
 	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "lp user $(PLAYER) parent set admin"
+
+lp-reset:
+	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make lp-reset PLAYER=kyoh86" && exit 1)
+	docker compose -f $(COMPOSE_FILE) exec -T --user 1000 world mc-send-to-console "lp user $(PLAYER) parent remove admin"
 
 world-datapack-sync:
 	$(SYNC_WORLD_DATAPACK_SCRIPT)

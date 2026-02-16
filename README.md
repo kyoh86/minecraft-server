@@ -44,6 +44,7 @@ make world-apply
 - OP 付与: `make op-world PLAYER=<player>`
 - OP 剥奪: `make deop-world PLAYER=<player>`
 - LuckPerms admin 付与: `make lp-admin PLAYER=<player>`
+- LuckPerms権限リセット（admin 剥奪）: `make lp-reset PLAYER=<player>`
 
 ## ドキュメント
 
