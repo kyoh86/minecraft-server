@@ -11,6 +11,6 @@ gates:
       world: world
       x: -5.5
       y: 63.0
-      z: -1.5
+      z: 0
       yaw: -90.0
       pitch: 0.0
