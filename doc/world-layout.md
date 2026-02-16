@@ -54,6 +54,8 @@
   - 対象は全ワールド（`mainhall` を含む）
   - 先頭に `# yaml-language-server: $schema=../policy.schema.json` を記述
   - `mv_set` に `mv modify <world> set ...` の項目を記述する
+  - `mainhall` は `gamemode=adventure` などの Hub 制約を管理し、
+    `residence/resource/factory` は `difficulty/pvp/gamemode` を管理する
 - `setup/wsl/worlds/<name>/setup.commands`
   - 対象は全ワールド（`mainhall` を含む）
   - 1行1コマンドで記述する
@@ -87,7 +89,11 @@
   - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
 - `wslctl world setup [--world <name>]`
   - `setup.commands` を対象次元で実行する
+  - `residence/resource/factory` は `0,0` 列の地表Y（`motion_blocking_no_leaves`）を検出し、`setworldspawn` と `mvsetspawn` を同一座標へ同期する
+  - `mainhall` は固定座標運用（`setup.commands` の値を使用）とし、自動同期は行わない
   - `world.policy.yml` に定義された MV 管理項目を適用する
+  - `mainhall` では `portals.yml` の `*_to_mainhall` 入口Yも各ワールド地表Yに合わせて自動補正する
+  - ポータル反映のため、処理完了時に `world` コンテナを自動再起動する
 - `wslctl world regenerate <name>`
   - world を削除して再生成する（`deletable: true` のみ）
 

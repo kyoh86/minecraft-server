@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../policy.schema.json
+name: residence
+mv_set:
+  gamemode: survival
+  pvp: true
+  difficulty: normal

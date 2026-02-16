@@ -3,6 +3,9 @@ gamerule advance_time false
 gamerule advance_weather false
 gamerule spawn_mobs false
 gamerule respawn_radius 0
+gamerule command_block_output false
 weather clear
 time set noon
-setworldspawn 0 -59 0
+setworldspawn 0 -58 0
+mvsetspawn mainhall:0,-58,0 --unsafe
+function mcserver:mainhall/hub_layout

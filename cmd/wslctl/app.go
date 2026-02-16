@@ -18,6 +18,20 @@ type worldPolicy struct {
 	MVSet map[string]string `yaml:"mv_set"`
 }
 
+type portalsConfig struct {
+	Portals map[string]portalDef `yaml:"portals"`
+}
+
+type portalDef struct {
+	Owner                  string `yaml:"owner"`
+	Location               string `yaml:"location"`
+	ActionType             string `yaml:"action-type"`
+	Action                 string `yaml:"action"`
+	SafeTeleport           bool   `yaml:"safe-teleport"`
+	TeleportNonPlayers     bool   `yaml:"teleport-non-players"`
+	CheckDestinationSafety bool   `yaml:"check-destination-safety"`
+}
+
 type app struct {
 	repoRoot string
 	wslDir   string

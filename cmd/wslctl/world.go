@@ -9,7 +9,9 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/goccy/go-yaml"
 )
@@ -175,6 +177,7 @@ func (a app) worldDelete(target string, yes bool) error {
 
 func (a app) worldSetup(target string) error {
 	target = strings.TrimSpace(target)
+	portalsSynced := false
 	if target != "" {
 		if target != primaryWorldName {
 			cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
@@ -187,6 +190,11 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldSetupCommands(target); err != nil {
 			return err
 		}
+		if target != primaryWorldName {
+			if err := a.syncWorldSpawn(target); err != nil {
+				return err
+			}
+		}
 		if err := a.applyWorldPolicy(target); err != nil {
 			return err
 		}
@@ -195,15 +203,22 @@ func (a app) worldSetup(target string) error {
 			return err
 		}
 		if target == primaryWorldName {
-			if _, err := a.syncMainhallPortalsConfig(); err != nil {
+			synced, err := a.syncMainhallPortalsConfig()
+			if err != nil {
 				return err
 			}
+			portalsSynced = portalsSynced || synced
 			if err := a.pruneMainhallExtraDimensions(); err != nil {
 				return err
 			}
 		}
 		if worldGuardSynced {
 			if err := a.sendConsole("wg reload"); err != nil {
+				return err
+			}
+		}
+		if portalsSynced {
+			if err := a.restartWorldPreservePortals(); err != nil {
 				return err
 			}
 		}
@@ -234,6 +249,9 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldSetupCommands(cfg.Name); err != nil {
 			return err
 		}
+		if err := a.syncWorldSpawn(cfg.Name); err != nil {
+			return err
+		}
 		if err := a.applyWorldPolicy(cfg.Name); err != nil {
 			return err
 		}
@@ -246,14 +264,21 @@ func (a app) worldSetup(target string) error {
 	if err := a.applyWorldPolicy(primaryWorldName); err != nil {
 		return err
 	}
-	if _, err := a.syncMainhallPortalsConfig(); err != nil {
+	synced, err := a.syncMainhallPortalsConfig()
+	if err != nil {
 		return err
 	}
+	portalsSynced = portalsSynced || synced
 	if err := a.pruneMainhallExtraDimensions(); err != nil {
 		return err
 	}
 	if worldGuardSynced {
 		if err := a.sendConsole("wg reload"); err != nil {
+			return err
+		}
+	}
+	if portalsSynced {
+		if err := a.restartWorldPreservePortals(); err != nil {
 			return err
 		}
 	}
@@ -394,21 +419,138 @@ func (a app) syncMainhallPortalsConfig() (bool, error) {
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return false, err
 	}
-	in, err := os.Open(src)
+	b, err := os.ReadFile(src)
 	if err != nil {
 		return false, err
 	}
-	defer in.Close()
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	var cfg portalsConfig
+	if err := yaml.Unmarshal(b, &cfg); err != nil {
+		return false, fmt.Errorf("parse portals config %s: %w", src, err)
+	}
+	if cfg.Portals == nil {
+		cfg.Portals = map[string]portalDef{}
+	}
+	if err := a.applyReturnGatePortalAnchors(&cfg); err != nil {
+		return false, err
+	}
+	out, err := yaml.Marshal(cfg)
 	if err != nil {
 		return false, err
 	}
-	defer out.Close()
-	if _, err := io.Copy(out, in); err != nil {
+	if err := os.WriteFile(dst, out, 0o644); err != nil {
 		return false, err
 	}
 	fmt.Printf("synced mainhall portals config: %s -> %s\n", src, dst)
 	return true, nil
+}
+
+func (a app) restartWorldPreservePortals() error {
+	portalsPath := filepath.Join(a.wslDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
+	backupPath := filepath.Join("/tmp", "mcserver-portals.yml")
+	if fileExists(portalsPath) {
+		b, err := os.ReadFile(portalsPath)
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(backupPath, b, 0o644); err != nil {
+			return err
+		}
+	}
+	if err := a.compose("down"); err != nil {
+		return err
+	}
+	if fileExists(backupPath) {
+		b, err := os.ReadFile(backupPath)
+		if err != nil {
+			return err
+		}
+		if err := os.MkdirAll(filepath.Dir(portalsPath), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(portalsPath, b, 0o644); err != nil {
+			return err
+		}
+	}
+	return a.compose("up", "-d", "--remove-orphans")
+}
+
+func (a app) applyReturnGatePortalAnchors(cfg *portalsConfig) error {
+	for _, worldName := range []string{"residence", "resource", "factory"} {
+		key := "gate_" + worldName + "_to_mainhall"
+		p, ok := cfg.Portals[key]
+		if !ok {
+			continue
+		}
+		y, ok, err := a.resolveWorldSurfaceY(worldName)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("could not resolve spawn y for return gate world %q", worldName)
+		}
+		p.Location = fmt.Sprintf("%s:-1,%d,-8:1,%d,-8", worldName, y+1, y+3)
+		cfg.Portals[key] = p
+	}
+	return nil
+}
+
+func (a app) syncWorldSpawn(worldName string) error {
+	y, ok, err := a.resolveWorldSurfaceY(worldName)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("surface y could not be resolved for world %q", worldName)
+	}
+	dimension := worldDimensionID(worldName)
+	if err := a.sendConsole(fmt.Sprintf("execute in %s run setworldspawn 0 %d 0", dimension, y)); err != nil {
+		return err
+	}
+	if err := a.sendConsole(fmt.Sprintf("mvsetspawn %s:0,%d,0 --unsafe", worldName, y)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
+	dimension := worldDimensionID(worldName)
+	composeFile := filepath.Join(a.wslDir, "docker-compose.yml")
+	tag := fmt.Sprintf("mcserver_yprobe_%d", time.Now().UnixNano())
+	re := regexp.MustCompile(`Marker has the following entity data:\s*(-?\d+(?:\.\d+)?)d?`)
+
+	if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add 0 0", dimension)); err != nil {
+		return 0, false, err
+	}
+	defer func() { _ = a.sendConsole(fmt.Sprintf("execute in %s run forceload remove 0 0", dimension)) }()
+
+	if err := a.sendConsole(fmt.Sprintf("execute in %s run summon minecraft:marker 0 0 0 {Tags:[\"%s\"]}", dimension, tag)); err != nil {
+		return 0, false, err
+	}
+	defer func() {
+		_ = a.sendConsole(fmt.Sprintf("execute in %s run kill @e[type=minecraft:marker,tag=%s]", dimension, tag))
+	}()
+
+	if err := a.sendConsole(fmt.Sprintf("execute in %s as @e[type=minecraft:marker,tag=%s,limit=1] at @s run execute positioned over motion_blocking_no_leaves run tp @s ~ ~ ~", dimension, tag)); err != nil {
+		return 0, false, err
+	}
+	if err := a.sendConsole(fmt.Sprintf("execute in %s run data get entity @e[type=minecraft:marker,tag=%s,limit=1] Pos[1]", dimension, tag)); err != nil {
+		return 0, false, err
+	}
+	time.Sleep(300 * time.Millisecond)
+	out, err := runCommandOutput("docker", "compose", "-f", composeFile, "logs", "--since=5s", "world")
+	if err != nil {
+		return 0, false, err
+	}
+	matches := re.FindAllStringSubmatch(out, -1)
+	if len(matches) == 0 {
+		return 0, false, nil
+	}
+	last := matches[len(matches)-1]
+	yf, err := strconv.ParseFloat(last[1], 64)
+	if err != nil {
+		return 0, false, err
+	}
+	return int(yf), true, nil
 }
 
 func (a app) syncWorldGuardRegionsConfig(worldName string) (bool, error) {

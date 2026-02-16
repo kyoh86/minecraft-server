@@ -21,13 +21,10 @@ func (a app) serverDown() error {
 }
 
 func (a app) serverRestart(service string) error {
-	if service != "" && service != "world" {
-		return a.compose("restart", service)
+	if service == "" {
+		service = "world"
 	}
-	if err := a.serverDown(); err != nil {
-		return err
-	}
-	return a.serverUp()
+	return a.compose("restart", service)
 }
 
 func (a app) serverPS() error {
@@ -47,9 +44,6 @@ func (a app) serverReload() error {
 }
 
 func (a app) syncStaticRuntimeConfigs() error {
-	if _, err := a.syncMainhallPortalsConfig(); err != nil {
-		return err
-	}
 	if _, err := a.syncWorldGuardRegionsConfig(primaryWorldName); err != nil {
 		return err
 	}

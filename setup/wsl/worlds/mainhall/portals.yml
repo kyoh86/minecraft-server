@@ -1,7 +1,7 @@
 portals:
   gate_residence:
     owner: console
-    location: mainhall:-1,-58,-9:1,-56,-9
+    location: mainhall:-1,-58,-8:1,-56,-8
     action-type: multiverse-destination
     action: w:residence
     safe-teleport: true
