@@ -32,13 +32,13 @@
   - World Border は `-5000 .. 5000` 想定
   - Nether/End あり
 
-上記 Border は初期化 function で `worldborder set 10000`（中心 `0 0`）として適用する。
+上記 Border は `setup.commands` で `worldborder set 10000`（中心 `0 0`）として適用する。
 
 ## 流通導線
 
 - プレイヤー導線は `mainhall` を中心に集約する
-- アイテム流通も現時点では `mainhall` 経由を基本とする
-- 座標整合が必要な独自ゲート導線は将来対応（現時点では後回し）
+- アイテム流通も `mainhall` 経由を基本とする
+- 座標整合が必要な独自ゲート導線は別途設計して対応する
 
 ## 定義場所
 
@@ -54,26 +54,19 @@
   - 対象は全ワールド（`mainhall` を含む）
   - 先頭に `# yaml-language-server: $schema=../policy.schema.json` を記述
   - `mv_set` に `mv modify <world> set ...` の項目を記述する
+- `setup/wsl/worlds/<name>/setup.commands`
+  - 対象は全ワールド（`mainhall` を含む）
+  - 1行1コマンドで記述する
+  - `wslctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
+  - `mv` 系コマンドはここに書かず、`world.policy.yml` に記述する
 
-## Datapack と初期化 function
+## Datapack とセットアップ
 
 - Datapack 配置元: `setup/wsl/datapacks/world-base`
 - Datapack 配置先: `setup/wsl/runtime/world/mainhall/datapacks/world-base`
 - `mainhall` の地形生成は `setup/wsl/docker-compose.yml` の `LEVEL_TYPE=FLAT` で制御する
-- `mainhall` の初期化コマンドは `minecraft:overworld` を対象に実行する
-- 初期化 function 例:
-  - `mcserver:worlds/mainhall/init`
-  - `mcserver:worlds/residence/init`
-  - `mcserver:worlds/resource/init`
-  - `mcserver:worlds/factory/init`
-
-初期化 function ID は `mcserver:worlds/<name>/init` の規則で決まる。
-
-`init.mcfunction` は分割可能。
-
-- `init/gamerules.mcfunction`
-- `init/environment.mcfunction`
-- `init/spawn.mcfunction`
+- `mainhall` のセットアップは `minecraft:overworld` を対象に実行する
+- それ以外のワールドは `minecraft:<world>` を対象に実行する
 
 ## プリミティブ操作
 
@@ -85,12 +78,12 @@
   - world 定義に従って create/import する
   - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
 - `wslctl world setup [--world <name>]`
-  - world 初期化 function を実行する
+  - `setup.commands` を対象次元で実行する
   - `world.policy.yml` に定義された MV 管理項目を適用する
 - `wslctl world regenerate <name>`
   - world を削除して再生成する（`deletable: true` のみ）
 
 ## 補足
 
-`world_settings.mcfunction` は互換用エントリとして残し、
-`mcserver:worlds/mainhall/init` を呼び出す。
+Datapack は最小構成として `mcserver:hello` のみを同梱している。
+現行運用のセットアップ実行経路は `wslctl world setup` のみとする。

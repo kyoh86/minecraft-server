@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -182,7 +183,7 @@ func (a app) worldSetup(target string) error {
 			}
 			target = cfg.Name
 		}
-		if err := a.applyWorldInitFunction(target); err != nil {
+		if err := a.applyWorldSetupCommands(target); err != nil {
 			return err
 		}
 		if err := a.applyWorldPolicy(target); err != nil {
@@ -197,7 +198,7 @@ func (a app) worldSetup(target string) error {
 		return nil
 	}
 
-	if err := a.applyWorldInitFunction(primaryWorldName); err != nil {
+	if err := a.applyWorldSetupCommands(primaryWorldName); err != nil {
 		return err
 	}
 
@@ -213,7 +214,7 @@ func (a app) worldSetup(target string) error {
 		if cfg.Name == primaryWorldName {
 			continue
 		}
-		if err := a.applyWorldInitFunction(cfg.Name); err != nil {
+		if err := a.applyWorldSetupCommands(cfg.Name); err != nil {
 			return err
 		}
 		if err := a.applyWorldPolicy(cfg.Name); err != nil {
@@ -268,12 +269,55 @@ func (a app) ensureWorld(cfg worldConfig, forceCreate bool) error {
 	return a.sendConsole(strings.Join(parts, " "))
 }
 
-func (a app) applyWorldInitFunction(worldName string) error {
-	return a.sendConsole("function " + worldInitFunctionID(worldName))
+func worldDimensionID(worldName string) string {
+	if worldName == primaryWorldName {
+		return "minecraft:overworld"
+	}
+	return "minecraft:" + worldName
 }
 
-func worldInitFunctionID(worldName string) string {
-	return fmt.Sprintf("mcserver:worlds/%s/init", worldName)
+func (a app) loadWorldSetupCommands(worldName string) ([]string, bool, error) {
+	path := filepath.Join(a.wslDir, "worlds", worldName, "setup.commands")
+	if !fileExists(path) {
+		return nil, false, nil
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, false, err
+	}
+	defer f.Close()
+
+	var commands []string
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		line = strings.TrimPrefix(line, "/")
+		commands = append(commands, line)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, false, err
+	}
+	return commands, true, nil
+}
+
+func (a app) applyWorldSetupCommands(worldName string) error {
+	commands, ok, err := a.loadWorldSetupCommands(worldName)
+	if err != nil {
+		return err
+	}
+	if !ok || len(commands) == 0 {
+		return nil
+	}
+	dimension := worldDimensionID(worldName)
+	for _, c := range commands {
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run %s", dimension, c)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (a app) applyWorldPolicy(worldName string) error {

@@ -17,6 +17,8 @@
   - Multiverse 管理ワールド（`residence/resource/factory`）の作成/import用定義
 - `setup/wsl/worlds/*/world.policy.yml`
   - ワールド運用ポリシー（`mv modify` で適用）
+- `setup/wsl/worlds/*/setup.commands`
+  - ワールド初期化コマンド（1行1コマンド）
 
 ## CLI 方針
 
@@ -25,7 +27,8 @@
 - `setup` : 初期ディレクトリ作成
 - `server` : 起動・停止・ログ・reload
 - `assets` : Datapack などの配置
-- `world` : world create/import・再生成・初期化 function 実行
+- `world` : world create/import・再生成・セットアップ適用
+  - `setup.commands` を対象次元で実行
   - `world.policy.yml` にある MV 管理項目も適用
 - `player` : op/admin 権限操作
 

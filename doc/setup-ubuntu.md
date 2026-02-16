@@ -31,7 +31,7 @@ wslctl server ps
 wslctl server logs world
 ```
 
-## Datapack と world 初期化
+## Datapack と world セットアップ
 
 ```console
 wslctl assets stage

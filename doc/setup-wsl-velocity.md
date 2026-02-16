@@ -43,14 +43,14 @@ wslctl server reload
 wslctl world setup
 ```
 
-特定ワールドだけ初期化 function を実行したい場合:
+特定ワールドだけセットアップを適用したい場合:
 
 ```console
 wslctl world setup --world mainhall
 ```
 
 `mainhall` は `LEVEL` 基底ワールドのため `world.env.yml` は持たず、
-`mcserver:worlds/mainhall/init` を規則名で実行する。
+`setup/wsl/worlds/mainhall/setup.commands` を読み込んで適用する。
 `mainhall` の MV 管理項目は `setup/wsl/worlds/mainhall/world.policy.yml` で管理する。
 
 ## ワールド再生成
@@ -79,7 +79,7 @@ wslctl world delete --yes resource
 ## 任意 function 実行
 
 ```console
-wslctl world function run mcserver:world_settings
+wslctl world function run mcserver:hello
 ```
 
 ## プレイヤー権限管理

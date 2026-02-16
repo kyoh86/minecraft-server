@@ -1,0 +1,10 @@
+# resource (minecraft:resource)
+gamerule advance_time true
+gamerule advance_weather true
+gamerule spawn_mobs true
+gamerule pvp true
+gamerule respawn_radius 0
+difficulty hard
+weather clear
+time set noon
+setworldspawn 0 64 0

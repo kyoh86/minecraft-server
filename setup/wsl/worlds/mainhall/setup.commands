@@ -1,0 +1,8 @@
+# mainhall (minecraft:overworld)
+gamerule advance_time false
+gamerule advance_weather false
+gamerule spawn_mobs false
+gamerule respawn_radius 0
+weather clear
+time set noon
+setworldspawn 0 64 0

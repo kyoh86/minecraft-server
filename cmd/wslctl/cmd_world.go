@@ -46,7 +46,7 @@ func newWorldCmd(a app) *cobra.Command {
 	var worldName string
 	setupCmd := &cobra.Command{
 		Use:   "setup",
-		Short: "run world init function for all worlds or one world",
+		Short: "apply setup.commands and world policy for all worlds or one world",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return a.worldSetup(worldName)
 		},

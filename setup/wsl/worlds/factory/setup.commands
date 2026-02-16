@@ -1,0 +1,12 @@
+# factory (minecraft:factory)
+gamerule advance_time true
+gamerule advance_weather true
+gamerule spawn_mobs true
+gamerule pvp true
+gamerule respawn_radius 0
+difficulty normal
+weather clear
+time set noon
+setworldspawn 0 64 0
+worldborder center 0 0
+worldborder set 10000
