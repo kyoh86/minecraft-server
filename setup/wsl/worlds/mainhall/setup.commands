@@ -5,4 +5,4 @@ gamerule spawn_mobs false
 gamerule respawn_radius 0
 weather clear
 time set noon
-setworldspawn 0 64 0
+setworldspawn 0 -59 0

@@ -1,0 +1,25 @@
+portals:
+  gate_residence:
+    owner: console
+    location: mainhall:-1,-58,-9:1,-56,-9
+    action-type: multiverse-destination
+    action: w:residence
+    safe-teleport: true
+    teleport-non-players: false
+    check-destination-safety: true
+  gate_resource:
+    owner: console
+    location: mainhall:9,-58,-1:9,-56,1
+    action-type: multiverse-destination
+    action: w:resource
+    safe-teleport: true
+    teleport-non-players: false
+    check-destination-safety: true
+  gate_factory:
+    owner: console
+    location: mainhall:-9,-58,-1:-9,-56,1
+    action-type: multiverse-destination
+    action: w:factory
+    safe-teleport: true
+    teleport-non-players: false
+    check-destination-safety: true
