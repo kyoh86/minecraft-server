@@ -69,7 +69,6 @@ make gatebridge-plugin-install
 
 - `plugins/gatebridge/src/` をビルド
 - `runtime/lobby/plugins/gatebridge.jar` へ配置
-- 旧 `VeloSend`（`123783.jar`）が残っている場合は削除
 - `lobby` コンテナを再作成して起動
 
 設定ファイルは `setup/wsl/runtime/lobby/plugins/GateBridge/config.yml` に配置される。  
@@ -264,4 +263,3 @@ make restart
 - `make lobby-gate-apply` : `function mcserver:lobby_gate` を実行
 - `make gatebridge-plugin-install` : `GateBridge` をビルド・配置して `lobby` を再起動
 - `make velocity-reconnect-plugin-install` : Velocity に `Rememberme` を導入して再起動
-- `make lobby-gate-plugin-install` : 互換エイリアス（`make gatebridge-plugin-install` と同等）

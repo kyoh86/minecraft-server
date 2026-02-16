@@ -42,9 +42,4 @@ jar --create \
   -C "${PLUGIN_SRC_DIR}" plugin.yml \
   -C "${PLUGIN_SRC_DIR}" config.yml
 
-# Cleanup legacy artifacts.
-rm -f "${TARGET_DIR}/123783.jar" "${TARGET_DIR}/.123783-version.json"
-rm -f "${TARGET_DIR}/lobby-gate-switcher.jar"
-rm -rf "${TARGET_DIR}/LobbyGateSwitcher"
-
 echo "installed: ${TARGET_JAR}"
