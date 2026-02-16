@@ -190,11 +190,26 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldPolicy(target); err != nil {
 			return err
 		}
+		worldGuardSynced, err := a.syncWorldGuardRegionsConfig(target)
+		if err != nil {
+			return err
+		}
 		if target == primaryWorldName {
-			if _, err := a.syncMainhallPortalsConfig(); err != nil {
+			portalsSynced, err := a.syncMainhallPortalsConfig()
+			if err != nil {
 				return err
 			}
+			if portalsSynced {
+				if err := a.sendConsole("mvp reload"); err != nil {
+					return err
+				}
+			}
 			if err := a.pruneMainhallExtraDimensions(); err != nil {
+				return err
+			}
+		}
+		if worldGuardSynced {
+			if err := a.sendConsole("wg reload"); err != nil {
 				return err
 			}
 		}
@@ -203,6 +218,10 @@ func (a app) worldSetup(target string) error {
 	}
 
 	if err := a.applyWorldSetupCommands(primaryWorldName); err != nil {
+		return err
+	}
+	worldGuardSynced, err := a.syncWorldGuardRegionsConfig(primaryWorldName)
+	if err != nil {
 		return err
 	}
 
@@ -224,15 +243,31 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldPolicy(cfg.Name); err != nil {
 			return err
 		}
+		synced, err := a.syncWorldGuardRegionsConfig(cfg.Name)
+		if err != nil {
+			return err
+		}
+		worldGuardSynced = worldGuardSynced || synced
 	}
 	if err := a.applyWorldPolicy(primaryWorldName); err != nil {
 		return err
 	}
-	if _, err := a.syncMainhallPortalsConfig(); err != nil {
+	portalsSynced, err := a.syncMainhallPortalsConfig()
+	if err != nil {
 		return err
+	}
+	if portalsSynced {
+		if err := a.sendConsole("mvp reload"); err != nil {
+			return err
+		}
 	}
 	if err := a.pruneMainhallExtraDimensions(); err != nil {
 		return err
+	}
+	if worldGuardSynced {
+		if err := a.sendConsole("wg reload"); err != nil {
+			return err
+		}
 	}
 	fmt.Printf("setup worlds from %s\n", filepath.Join(a.wslDir, "worlds"))
 	return nil
@@ -385,6 +420,32 @@ func (a app) syncMainhallPortalsConfig() (bool, error) {
 		return false, err
 	}
 	fmt.Printf("synced mainhall portals config: %s -> %s\n", src, dst)
+	return true, nil
+}
+
+func (a app) syncWorldGuardRegionsConfig(worldName string) (bool, error) {
+	src := filepath.Join(a.wslDir, "worlds", worldName, "worldguard.regions.yml")
+	if !fileExists(src) {
+		return false, nil
+	}
+	dst := filepath.Join(a.wslDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+		return false, err
+	}
+	in, err := os.Open(src)
+	if err != nil {
+		return false, err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		return false, err
+	}
+	defer out.Close()
+	if _, err := io.Copy(out, in); err != nil {
+		return false, err
+	}
+	fmt.Printf("synced worldguard regions: %s -> %s\n", src, dst)
 	return true, nil
 }
 
