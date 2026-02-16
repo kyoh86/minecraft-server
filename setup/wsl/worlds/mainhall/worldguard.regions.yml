@@ -1,0 +1,25 @@
+regions:
+  spawn_protected:
+    min:
+      x: -24
+      y: -70
+      z: -24
+    max:
+      x: 24
+      y: -40
+      z: 24
+    members: {}
+    owners: {}
+    flags:
+      build: deny
+      block-break: deny
+      block-place: deny
+      tnt: deny
+      creeper-explosion: deny
+      other-explosion: deny
+      ghast-fireball: deny
+      wither-damage: deny
+    type: cuboid
+    priority: 10
+global:
+  flags: {}

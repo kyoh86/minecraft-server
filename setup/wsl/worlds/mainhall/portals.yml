@@ -23,3 +23,27 @@ portals:
     safe-teleport: true
     teleport-non-players: false
     check-destination-safety: true
+  gate_residence_to_mainhall:
+    owner: console
+    location: residence:-1,161,-8:1,163,-8
+    action-type: multiverse-destination
+    action: w:mainhall
+    safe-teleport: true
+    teleport-non-players: false
+    check-destination-safety: true
+  gate_resource_to_mainhall:
+    owner: console
+    location: resource:-1,161,-8:1,163,-8
+    action-type: multiverse-destination
+    action: w:mainhall
+    safe-teleport: true
+    teleport-non-players: false
+    check-destination-safety: true
+  gate_factory_to_mainhall:
+    owner: console
+    location: factory:-1,161,-8:1,163,-8
+    action-type: multiverse-destination
+    action: w:mainhall
+    safe-teleport: true
+    teleport-non-players: false
+    check-destination-safety: true

@@ -7,4 +7,15 @@ gamerule respawn_radius 0
 difficulty hard
 weather clear
 time set noon
-setworldspawn 0 64 0
+forceload add -16 -16 16 16
+fill -16 150 -16 16 174 16 air
+fill -9 158 -9 9 158 9 polished_deepslate
+fill -8 159 -8 8 159 8 smooth_quartz
+fill -7 160 -7 7 165 7 air
+fill -8 160 -8 8 165 -8 smooth_quartz
+fill -2 160 -8 2 164 -8 obsidian
+fill -1 161 -8 1 163 -8 air
+setblock 0 160 -6 oak_sign[rotation=8]
+data merge block 0 160 -6 {front_text:{messages:[{text:"To Mainhall",color:"gold",bold:1b},"","",""]}}
+setworldspawn 0 160 0
+forceload remove -16 -16 16 16
