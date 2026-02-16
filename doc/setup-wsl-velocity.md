@@ -72,6 +72,7 @@ wslctl world delete --yes resource
 - `delete` は `drop` に加えてワールドディスクを削除する。
 - `mainhall` は保護され、`drop`/`delete` できない。
 - `delete` は `world.env.yml` の `deletable: true` が必要。
+- `world ensure` / `world setup --world mainhall` 実行時は、`mainhall_nether` と `mainhall_the_end` を自動で drop する。
 
 ## 任意 function 実行
 

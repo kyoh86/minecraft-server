@@ -59,6 +59,9 @@ func (a app) worldEnsure() error {
 			return err
 		}
 	}
+	if err := a.pruneMainhallExtraDimensions(); err != nil {
+		return err
+	}
 
 	fmt.Printf("ensured worlds from %s\n", filepath.Join(a.wslDir, "worlds"))
 	return nil
@@ -182,6 +185,11 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldInitFunction(target); err != nil {
 			return err
 		}
+		if target == primaryWorldName {
+			if err := a.pruneMainhallExtraDimensions(); err != nil {
+				return err
+			}
+		}
 		fmt.Printf("setup world '%s'\n", target)
 		return nil
 	}
@@ -205,6 +213,9 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldInitFunction(cfg.Name); err != nil {
 			return err
 		}
+	}
+	if err := a.pruneMainhallExtraDimensions(); err != nil {
+		return err
 	}
 	fmt.Printf("setup worlds from %s\n", filepath.Join(a.wslDir, "worlds"))
 	return nil
@@ -254,6 +265,15 @@ func (a app) applyWorldInitFunction(worldName string) error {
 
 func worldInitFunctionID(worldName string) string {
 	return fmt.Sprintf("mcserver:worlds/%s/init", worldName)
+}
+
+func (a app) pruneMainhallExtraDimensions() error {
+	for _, name := range []string{primaryWorldName + "_nether", primaryWorldName + "_the_end"} {
+		if err := a.worldDrop(name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (a app) listWorldConfigs() ([]string, error) {

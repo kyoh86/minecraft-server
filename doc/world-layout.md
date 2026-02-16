@@ -54,6 +54,7 @@
 - Datapack 配置元: `setup/wsl/datapacks/world-base`
 - Datapack 配置先: `setup/wsl/runtime/world/mainhall/datapacks/world-base`
 - `mainhall` の地形生成は `setup/wsl/docker-compose.yml` の `LEVEL_TYPE=FLAT` で制御する
+- `mainhall` の初期化コマンドは `minecraft:overworld` を対象に実行する
 - 初期化 function 例:
   - `mcserver:worlds/mainhall/init`
   - `mcserver:worlds/residence/init`
@@ -76,6 +77,7 @@
   - Datapack/function を再読み込みする
 - `wslctl world ensure`
   - world 定義に従って create/import する
+  - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
 - `wslctl world setup [--world <name>]`
   - world 初期化 function を実行する
 - `wslctl world regenerate <name>`

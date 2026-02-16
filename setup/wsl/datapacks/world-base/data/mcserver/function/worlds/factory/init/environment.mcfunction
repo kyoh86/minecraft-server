@@ -1,3 +1,3 @@
-execute in factory run difficulty normal
-execute in factory run weather clear
-execute in factory run time set noon
+execute in minecraft:factory run difficulty normal
+execute in minecraft:factory run weather clear
+execute in minecraft:factory run time set noon

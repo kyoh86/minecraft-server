@@ -1,1 +1,1 @@
-execute in mainhall run setworldspawn 0 64 0
+execute in minecraft:overworld run setworldspawn 0 64 0

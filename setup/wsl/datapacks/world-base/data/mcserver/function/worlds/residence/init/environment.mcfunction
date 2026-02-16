@@ -1,3 +1,3 @@
-execute in residence run difficulty normal
-execute in residence run weather clear
-execute in residence run time set noon
+execute in minecraft:residence run difficulty normal
+execute in minecraft:residence run weather clear
+execute in minecraft:residence run time set noon

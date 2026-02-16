@@ -1,1 +1,1 @@
-execute in factory run setworldspawn 0 64 0
+execute in minecraft:factory run setworldspawn 0 64 0
