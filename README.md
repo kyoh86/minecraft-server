@@ -17,7 +17,7 @@
   - world初期化用 Datapack
 - `setup/wsl/worlds/*/world.env.yml`
   - ワールド作成/import用の定義
-  - 例: `lobby` は `world_type: flat`
+  - 例: `mainhall` は `world_type: flat`
 
 ## 使い方
 
@@ -42,7 +42,7 @@ make down
 
 ## ワールド作成と初期化
 
-`world.env.yml` に従って residence/lobby/resource/factory を作成/import し、
+`world.env.yml` に従って mainhall/residence/resource/factory を作成/import し、
 各ワールドの `init.mcfunction` を実行する。
 
 ```console

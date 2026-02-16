@@ -23,7 +23,7 @@ func (a app) initRuntime() error {
 
 func (a app) syncWorldDatapack() error {
 	srcDir := filepath.Join(a.wslDir, "datapacks", "world-base")
-	dstRoot := filepath.Join(a.wslDir, "runtime", "world", "residence", "datapacks")
+	dstRoot := filepath.Join(a.wslDir, "runtime", "world", "mainhall", "datapacks")
 	dstDir := filepath.Join(dstRoot, "world-base")
 
 	if !fileExists(srcDir) {

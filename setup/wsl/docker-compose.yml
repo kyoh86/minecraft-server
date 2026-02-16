@@ -9,9 +9,9 @@ services:
       EULA: "TRUE"
       TYPE: PAPER
       VERSION: "1.21.11"
-      LEVEL: "residence"
+      LEVEL: "mainhall"
       MEMORY: "4G"
-      SERVER_NAME: "residence"
+      SERVER_NAME: "mainhall"
       MOTD: "Main Server"
       ONLINE_MODE: "TRUE"
       ENABLE_RCON: "FALSE"

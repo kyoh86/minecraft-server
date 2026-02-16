@@ -4,8 +4,8 @@
 
 以下の4ワールド構成を、手順ではなく定義ファイルで再現できるようにする。
 
-- `world` : 通常プレイ用
-- `lobby` : 導線・集約用
+- `mainhall` : 導線・集約用
+- `residence` : 通常プレイ・居住用
 - `resource` : 定期リセット前提の資源用
 - `factory` : 自動化・装置用
 
@@ -26,8 +26,8 @@
 
 - Datapack: `setup/wsl/datapacks/world-base`
 - 各ワールドの function エントリ:
+  - `mcserver:worlds/mainhall/init`
   - `mcserver:worlds/residence/init`
-  - `mcserver:worlds/lobby/init`
   - `mcserver:worlds/resource/init`
   - `mcserver:worlds/factory/init`
 
@@ -54,4 +54,4 @@
 ## 補足
 
 `world_settings.mcfunction` は互換用エントリとして残し、
-`mcserver:worlds/residence/init` を呼び出す。
+`mcserver:worlds/mainhall/init` を呼び出す。
