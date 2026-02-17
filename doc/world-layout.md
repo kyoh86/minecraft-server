@@ -94,7 +94,9 @@
 - `wslctl world spawn stage`
   - profile を必須入力として、`.tmpl` を runtime に描画する
   - `worldguard.regions.yml.tmpl` / `portals.yml.tmpl` を反映する
-  - `reload` / `wg reload` / `mv reload` を実行する
+  - `reload` / `wg reload` / `mvp config enforce-portal-access false` / `mv reload` を実行する
+  - `spawn_protected` の Y 範囲は `surface_y-11 .. surface_y+17` とする
+  - `*_to_mainhall` ポータルの Y 範囲は `surface_y .. surface_y+3` とする
 - `wslctl world spawn apply`
   - `mainhall` では `mcserver:mainhall/hub_layout` を適用する
   - `residence/resource/factory` では profile の `surface_y` を使い、

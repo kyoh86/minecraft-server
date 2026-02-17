@@ -438,6 +438,9 @@ func (a app) worldSpawnStage() error {
 	if err := a.sendConsole("wg reload"); err != nil {
 		return err
 	}
+	if err := a.sendConsole("mvp config enforce-portal-access false"); err != nil {
+		return err
+	}
 	if err := a.sendConsole("mv reload"); err != nil {
 		return err
 	}
@@ -607,10 +610,10 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 		data.Worlds[worldName] = spawnTemplateWorld{
 			SurfaceY:       p.SurfaceY,
 			AnchorY:        p.AnchorY,
-			ReturnGateMinY: p.SurfaceY + 1,
+			ReturnGateMinY: p.SurfaceY,
 			ReturnGateMaxY: p.SurfaceY + 3,
-			RegionMinY:     p.SurfaceY + 46,
-			RegionMaxY:     p.SurfaceY + 86,
+			RegionMinY:     p.SurfaceY - 11,
+			RegionMaxY:     p.SurfaceY + 17,
 		}
 	}
 	return data, nil
