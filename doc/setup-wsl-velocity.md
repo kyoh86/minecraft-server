@@ -22,6 +22,10 @@
 - `wslctl world drop|delete`
 - `wslctl player op ...|admin ...`
 
+`server/world/player` 系でコンソール送信を伴うコマンドは、`world` コンテナが
+`running + healthy` になり、`/tmp/minecraft-console-in` パイプが生成されるまで
+待機してから実行される。
+
 ## 初回セットアップ
 
 ```console

@@ -6,6 +6,8 @@ gamerule respawn_radius 0
 gamerule command_block_output false
 weather clear
 time set noon
+forceload add -1 -1 0 0
 setworldspawn 0 -58 0
 mvsetspawn mainhall:0,-58,0 --unsafe
 function mcserver:mainhall/hub_layout
+forceload remove -1 -1 0 0

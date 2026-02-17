@@ -2,19 +2,66 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 func (a app) sendConsole(command string) error {
+	if err := a.waitWorldReady(90 * time.Second); err != nil {
+		return err
+	}
 	composeFile := filepath.Join(a.wslDir, "docker-compose.yml")
 	return runCommand(
 		"docker", "compose", "-f", composeFile,
 		"exec", "-T", "--user", "1000", "world", "mc-send-to-console", command,
 	)
+}
+
+func (a app) waitWorldReady(timeout time.Duration) error {
+	composeFile := filepath.Join(a.wslDir, "docker-compose.yml")
+	deadline := time.Now().Add(timeout)
+
+	for {
+		containerID, err := runCommandOutput("docker", "compose", "-f", composeFile, "ps", "-q", "world")
+		if err == nil {
+			containerID = strings.TrimSpace(containerID)
+			if containerID != "" {
+				state, err := runCommandOutput(
+					"docker", "inspect",
+					"--format", "{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
+					containerID,
+				)
+				if err == nil {
+					parts := strings.Fields(strings.TrimSpace(state))
+					if len(parts) >= 2 && parts[0] == "running" && (parts[1] == "healthy" || parts[1] == "none") {
+						if a.worldConsolePipeReady(composeFile) {
+							return nil
+						}
+					}
+				}
+			}
+		}
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("world container is not ready within %s", timeout)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func (a app) worldConsolePipeReady(composeFile string) bool {
+	_, err := runCommandOutput(
+		"docker", "compose", "-f", composeFile,
+		"exec", "-T", "world", "sh", "-lc",
+		"test -p /tmp/minecraft-console-in",
+	)
+	return err == nil
 }
 
 func runCommand(name string, args ...string) error {

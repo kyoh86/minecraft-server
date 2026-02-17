@@ -89,6 +89,7 @@
   - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
 - `wslctl world setup [--world <name>]`
   - `setup.commands` を対象次元で実行する
+  - `mainhall` は Hub の施工範囲（`x/z=-12..12`）を覆う `-1..0` チャンクを `forceload` してから Hub function を適用し、完了後に解除する
   - `residence/resource/factory` は `0,0` 列の地表Y（`motion_blocking_no_leaves`）を検出し、`setworldspawn` と `mvsetspawn` を同一座標へ同期する
   - `mainhall` は固定座標運用（`setup.commands` の値を使用）とし、自動同期は行わない
   - `world.policy.yml` に定義された MV 管理項目を適用する
@@ -115,6 +116,8 @@ wslctl world function run mcserver:mainhall/hub_layout
 また、床下にゲート演出用の反復コマンドブロックを配置し、
 `end_rod` と `enchant` のパーティクルを各ゲート面へ常時投影する。
 各ゲートは背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
+西向き（`factory` 側）ゲートのガラス表示は、判定面への進入を妨げないよう
+`x=-9.4` に配置する。
 
 `residence` / `resource` / `factory` では `setup.commands` から
 `mcserver:world/hub_layout` を呼び出し、各ワールドの
@@ -128,3 +131,8 @@ wslctl world function run mcserver:mainhall/hub_layout
 wslctl world setup --world mainhall
 wslctl server restart
 ```
+
+`mainhall` の入口ポータルはゲート面に合わせて定義する
+（`residence` は `z=-9` 面、`factory` は `x=-9` 面）。
+`factory` 入口のみ `check-destination-safety: false` とし、
+着地点安全判定による遷移拒否を防ぐ。

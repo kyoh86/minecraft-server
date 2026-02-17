@@ -1,5 +1,3 @@
-execute in minecraft:overworld run fill -12 63 -12 12 80 12 air
-
 execute in minecraft:overworld run fill -12 -60 -12 12 -43 12 air
 execute in minecraft:overworld run fill -12 -60 -12 12 -60 12 polished_andesite
 execute in minecraft:overworld run fill -11 -59 -11 11 -59 11 smooth_quartz
@@ -54,16 +52,21 @@ execute in minecraft:overworld run setblock -9 -60 0 redstone_torch
 execute in minecraft:overworld run setblock -9 -54 0 redstone_block
 
 execute in minecraft:overworld run kill @e[type=minecraft:block_display,tag=mcserver_gate_glass,distance=..64]
-execute in minecraft:overworld run summon minecraft:block_display -1.0 -58.0 -8.6 {Tags:["mcserver_gate_glass","mcserver_gate_glass_north"],block_state:{Name:"minecraft:tinted_glass"}}
-execute in minecraft:overworld run summon minecraft:block_display 9.4 -58.0 -1.0 {Tags:["mcserver_gate_glass","mcserver_gate_glass_east"],block_state:{Name:"minecraft:tinted_glass"}}
-execute in minecraft:overworld run summon minecraft:block_display -8.6 -58.0 -1.0 {Tags:["mcserver_gate_glass","mcserver_gate_glass_west"],block_state:{Name:"minecraft:tinted_glass"}}
-execute in minecraft:overworld run data merge entity @e[type=minecraft:block_display,tag=mcserver_gate_glass_north,limit=1] {transformation:{scale:[3.0f,3.0f,0.2f]}}
-execute in minecraft:overworld run data merge entity @e[type=minecraft:block_display,tag=mcserver_gate_glass_east,limit=1] {transformation:{scale:[0.2f,3.0f,3.0f]}}
-execute in minecraft:overworld run data merge entity @e[type=minecraft:block_display,tag=mcserver_gate_glass_west,limit=1] {transformation:{scale:[0.2f,3.0f,3.0f]}}
 
+# Gate for Regidence
+execute in minecraft:overworld run summon minecraft:block_display -1.0 -58.0 -8.6 {Tags:["mcserver_gate_glass","mcserver_gate_glass_north"],block_state:{Name:"minecraft:tinted_glass"}}
+execute in minecraft:overworld run data merge entity @e[type=minecraft:block_display,tag=mcserver_gate_glass_north,limit=1] {transformation:{scale:[3.0f,3.0f,0.2f]}}
 execute in minecraft:overworld run setblock -3 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:end_rod 0 -56 -9 1.0 1.0 0.05 0.01 8 normal"}
 execute in minecraft:overworld run setblock -2 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:enchant 0 -56 -9 1.0 1.0 0.05 0.05 24 normal"}
+
+# Gate for Resources
+execute in minecraft:overworld run summon minecraft:block_display 9.4 -58.0 -1.0 {Tags:["mcserver_gate_glass","mcserver_gate_glass_east"],block_state:{Name:"minecraft:tinted_glass"}}
+execute in minecraft:overworld run data merge entity @e[type=minecraft:block_display,tag=mcserver_gate_glass_east,limit=1] {transformation:{scale:[0.2f,3.0f,3.0f]}}
 execute in minecraft:overworld run setblock -1 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:end_rod 9 -56 0 0.05 1.0 1.0 0.01 8 normal"}
 execute in minecraft:overworld run setblock 0 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:enchant 9 -56 0 0.05 1.0 1.0 0.05 24 normal"}
+
+# Gate for Factory
+execute in minecraft:overworld run summon minecraft:block_display -8.6 -58.0 -1.0 {Tags:["mcserver_gate_glass","mcserver_gate_glass_west"],block_state:{Name:"minecraft:tinted_glass"}}
+execute in minecraft:overworld run data merge entity @e[type=minecraft:block_display,tag=mcserver_gate_glass_west,limit=1] {transformation:{scale:[0.2f,3.0f,3.0f]}}
 execute in minecraft:overworld run setblock 1 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:end_rod -9 -56 0 0.05 1.0 1.0 0.01 8 normal"}
 execute in minecraft:overworld run setblock 2 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:enchant -9 -56 0 0.05 1.0 1.0 0.05 24 normal"}
