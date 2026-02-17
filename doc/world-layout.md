@@ -94,7 +94,7 @@
 - `wslctl world spawn stage`
   - profile を必須入力として、`.tmpl` を runtime に描画する
   - `worldguard.regions.yml.tmpl` / `portals.yml.tmpl` を反映する
-  - `reload` / `wg reload` / `mvp reload` を実行する
+  - `reload` / `wg reload` / `mv reload` を実行する
 - `wslctl world spawn apply`
   - `mainhall` では `mcserver:mainhall/hub_layout` を適用する
   - `residence/resource/factory` では profile の `surface_y` を使い、
@@ -123,6 +123,8 @@ wslctl world function run mcserver:mainhall/hub_layout
 各ゲートは背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
 西向き（`factory` 側）ゲートのガラス表示は、判定面への進入を妨げないよう
 `x=-9.4` に配置する。
+初回ログイン時の安全スポーン補正で屋根上に出ないよう、
+中心座標（`0 -51 0`）の天井を開口している。
 
 `mainhall` のハブは `wslctl world spawn apply` が
 `mcserver:mainhall/hub_layout` を実行して構築する。

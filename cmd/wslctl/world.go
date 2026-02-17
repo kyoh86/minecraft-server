@@ -438,7 +438,7 @@ func (a app) worldSpawnStage() error {
 	if err := a.sendConsole("wg reload"); err != nil {
 		return err
 	}
-	if err := a.sendConsole("mvp reload"); err != nil {
+	if err := a.sendConsole("mv reload"); err != nil {
 		return err
 	}
 	fmt.Printf("staged world spawn runtime configs for %d worlds\n", len(worldNames))
