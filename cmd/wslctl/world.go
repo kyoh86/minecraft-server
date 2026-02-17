@@ -434,7 +434,20 @@ func (a app) worldSpawnStage() error {
 	}
 	hubSrc := filepath.Join(a.wslDir, "datapacks", "world-base", "data", "mcserver", "function", "world", "hub_layout.mcfunction.tmpl")
 	hubDst := filepath.Join(a.wslDir, "runtime", "world", primaryWorldName, "datapacks", "world-base", "data", "mcserver", "function", "world", "hub_layout.mcfunction")
-	if err := renderTemplateFile(hubSrc, hubDst, data); err != nil {
+	hubData := map[string]any{
+		"worlds": data.Worlds,
+		"spawn": map[string]int{
+			"x": 0,
+			"y": 0,
+			"z": 0,
+		},
+		"span": map[string]int{
+			"x": 0,
+			"y": 0,
+			"z": 0,
+		},
+	}
+	if err := renderTemplateFile(hubSrc, hubDst, hubData); err != nil {
 		return err
 	}
 	if err := a.sendConsole("reload"); err != nil {
