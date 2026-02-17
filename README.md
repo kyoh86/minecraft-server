@@ -12,7 +12,7 @@
 - `setup/wsl/runtime/world`
   - サーバーデータ永続化先
 - `setup/wsl/datapacks/world-base`
-  - ワールド初期化用 Datapack
+  - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `setup/wsl/worlds/*/world.env.yml`
   - Multiverse 管理ワールド（`residence/resource/factory`）の作成/import用定義
 - `setup/wsl/worlds/*/world.policy.yml`

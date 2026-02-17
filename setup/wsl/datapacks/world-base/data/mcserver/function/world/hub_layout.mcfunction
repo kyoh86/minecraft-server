@@ -1,5 +1,3 @@
-setworldspawn ~ ~ ~
-
 # Margin
 fill ~-16 ~-1 ~-16 ~16 ~10 ~16 air
 

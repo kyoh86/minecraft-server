@@ -71,7 +71,7 @@
 
 ## Datapack とセットアップ
 
-- Datapack テンプレート配置元: `setup/wsl/datapacks/world-base`
+- Datapack 配置元: `setup/wsl/datapacks/world-base`
 - Datapack 出力先: `setup/wsl/runtime/world/mainhall/datapacks/world-base`
 - `mainhall` の地形生成は `setup/wsl/docker-compose.yml` の `LEVEL_TYPE=FLAT` で制御する
 - `mainhall` のセットアップは `minecraft:overworld` を対象に実行する
@@ -85,7 +85,7 @@
 - `wslctl world setup [--world <name>]`
   - `setup.commands` を対象次元で実行する
   - `world.policy.yml` に定義された MV 管理項目を適用する
-  - runtime 側に最小 datapack 骨格（`world-base`）を作成する
+  - `world-base` datapack を runtime へそのままコピーする
 - `wslctl world spawn profile`
   - `residence/resource/factory` の地表Y（`motion_blocking_no_leaves`）を検出する
   - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
@@ -93,10 +93,12 @@
   - `setworldspawn` と `mvsetspawn` を同期する
 - `wslctl world spawn stage`
   - profile を必須入力として、`.tmpl` を runtime に描画する
-  - `worldguard.regions.yml.tmpl` / `portals.yml.tmpl` / `hub_layout.mcfunction.tmpl` を反映する
+  - `worldguard.regions.yml.tmpl` / `portals.yml.tmpl` を反映する
   - `reload` / `wg reload` / `mvp reload` を実行する
 - `wslctl world spawn apply`
-  - profile の `surface_y` を使い、`execute in <dimension> run execute positioned ...` で
+  - `mainhall` では `mcserver:mainhall/hub_layout` を適用する
+  - `residence/resource/factory` では profile の `surface_y` を使い、
+    `execute in <dimension> run execute positioned ...` で
     `mcserver:world/hub_layout` を適用する
 - `wslctl world regenerate <name>`
   - world を削除して再生成する（`deletable: true` のみ）
@@ -122,6 +124,8 @@ wslctl world function run mcserver:mainhall/hub_layout
 西向き（`factory` 側）ゲートのガラス表示は、判定面への進入を妨げないよう
 `x=-9.4` に配置する。
 
+`mainhall` のハブは `wslctl world spawn apply` が
+`mcserver:mainhall/hub_layout` を実行して構築する。
 `residence` / `resource` / `factory` の小ハブは
 `wslctl world spawn apply` が profile 座標を基準に構築する。
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。

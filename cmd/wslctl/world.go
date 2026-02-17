@@ -432,24 +432,6 @@ func (a app) worldSpawnStage() error {
 	if err := renderTemplateFile(portalsSrc, portalsDst, data); err != nil {
 		return err
 	}
-	hubSrc := filepath.Join(a.wslDir, "datapacks", "world-base", "data", "mcserver", "function", "world", "hub_layout.mcfunction.tmpl")
-	hubDst := filepath.Join(a.wslDir, "runtime", "world", primaryWorldName, "datapacks", "world-base", "data", "mcserver", "function", "world", "hub_layout.mcfunction")
-	hubData := map[string]any{
-		"worlds": data.Worlds,
-		"spawn": map[string]int{
-			"x": 0,
-			"y": 0,
-			"z": 0,
-		},
-		"span": map[string]int{
-			"x": 0,
-			"y": 0,
-			"z": 0,
-		},
-	}
-	if err := renderTemplateFile(hubSrc, hubDst, hubData); err != nil {
-		return err
-	}
 	if err := a.sendConsole("reload"); err != nil {
 		return err
 	}
@@ -478,6 +460,15 @@ func (a app) worldSpawnApply() error {
 	if err := a.sendConsole("reload"); err != nil {
 		return err
 	}
+	if err := a.sendConsole("execute in minecraft:overworld run forceload add -1 -1 0 0"); err != nil {
+		return err
+	}
+	if err := a.sendConsole("execute in minecraft:overworld run function mcserver:mainhall/hub_layout"); err != nil {
+		return err
+	}
+	if err := a.sendConsole("execute in minecraft:overworld run forceload remove -1 -1 0 0"); err != nil {
+		return err
+	}
 	for _, worldName := range worldNames {
 		p := profile.Worlds[worldName]
 		dimension := worldDimensionID(worldName)
@@ -491,7 +482,7 @@ func (a app) worldSpawnApply() error {
 			return err
 		}
 	}
-	fmt.Printf("applied spawn layout for %d worlds\n", len(worldNames))
+	fmt.Printf("applied spawn layout for %d worlds\n", len(worldNames)+1)
 	return nil
 }
 
@@ -537,16 +528,22 @@ func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
 }
 
 func (a app) ensureRuntimeDatapackScaffold() error {
-	root := filepath.Join(a.wslDir, "runtime", "world", primaryWorldName, "datapacks", "world-base")
-	if err := os.MkdirAll(filepath.Join(root, "data", "mcserver", "function", "world"), 0o755); err != nil {
+	srcDir := filepath.Join(a.wslDir, "datapacks", "world-base")
+	dstRoot := filepath.Join(a.wslDir, "runtime", "world", primaryWorldName, "datapacks")
+	dstDir := filepath.Join(dstRoot, "world-base")
+	if !fileExists(srcDir) {
+		return fmt.Errorf("missing datapack source: %s", srcDir)
+	}
+	if err := os.MkdirAll(dstRoot, 0o755); err != nil {
 		return err
 	}
-	packPath := filepath.Join(root, "pack.mcmeta")
-	if fileExists(packPath) {
-		return nil
+	if err := os.RemoveAll(dstDir); err != nil {
+		return err
 	}
-	const pack = "{\n  \"pack\": {\n    \"pack_format\": 81,\n    \"description\": \"World baseline settings\"\n  }\n}\n"
-	return os.WriteFile(packPath, []byte(pack), 0o644)
+	if err := copyDir(srcDir, dstDir); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a app) listManagedWorldNames() ([]string, error) {
