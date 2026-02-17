@@ -2,11 +2,11 @@ regions:
   spawn_protected:
     min:
       x: -24
-      y: 150
+      y: {{(index .Worlds "residence").RegionMinY}}
       z: -24
     max:
       x: 24
-      y: 190
+      y: {{(index .Worlds "residence").RegionMaxY}}
       z: 24
     members: {}
     owners: {}

@@ -5,8 +5,3 @@ gamerule spawn_mobs true
 gamerule respawn_radius 0
 weather clear
 time set noon
-forceload add 0 0
-summon minecraft:marker 0 0 0 {Tags:["mcserver_hub_anchor_tmp"]}
-execute as @e[type=minecraft:marker,tag=mcserver_hub_anchor_tmp,limit=1] at @s run execute positioned over motion_blocking_no_leaves run function mcserver:world/hub_layout
-kill @e[type=minecraft:marker,tag=mcserver_hub_anchor_tmp]
-forceload remove 0 0

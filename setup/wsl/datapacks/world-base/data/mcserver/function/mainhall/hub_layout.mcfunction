@@ -4,6 +4,7 @@ execute in minecraft:overworld run fill -12 -60 -12 12 -60 12 polished_andesite
 execute in minecraft:overworld run fill -11 -59 -11 11 -59 11 smooth_quartz
 
 execute in minecraft:overworld run fill -8 -59 -8 8 -51 8 smooth_quartz
+execute in minecraft:overworld run fill -7 -51 -7 7 -51 7 glass
 execute in minecraft:overworld run fill -7 -58 -7 7 -52 7 air
 
 execute in minecraft:overworld run fill -9 -59 -9 9 -59 -9 polished_deepslate

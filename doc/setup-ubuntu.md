@@ -31,13 +31,14 @@ wslctl server ps
 wslctl server logs world
 ```
 
-## Datapack と world セットアップ
+## world セットアップ
 
 ```console
-wslctl assets stage
-wslctl server reload
 wslctl world ensure
 wslctl world setup
+wslctl world spawn profile
+wslctl world spawn stage
+wslctl world spawn apply
 ```
 
 資源ワールド再生成:
@@ -45,6 +46,9 @@ wslctl world setup
 ```console
 wslctl world regenerate resource
 wslctl world setup --world resource
+wslctl world spawn profile
+wslctl world spawn stage
+wslctl world spawn apply
 ```
 
 ## 停止

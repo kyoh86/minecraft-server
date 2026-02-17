@@ -2,21 +2,23 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/goccy/go-yaml"
 )
 
 const primaryWorldName = "mainhall"
+const spawnProfilePath = "runtime/world/.wslctl/spawn-profile.yml"
 
 func (a app) initRuntime() error {
 	runtimeDir := filepath.Join(a.wslDir, "runtime", "world")
@@ -27,26 +29,26 @@ func (a app) initRuntime() error {
 	return nil
 }
 
-func (a app) stageAssets() error {
-	srcDir := filepath.Join(a.wslDir, "datapacks", "world-base")
-	dstRoot := filepath.Join(a.wslDir, "runtime", "world", "mainhall", "datapacks")
-	dstDir := filepath.Join(dstRoot, "world-base")
+type spawnProfile struct {
+	Worlds map[string]spawnProfileWorld `yaml:"worlds"`
+}
 
-	if !fileExists(srcDir) {
-		return fmt.Errorf("missing datapack source: %s", srcDir)
-	}
-	if err := os.MkdirAll(dstRoot, 0o755); err != nil {
-		return err
-	}
-	if err := os.RemoveAll(dstDir); err != nil {
-		return err
-	}
-	if err := copyDir(srcDir, dstDir); err != nil {
-		return err
-	}
+type spawnProfileWorld struct {
+	SurfaceY int `yaml:"surface_y"`
+	AnchorY  int `yaml:"anchor_y"`
+}
 
-	fmt.Printf("staged assets to %s\n", dstDir)
-	return nil
+type spawnTemplateData struct {
+	Worlds map[string]spawnTemplateWorld
+}
+
+type spawnTemplateWorld struct {
+	SurfaceY       int
+	AnchorY        int
+	ReturnGateMinY int
+	ReturnGateMaxY int
+	RegionMinY     int
+	RegionMaxY     int
 }
 
 func (a app) worldEnsure() error {
@@ -177,7 +179,9 @@ func (a app) worldDelete(target string, yes bool) error {
 
 func (a app) worldSetup(target string) error {
 	target = strings.TrimSpace(target)
-	portalsSynced := false
+	if err := a.ensureRuntimeDatapackScaffold(); err != nil {
+		return err
+	}
 	if target != "" {
 		if target != primaryWorldName {
 			cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
@@ -190,37 +194,8 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldSetupCommands(target); err != nil {
 			return err
 		}
-		if target != primaryWorldName {
-			if err := a.syncWorldSpawn(target); err != nil {
-				return err
-			}
-		}
 		if err := a.applyWorldPolicy(target); err != nil {
 			return err
-		}
-		worldGuardSynced, err := a.syncWorldGuardRegionsConfig(target)
-		if err != nil {
-			return err
-		}
-		if target == primaryWorldName {
-			synced, err := a.syncMainhallPortalsConfig()
-			if err != nil {
-				return err
-			}
-			portalsSynced = portalsSynced || synced
-			if err := a.pruneMainhallExtraDimensions(); err != nil {
-				return err
-			}
-		}
-		if worldGuardSynced {
-			if err := a.sendConsole("wg reload"); err != nil {
-				return err
-			}
-		}
-		if portalsSynced {
-			if err := a.restartWorldPreservePortals(); err != nil {
-				return err
-			}
 		}
 		fmt.Printf("setup world '%s'\n", target)
 		return nil
@@ -229,11 +204,6 @@ func (a app) worldSetup(target string) error {
 	if err := a.applyWorldSetupCommands(primaryWorldName); err != nil {
 		return err
 	}
-	worldGuardSynced, err := a.syncWorldGuardRegionsConfig(primaryWorldName)
-	if err != nil {
-		return err
-	}
-
 	cfgs, err := a.listWorldConfigs()
 	if err != nil {
 		return err
@@ -249,38 +219,15 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldSetupCommands(cfg.Name); err != nil {
 			return err
 		}
-		if err := a.syncWorldSpawn(cfg.Name); err != nil {
-			return err
-		}
 		if err := a.applyWorldPolicy(cfg.Name); err != nil {
 			return err
 		}
-		synced, err := a.syncWorldGuardRegionsConfig(cfg.Name)
-		if err != nil {
-			return err
-		}
-		worldGuardSynced = worldGuardSynced || synced
 	}
 	if err := a.applyWorldPolicy(primaryWorldName); err != nil {
 		return err
 	}
-	synced, err := a.syncMainhallPortalsConfig()
-	if err != nil {
-		return err
-	}
-	portalsSynced = portalsSynced || synced
 	if err := a.pruneMainhallExtraDimensions(); err != nil {
 		return err
-	}
-	if worldGuardSynced {
-		if err := a.sendConsole("wg reload"); err != nil {
-			return err
-		}
-	}
-	if portalsSynced {
-		if err := a.restartWorldPreservePortals(); err != nil {
-			return err
-		}
 	}
 	fmt.Printf("setup worlds from %s\n", filepath.Join(a.wslDir, "worlds"))
 	return nil
@@ -410,105 +357,128 @@ func (a app) pruneMainhallExtraDimensions() error {
 	return nil
 }
 
-func (a app) syncMainhallPortalsConfig() (bool, error) {
-	src := filepath.Join(a.wslDir, "worlds", primaryWorldName, "portals.yml")
-	if !fileExists(src) {
-		return false, nil
-	}
-	dst := filepath.Join(a.wslDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
-	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return false, err
-	}
-	b, err := os.ReadFile(src)
+func (a app) worldSpawnProfile() error {
+	worldNames, err := a.listManagedWorldNames()
 	if err != nil {
-		return false, err
-	}
-	var cfg portalsConfig
-	if err := yaml.Unmarshal(b, &cfg); err != nil {
-		return false, fmt.Errorf("parse portals config %s: %w", src, err)
-	}
-	if cfg.Portals == nil {
-		cfg.Portals = map[string]portalDef{}
-	}
-	if err := a.applyReturnGatePortalAnchors(&cfg); err != nil {
-		return false, err
-	}
-	out, err := yaml.Marshal(cfg)
-	if err != nil {
-		return false, err
-	}
-	if err := os.WriteFile(dst, out, 0o644); err != nil {
-		return false, err
-	}
-	fmt.Printf("synced mainhall portals config: %s -> %s\n", src, dst)
-	return true, nil
-}
-
-func (a app) restartWorldPreservePortals() error {
-	portalsPath := filepath.Join(a.wslDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
-	backupPath := filepath.Join("/tmp", "mcserver-portals.yml")
-	if fileExists(portalsPath) {
-		b, err := os.ReadFile(portalsPath)
-		if err != nil {
-			return err
-		}
-		if err := os.WriteFile(backupPath, b, 0o644); err != nil {
-			return err
-		}
-	}
-	if err := a.compose("down"); err != nil {
 		return err
 	}
-	if fileExists(backupPath) {
-		b, err := os.ReadFile(backupPath)
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(filepath.Dir(portalsPath), 0o755); err != nil {
-			return err
-		}
-		if err := os.WriteFile(portalsPath, b, 0o644); err != nil {
-			return err
-		}
-	}
-	return a.compose("up", "-d", "--remove-orphans")
-}
-
-func (a app) applyReturnGatePortalAnchors(cfg *portalsConfig) error {
-	for _, worldName := range []string{"residence", "resource", "factory"} {
-		key := "gate_" + worldName + "_to_mainhall"
-		p, ok := cfg.Portals[key]
-		if !ok {
-			continue
-		}
+	profile := spawnProfile{Worlds: map[string]spawnProfileWorld{}}
+	for _, worldName := range worldNames {
 		y, ok, err := a.resolveWorldSurfaceY(worldName)
 		if err != nil {
 			return err
 		}
 		if !ok {
-			return fmt.Errorf("could not resolve spawn y for return gate world %q", worldName)
+			return fmt.Errorf("surface y could not be resolved for world %q", worldName)
 		}
-		p.Location = fmt.Sprintf("%s:-1,%d,-8:1,%d,-8", worldName, y+1, y+3)
-		cfg.Portals[key] = p
+		anchorY := y - 32
+		dimension := worldDimensionID(worldName)
+		worldTag := "mcserver_spawn_anchor_" + worldName
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add 0 0", dimension)); err != nil {
+			return err
+		}
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run kill @e[type=minecraft:marker,tag=%s]", dimension, worldTag)); err != nil {
+			return err
+		}
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run summon minecraft:marker 0 %d 0 {Tags:[\"mcserver_spawn_anchor\",\"%s\"],NoGravity:1b,Invisible:1b,Invulnerable:1b}", dimension, anchorY, worldTag)); err != nil {
+			return err
+		}
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run setworldspawn 0 %d 0", dimension, y)); err != nil {
+			return err
+		}
+		if err := a.sendConsole(fmt.Sprintf("mvsetspawn %s:0,%d,0 --unsafe", worldName, y)); err != nil {
+			return err
+		}
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload remove 0 0", dimension)); err != nil {
+			return err
+		}
+		profile.Worlds[worldName] = spawnProfileWorld{
+			SurfaceY: y,
+			AnchorY:  anchorY,
+		}
 	}
+	if err := a.saveSpawnProfile(profile); err != nil {
+		return err
+	}
+	fmt.Printf("profiled world spawn data for %d worlds\n", len(profile.Worlds))
 	return nil
 }
 
-func (a app) syncWorldSpawn(worldName string) error {
-	y, ok, err := a.resolveWorldSurfaceY(worldName)
+func (a app) worldSpawnStage() error {
+	worldNames, err := a.listManagedWorldNames()
 	if err != nil {
 		return err
 	}
-	if !ok {
-		return fmt.Errorf("surface y could not be resolved for world %q", worldName)
-	}
-	dimension := worldDimensionID(worldName)
-	if err := a.sendConsole(fmt.Sprintf("execute in %s run setworldspawn 0 %d 0", dimension, y)); err != nil {
+	profile, err := a.loadSpawnProfile()
+	if err != nil {
 		return err
 	}
-	if err := a.sendConsole(fmt.Sprintf("mvsetspawn %s:0,%d,0 --unsafe", worldName, y)); err != nil {
+	data, err := buildSpawnTemplateData(worldNames, profile)
+	if err != nil {
 		return err
 	}
+	if err := a.ensureRuntimeDatapackScaffold(); err != nil {
+		return err
+	}
+	for _, worldName := range worldNames {
+		src := filepath.Join(a.wslDir, "worlds", worldName, "worldguard.regions.yml.tmpl")
+		dst := filepath.Join(a.wslDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
+		if err := renderTemplateFile(src, dst, data); err != nil {
+			return err
+		}
+	}
+	portalsSrc := filepath.Join(a.wslDir, "worlds", primaryWorldName, "portals.yml.tmpl")
+	portalsDst := filepath.Join(a.wslDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
+	if err := renderTemplateFile(portalsSrc, portalsDst, data); err != nil {
+		return err
+	}
+	hubSrc := filepath.Join(a.wslDir, "datapacks", "world-base", "data", "mcserver", "function", "world", "hub_layout.mcfunction.tmpl")
+	hubDst := filepath.Join(a.wslDir, "runtime", "world", primaryWorldName, "datapacks", "world-base", "data", "mcserver", "function", "world", "hub_layout.mcfunction")
+	if err := renderTemplateFile(hubSrc, hubDst, data); err != nil {
+		return err
+	}
+	if err := a.sendConsole("reload"); err != nil {
+		return err
+	}
+	if err := a.sendConsole("wg reload"); err != nil {
+		return err
+	}
+	if err := a.sendConsole("mvp reload"); err != nil {
+		return err
+	}
+	fmt.Printf("staged world spawn runtime configs for %d worlds\n", len(worldNames))
+	return nil
+}
+
+func (a app) worldSpawnApply() error {
+	worldNames, err := a.listManagedWorldNames()
+	if err != nil {
+		return err
+	}
+	profile, err := a.loadSpawnProfile()
+	if err != nil {
+		return err
+	}
+	if _, err := buildSpawnTemplateData(worldNames, profile); err != nil {
+		return err
+	}
+	if err := a.sendConsole("reload"); err != nil {
+		return err
+	}
+	for _, worldName := range worldNames {
+		p := profile.Worlds[worldName]
+		dimension := worldDimensionID(worldName)
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add 0 0", dimension)); err != nil {
+			return err
+		}
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run execute positioned 0 %d 0 run function mcserver:world/hub_layout", dimension, p.SurfaceY)); err != nil {
+			return err
+		}
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload remove 0 0", dimension)); err != nil {
+			return err
+		}
+	}
+	fmt.Printf("applied spawn layout for %d worlds\n", len(worldNames))
 	return nil
 }
 
@@ -553,30 +523,109 @@ func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
 	return int(yf), true, nil
 }
 
-func (a app) syncWorldGuardRegionsConfig(worldName string) (bool, error) {
-	src := filepath.Join(a.wslDir, "worlds", worldName, "worldguard.regions.yml")
+func (a app) ensureRuntimeDatapackScaffold() error {
+	root := filepath.Join(a.wslDir, "runtime", "world", primaryWorldName, "datapacks", "world-base")
+	if err := os.MkdirAll(filepath.Join(root, "data", "mcserver", "function", "world"), 0o755); err != nil {
+		return err
+	}
+	packPath := filepath.Join(root, "pack.mcmeta")
+	if fileExists(packPath) {
+		return nil
+	}
+	const pack = "{\n  \"pack\": {\n    \"pack_format\": 81,\n    \"description\": \"World baseline settings\"\n  }\n}\n"
+	return os.WriteFile(packPath, []byte(pack), 0o644)
+}
+
+func (a app) listManagedWorldNames() ([]string, error) {
+	cfgs, err := a.listWorldConfigs()
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(cfgs))
+	for _, cfgPath := range cfgs {
+		cfg, err := loadWorldConfig(cfgPath)
+		if err != nil {
+			return nil, err
+		}
+		if cfg.Name == primaryWorldName {
+			continue
+		}
+		names = append(names, cfg.Name)
+	}
+	sort.Strings(names)
+	return names, nil
+}
+
+func (a app) loadSpawnProfile() (spawnProfile, error) {
+	path := filepath.Join(a.wslDir, spawnProfilePath)
+	if !fileExists(path) {
+		return spawnProfile{}, fmt.Errorf("spawn profile not found: run `wslctl world spawn profile` first")
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return spawnProfile{}, err
+	}
+	var p spawnProfile
+	if err := yaml.Unmarshal(b, &p); err != nil {
+		return spawnProfile{}, fmt.Errorf("parse spawn profile %s: %w", path, err)
+	}
+	if p.Worlds == nil {
+		p.Worlds = map[string]spawnProfileWorld{}
+	}
+	return p, nil
+}
+
+func (a app) saveSpawnProfile(p spawnProfile) error {
+	path := filepath.Join(a.wslDir, spawnProfilePath)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	b, err := yaml.Marshal(p)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, b, 0o644)
+}
+
+func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTemplateData, error) {
+	data := spawnTemplateData{Worlds: map[string]spawnTemplateWorld{}}
+	for _, worldName := range worldNames {
+		p, ok := profile.Worlds[worldName]
+		if !ok {
+			return spawnTemplateData{}, fmt.Errorf("spawn profile for world %q is missing: run `wslctl world spawn profile` first", worldName)
+		}
+		data.Worlds[worldName] = spawnTemplateWorld{
+			SurfaceY:       p.SurfaceY,
+			AnchorY:        p.AnchorY,
+			ReturnGateMinY: p.SurfaceY + 1,
+			ReturnGateMaxY: p.SurfaceY + 3,
+			RegionMinY:     p.SurfaceY + 46,
+			RegionMaxY:     p.SurfaceY + 86,
+		}
+	}
+	return data, nil
+}
+
+func renderTemplateFile(src, dst string, data any) error {
 	if !fileExists(src) {
-		return false, nil
+		return fmt.Errorf("missing template file: %s", src)
 	}
-	dst := filepath.Join(a.wslDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
+	b, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	tpl, err := template.New(filepath.Base(src)).Option("missingkey=error").Parse(string(b))
+	if err != nil {
+		return fmt.Errorf("parse template %s: %w", src, err)
+	}
+	var out bytes.Buffer
+	if err := tpl.Execute(&out, data); err != nil {
+		return fmt.Errorf("render template %s: %w", src, err)
+	}
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return false, err
+		return err
 	}
-	in, err := os.Open(src)
-	if err != nil {
-		return false, err
-	}
-	defer in.Close()
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
-	if err != nil {
-		return false, err
-	}
-	defer out.Close()
-	if _, err := io.Copy(out, in); err != nil {
-		return false, err
-	}
-	fmt.Printf("synced worldguard regions: %s -> %s\n", src, dst)
-	return true, nil
+	return os.WriteFile(dst, out.Bytes(), 0o644)
 }
 
 func (a app) listWorldConfigs() ([]string, error) {

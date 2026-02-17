@@ -10,9 +10,6 @@ func (a app) compose(args ...string) error {
 }
 
 func (a app) serverUp() error {
-	if err := a.syncStaticRuntimeConfigs(); err != nil {
-		return err
-	}
 	return a.compose("up", "-d", "--remove-orphans")
 }
 
@@ -41,24 +38,4 @@ func (a app) serverLogs(service string) error {
 
 func (a app) serverReload() error {
 	return a.sendConsole("reload")
-}
-
-func (a app) syncStaticRuntimeConfigs() error {
-	if _, err := a.syncWorldGuardRegionsConfig(primaryWorldName); err != nil {
-		return err
-	}
-	cfgs, err := a.listWorldConfigs()
-	if err != nil {
-		return err
-	}
-	for _, cfgPath := range cfgs {
-		cfg, err := loadWorldConfig(cfgPath)
-		if err != nil {
-			return err
-		}
-		if _, err := a.syncWorldGuardRegionsConfig(cfg.Name); err != nil {
-			return err
-		}
-	}
-	return nil
 }

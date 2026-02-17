@@ -54,6 +54,30 @@ func newWorldCmd(a app) *cobra.Command {
 	setupCmd.Flags().StringVar(&worldName, "world", "", "target world name")
 	cmd.AddCommand(setupCmd)
 
+	spawnCmd := &cobra.Command{Use: "spawn", Short: "spawn profile and layout operations"}
+	spawnCmd.AddCommand(&cobra.Command{
+		Use:   "profile",
+		Short: "probe surface Y and set anchor/spawn for managed worlds",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.worldSpawnProfile()
+		},
+	})
+	spawnCmd.AddCommand(&cobra.Command{
+		Use:   "stage",
+		Short: "render spawn templates into runtime and reload",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.worldSpawnStage()
+		},
+	})
+	spawnCmd.AddCommand(&cobra.Command{
+		Use:   "apply",
+		Short: "apply hub layout function at profiled spawn coordinates",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.worldSpawnApply()
+		},
+	})
+	cmd.AddCommand(spawnCmd)
+
 	functionCmd := &cobra.Command{Use: "function", Short: "world function operations"}
 	functionCmd.AddCommand(&cobra.Command{
 		Use:   "run <id>",

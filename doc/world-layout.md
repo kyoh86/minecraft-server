@@ -61,47 +61,50 @@
   - 1行1コマンドで記述する
   - `wslctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
   - `mv` 系コマンドはここに書かず、`world.policy.yml` に記述する
-- `setup/wsl/worlds/<name>/worldguard.regions.yml`
-  - `WorldGuard` のリージョン定義
-  - `wslctl world setup` で runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ同期する
-  - 同期後は `wg reload` を実行して反映する
-- `setup/wsl/worlds/mainhall/portals.yml`
-  - `Multiverse-Portals` 用のポータル定義
-  - `wslctl world setup --world mainhall` で runtime へ同期する
-  - 反映にはサーバー再起動が必要
+  - 座標依存の function 実行はここに書かない
+- `setup/wsl/worlds/<name>/worldguard.regions.yml.tmpl`
+  - `WorldGuard` のリージョン定義テンプレート
+  - `wslctl world spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ描画する
+- `setup/wsl/worlds/mainhall/portals.yml.tmpl`
+  - `Multiverse-Portals` 用のポータル定義テンプレート
+  - `wslctl world spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
 
 ## Datapack とセットアップ
 
-- Datapack 配置元: `setup/wsl/datapacks/world-base`
-- Datapack 配置先: `setup/wsl/runtime/world/mainhall/datapacks/world-base`
+- Datapack テンプレート配置元: `setup/wsl/datapacks/world-base`
+- Datapack 出力先: `setup/wsl/runtime/world/mainhall/datapacks/world-base`
 - `mainhall` の地形生成は `setup/wsl/docker-compose.yml` の `LEVEL_TYPE=FLAT` で制御する
 - `mainhall` のセットアップは `minecraft:overworld` を対象に実行する
 - それ以外のワールドは `minecraft:<world>` を対象に実行する
 
 ## プリミティブ操作
 
-- `wslctl assets stage`
-  - Datapack を runtime 側へ配置する
-- `wslctl server reload`
-  - Datapack/function を再読み込みする
 - `wslctl world ensure`
   - world 定義に従って create/import する
   - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
 - `wslctl world setup [--world <name>]`
   - `setup.commands` を対象次元で実行する
-  - `mainhall` は Hub の施工範囲（`x/z=-12..12`）を覆う `-1..0` チャンクを `forceload` してから Hub function を適用し、完了後に解除する
-  - `residence/resource/factory` は `0,0` 列の地表Y（`motion_blocking_no_leaves`）を検出し、`setworldspawn` と `mvsetspawn` を同一座標へ同期する
-  - `mainhall` は固定座標運用（`setup.commands` の値を使用）とし、自動同期は行わない
   - `world.policy.yml` に定義された MV 管理項目を適用する
-  - `mainhall` では `portals.yml` の `*_to_mainhall` 入口Yも各ワールド地表Yに合わせて自動補正する
-  - ポータル反映のため、処理完了時に `world` コンテナを自動再起動する
+  - runtime 側に最小 datapack 骨格（`world-base`）を作成する
+- `wslctl world spawn profile`
+  - `residence/resource/factory` の地表Y（`motion_blocking_no_leaves`）を検出する
+  - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
+  - 各ワールドに `mcserver_spawn_anchor_<world>` marker を配置する
+  - `setworldspawn` と `mvsetspawn` を同期する
+- `wslctl world spawn stage`
+  - profile を必須入力として、`.tmpl` を runtime に描画する
+  - `worldguard.regions.yml.tmpl` / `portals.yml.tmpl` / `hub_layout.mcfunction.tmpl` を反映する
+  - `reload` / `wg reload` / `mvp reload` を実行する
+- `wslctl world spawn apply`
+  - profile の `surface_y` を使い、`execute in <dimension> run execute positioned ...` で
+    `mcserver:world/hub_layout` を適用する
 - `wslctl world regenerate <name>`
   - world を削除して再生成する（`deletable: true` のみ）
 
 ## 補足
 
-Datapack は最小構成として `mcserver:hello` のみを同梱している。
-現行運用のセットアップ実行経路は `wslctl world setup` のみとする。
+`world setup` は固定値適用のみを担当し、地表Y判定やポータル座標補正は行わない。
+座標依存の反映は `world spawn profile/stage/apply` のみで行う。
 
 ## hub_layout
 
@@ -119,18 +122,18 @@ wslctl world function run mcserver:mainhall/hub_layout
 西向き（`factory` 側）ゲートのガラス表示は、判定面への進入を妨げないよう
 `x=-9.4` に配置する。
 
-`residence` / `resource` / `factory` では `setup.commands` から
-`mcserver:world/hub_layout` を呼び出し、各ワールドの
-`motion_blocking_no_leaves` 高度に小ハブ（足場・フレーム・mainhall 帰還ゲート）を構築する。
+`residence` / `resource` / `factory` の小ハブは
+`wslctl world spawn apply` が profile 座標を基準に構築する。
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
-同時に `worldguard.regions.yml` の `spawn_protected` を同期し、
+同時に `worldguard.regions.yml.tmpl` の描画結果により
 スポーン周辺での建設・破壊・爆破を禁止する。
 
-`Multiverse-Portals` のポータル定義を適用する場合:
+`Multiverse-Portals` と `WorldGuard` のテンプレート反映:
 
 ```console
-wslctl world setup --world mainhall
-wslctl server restart
+wslctl world spawn profile
+wslctl world spawn stage
+wslctl world spawn apply
 ```
 
 `mainhall` の入口ポータルはゲート面に合わせて定義する

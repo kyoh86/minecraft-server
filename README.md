@@ -19,8 +19,10 @@
   - ワールド運用ポリシー（`mv modify` で適用）
 - `setup/wsl/worlds/*/setup.commands`
   - ワールド初期化コマンド（1行1コマンド）
-- `setup/wsl/worlds/*/worldguard.regions.yml`
-  - スポーン周辺保護リージョン定義（WorldGuard）
+- `setup/wsl/worlds/*/worldguard.regions.yml.tmpl`
+  - スポーン周辺保護リージョン定義テンプレート（WorldGuard）
+- `setup/wsl/worlds/mainhall/portals.yml.tmpl`
+  - 帰還ポータル定義テンプレート（Multiverse-Portals）
 
 ## CLI 方針
 
@@ -28,10 +30,10 @@
 
 - `setup` : 初期ディレクトリ作成
 - `server` : 起動・停止・ログ・reload
-- `assets` : Datapack などの配置
 - `world` : world create/import・再生成・セットアップ適用
   - `setup.commands` を対象次元で実行
-  - `world.policy.yml` にある MV 管理項目も適用
+  - `world.policy.yml` にある MV 管理項目を適用
+  - `spawn profile/stage/apply` でYプロファイル・テンプレ反映・レイアウト適用
 - `player` : op/admin 権限操作
 
 ## 典型フロー（初回）
@@ -39,18 +41,19 @@
 ```console
 wslctl setup init
 wslctl server up
-wslctl assets stage
-wslctl server reload
 wslctl world ensure
 wslctl world setup
+wslctl world spawn profile
+wslctl world spawn stage
+wslctl world spawn apply
 ```
 
 ## 典型フロー（設定変更反映）
 
 ```console
-wslctl assets stage
-wslctl server reload
 wslctl world setup --world mainhall
+wslctl world spawn stage
+wslctl world spawn apply
 ```
 
 ## 典型フロー（1ワールド再生成）
@@ -66,12 +69,14 @@ wslctl world setup --world resource
 
 - `make setup-init`
 - `make server-up`
-- `make assets-stage`
 - `make world-ensure`
 - `make world-regenerate WORLD=resource`
 - `make world-drop WORLD=resource`
 - `make world-delete WORLD=resource`
 - `make world-setup WORLD=mainhall`
+- `make world-spawn-profile`
+- `make world-spawn-stage`
+- `make world-spawn-apply`
 
 ## ドキュメント
 

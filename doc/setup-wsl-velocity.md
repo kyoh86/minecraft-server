@@ -17,8 +17,7 @@
 
 - `wslctl setup init`
 - `wslctl server up|down|restart|ps|logs|reload`
-- `wslctl assets stage`
-- `wslctl world ensure|regenerate|setup|function run`
+- `wslctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
 - `wslctl world drop|delete`
 - `wslctl player op ...|admin ...`
 
@@ -31,20 +30,21 @@
 ```console
 wslctl setup init
 wslctl server up
-wslctl assets stage
-wslctl server reload
 wslctl world ensure
 wslctl world setup
+wslctl world spawn profile
+wslctl world spawn stage
+wslctl world spawn apply
 ```
 
 ## 設定変更の反映
 
-Datapack / mcfunction を更新した場合は次を実行する。
+設定変更を反映する場合は次を実行する。
 
 ```console
-wslctl assets stage
-wslctl server reload
 wslctl world setup
+wslctl world spawn stage
+wslctl world spawn apply
 ```
 
 特定ワールドだけセットアップを適用したい場合:
@@ -56,11 +56,10 @@ wslctl world setup --world mainhall
 `mainhall` は `LEVEL` 基底ワールドのため `world.env.yml` は持たず、
 `setup/wsl/worlds/mainhall/setup.commands` を読み込んで適用する。
 `mainhall` の MV 管理項目は `setup/wsl/worlds/mainhall/world.policy.yml` で管理する。
-`setup/wsl/worlds/mainhall/portals.yml` がある場合は runtime の
-`plugins/Multiverse-Portals/portals.yml` へ同期する。
-`setup/wsl/worlds/<world>/worldguard.regions.yml` がある場合は runtime の
-`plugins/WorldGuard/worlds/<world>/regions.yml` へ同期し、`wg reload` を実行する。
-ポータル定義反映には `wslctl server restart` が必要。
+`wslctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
+座標依存の反映は `wslctl world spawn profile/stage/apply` で行う。
+テンプレートは `setup/wsl/worlds/mainhall/portals.yml.tmpl` と
+`setup/wsl/worlds/<world>/worldguard.regions.yml.tmpl` を使用する。
 
 ## ワールド再生成
 
@@ -69,6 +68,9 @@ wslctl world setup --world mainhall
 ```console
 wslctl world regenerate resource
 wslctl world setup --world resource
+wslctl world spawn profile
+wslctl world spawn stage
+wslctl world spawn apply
 ```
 
 ## ワールド drop / delete
@@ -115,12 +117,14 @@ wslctl server down
 - `make server-ps`
 - `make server-logs`
 - `make server-reload`
-- `make assets-stage`
 - `make world-ensure`
 - `make world-regenerate WORLD=<name>`
 - `make world-drop WORLD=<name>`
 - `make world-delete WORLD=<name>`
 - `make world-setup [WORLD=<name>]`
+- `make world-spawn-profile`
+- `make world-spawn-stage`
+- `make world-spawn-apply`
 - `make world-function FUNCTION=<id>`
 - `make player-op-grant PLAYER=<id>`
 - `make player-op-revoke PLAYER=<id>`

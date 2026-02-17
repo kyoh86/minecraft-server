@@ -4,8 +4,8 @@ WSLCTL := $(GO_ENV) go run ./cmd/wslctl
 .PHONY: \
 	setup-init \
 	server-up server-down server-restart server-ps server-logs server-reload \
-	assets-stage \
 	world-ensure world-regenerate world-drop world-delete world-setup world-function \
+	world-spawn-profile world-spawn-stage world-spawn-apply \
 	player-op-grant player-op-revoke player-admin-grant player-admin-revoke
 
 setup-init:
@@ -28,9 +28,6 @@ server-logs:
 
 server-reload:
 	$(WSLCTL) server reload
-
-assets-stage:
-	$(WSLCTL) assets stage
 
 world-ensure:
 	$(WSLCTL) world ensure
@@ -57,6 +54,15 @@ world-setup:
 world-function:
 	@test -n "$(FUNCTION)" || (echo "FUNCTION is required. e.g. make world-function FUNCTION=mcserver:world_settings" && exit 1)
 	$(WSLCTL) world function run $(FUNCTION)
+
+world-spawn-profile:
+	$(WSLCTL) world spawn profile
+
+world-spawn-stage:
+	$(WSLCTL) world spawn stage
+
+world-spawn-apply:
+	$(WSLCTL) world spawn apply
 
 player-op-grant:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make player-op-grant PLAYER=kyoh86" && exit 1)
