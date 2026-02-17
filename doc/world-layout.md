@@ -122,6 +122,7 @@ wslctl world function run mcserver:mainhall/hub_layout
 `residence` / `resource` / `factory` では `setup.commands` から
 `mcserver:world/hub_layout` を呼び出し、各ワールドの
 `motion_blocking_no_leaves` 高度に小ハブ（足場・フレーム・mainhall 帰還ゲート）を構築する。
+小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
 同時に `worldguard.regions.yml` の `spawn_protected` を同期し、
 スポーン周辺での建設・破壊・爆破を禁止する。
 
