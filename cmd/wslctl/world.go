@@ -21,11 +21,11 @@ const primaryWorldName = "mainhall"
 const spawnProfilePath = "runtime/world/.wslctl/spawn-profile.yml"
 
 func (a app) initRuntime() error {
-	runtimeDir := filepath.Join(a.wslDir, "runtime", "world")
+	runtimeDir := filepath.Join(a.baseDir, "runtime", "world")
 	if err := os.MkdirAll(runtimeDir, 0o755); err != nil {
 		return err
 	}
-	fmt.Printf("Initialized: %s\n", filepath.Join(a.wslDir, "runtime"))
+	fmt.Printf("Initialized: %s\n", filepath.Join(a.baseDir, "runtime"))
 	return nil
 }
 
@@ -69,7 +69,7 @@ func (a app) worldEnsure() error {
 		return err
 	}
 
-	fmt.Printf("ensured worlds from %s\n", filepath.Join(a.wslDir, "worlds"))
+	fmt.Printf("ensured worlds from %s\n", filepath.Join(a.baseDir, "worlds"))
 	return nil
 }
 
@@ -79,7 +79,7 @@ func (a app) worldRegenerate(target string) error {
 		return errors.New("world name is required")
 	}
 
-	cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
+	cfgPath := filepath.Join(a.baseDir, "worlds", target, "world.env.yml")
 	cfg, err := loadWorldConfig(cfgPath)
 	if err != nil {
 		return err
@@ -96,9 +96,9 @@ func (a app) worldRegenerate(target string) error {
 	}
 
 	for _, p := range []string{
-		filepath.Join(a.wslDir, "runtime", "world", target),
-		filepath.Join(a.wslDir, "runtime", "world", target+"_nether"),
-		filepath.Join(a.wslDir, "runtime", "world", target+"_the_end"),
+		filepath.Join(a.baseDir, "runtime", "world", target),
+		filepath.Join(a.baseDir, "runtime", "world", target+"_nether"),
+		filepath.Join(a.baseDir, "runtime", "world", target+"_the_end"),
 	} {
 		if err := os.RemoveAll(p); err != nil {
 			return err
@@ -151,7 +151,7 @@ func (a app) worldDelete(target string, yes bool) error {
 		return errors.New("delete requires --yes")
 	}
 
-	cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
+	cfgPath := filepath.Join(a.baseDir, "worlds", target, "world.env.yml")
 	cfg, err := loadWorldConfig(cfgPath)
 	if err != nil {
 		return err
@@ -164,9 +164,9 @@ func (a app) worldDelete(target string, yes bool) error {
 		return err
 	}
 	paths := []string{
-		filepath.Join(a.wslDir, "runtime", "world", target),
-		filepath.Join(a.wslDir, "runtime", "world", target+"_nether"),
-		filepath.Join(a.wslDir, "runtime", "world", target+"_the_end"),
+		filepath.Join(a.baseDir, "runtime", "world", target),
+		filepath.Join(a.baseDir, "runtime", "world", target+"_nether"),
+		filepath.Join(a.baseDir, "runtime", "world", target+"_the_end"),
 	}
 	for _, p := range paths {
 		if err := os.RemoveAll(p); err != nil {
@@ -184,7 +184,7 @@ func (a app) worldSetup(target string) error {
 	}
 	if target != "" {
 		if target != primaryWorldName {
-			cfgPath := filepath.Join(a.wslDir, "worlds", target, "world.env.yml")
+			cfgPath := filepath.Join(a.baseDir, "worlds", target, "world.env.yml")
 			cfg, err := loadWorldConfig(cfgPath)
 			if err != nil {
 				return err
@@ -229,7 +229,7 @@ func (a app) worldSetup(target string) error {
 	if err := a.pruneMainhallExtraDimensions(); err != nil {
 		return err
 	}
-	fmt.Printf("setup worlds from %s\n", filepath.Join(a.wslDir, "worlds"))
+	fmt.Printf("setup worlds from %s\n", filepath.Join(a.baseDir, "worlds"))
 	return nil
 }
 
@@ -255,7 +255,7 @@ func (a app) ensureWorld(cfg worldConfig, forceCreate bool) error {
 			return nil
 		}
 
-		onDisk := fileExists(filepath.Join(a.wslDir, "runtime", "world", cfg.Name))
+		onDisk := fileExists(filepath.Join(a.baseDir, "runtime", "world", cfg.Name))
 		if onDisk {
 			return a.sendConsole(fmt.Sprintf("mv import %s %s", cfg.Name, cfg.Environment))
 		}
@@ -279,7 +279,7 @@ func worldDimensionID(worldName string) string {
 }
 
 func (a app) loadWorldSetupCommands(worldName string) ([]string, bool, error) {
-	path := filepath.Join(a.wslDir, "worlds", worldName, "setup.commands")
+	path := filepath.Join(a.baseDir, "worlds", worldName, "setup.commands")
 	if !fileExists(path) {
 		return nil, false, nil
 	}
@@ -421,14 +421,14 @@ func (a app) worldSpawnStage() error {
 		return err
 	}
 	for _, worldName := range worldNames {
-		src := filepath.Join(a.wslDir, "worlds", worldName, "worldguard.regions.yml.tmpl")
-		dst := filepath.Join(a.wslDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
+		src := filepath.Join(a.baseDir, "worlds", worldName, "worldguard.regions.yml.tmpl")
+		dst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
 		if err := renderTemplateFile(src, dst, data); err != nil {
 			return err
 		}
 	}
-	portalsSrc := filepath.Join(a.wslDir, "worlds", primaryWorldName, "portals.yml.tmpl")
-	portalsDst := filepath.Join(a.wslDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
+	portalsSrc := filepath.Join(a.baseDir, "worlds", primaryWorldName, "portals.yml.tmpl")
+	portalsDst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
 	if err := renderTemplateFile(portalsSrc, portalsDst, data); err != nil {
 		return err
 	}
@@ -491,7 +491,7 @@ func (a app) worldSpawnApply() error {
 
 func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
 	dimension := worldDimensionID(worldName)
-	composeFile := filepath.Join(a.wslDir, "docker-compose.yml")
+	composeFile := a.composeFilePath()
 	tag := fmt.Sprintf("mcserver_yprobe_%d", time.Now().UnixNano())
 	re := regexp.MustCompile(`Marker has the following entity data:\s*(-?\d+(?:\.\d+)?)d?`)
 
@@ -531,8 +531,8 @@ func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
 }
 
 func (a app) ensureRuntimeDatapackScaffold() error {
-	srcDir := filepath.Join(a.wslDir, "datapacks", "world-base")
-	dstRoot := filepath.Join(a.wslDir, "runtime", "world", primaryWorldName, "datapacks")
+	srcDir := filepath.Join(a.baseDir, "datapacks", "world-base")
+	dstRoot := filepath.Join(a.baseDir, "runtime", "world", primaryWorldName, "datapacks")
 	dstDir := filepath.Join(dstRoot, "world-base")
 	if !fileExists(srcDir) {
 		return fmt.Errorf("missing datapack source: %s", srcDir)
@@ -570,7 +570,7 @@ func (a app) listManagedWorldNames() ([]string, error) {
 }
 
 func (a app) loadSpawnProfile() (spawnProfile, error) {
-	path := filepath.Join(a.wslDir, spawnProfilePath)
+	path := filepath.Join(a.baseDir, spawnProfilePath)
 	if !fileExists(path) {
 		return spawnProfile{}, fmt.Errorf("spawn profile not found: run `wslctl world spawn profile` first")
 	}
@@ -589,7 +589,7 @@ func (a app) loadSpawnProfile() (spawnProfile, error) {
 }
 
 func (a app) saveSpawnProfile(p spawnProfile) error {
-	path := filepath.Join(a.wslDir, spawnProfilePath)
+	path := filepath.Join(a.baseDir, spawnProfilePath)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
@@ -642,7 +642,7 @@ func renderTemplateFile(src, dst string, data any) error {
 }
 
 func (a app) listWorldConfigs() ([]string, error) {
-	root := filepath.Join(a.wslDir, "worlds")
+	root := filepath.Join(a.baseDir, "worlds")
 	entries, err := os.ReadDir(root)
 	if err != nil {
 		return nil, err
@@ -662,7 +662,7 @@ func (a app) listWorldConfigs() ([]string, error) {
 }
 
 func (a app) loadWorldPolicy(worldName string) (worldPolicy, bool, error) {
-	path := filepath.Join(a.wslDir, "worlds", worldName, "world.policy.yml")
+	path := filepath.Join(a.baseDir, "worlds", worldName, "world.policy.yml")
 	if !fileExists(path) {
 		return worldPolicy{}, false, nil
 	}
@@ -696,7 +696,7 @@ func loadWorldConfig(path string) (worldConfig, error) {
 }
 
 func (a app) worldRegisteredInMultiverse(worldName string) (bool, error) {
-	path := filepath.Join(a.wslDir, "runtime", "world", "plugins", "Multiverse-Core", "worlds.yml")
+	path := filepath.Join(a.baseDir, "runtime", "world", "plugins", "Multiverse-Core", "worlds.yml")
 	if !fileExists(path) {
 		return false, nil
 	}

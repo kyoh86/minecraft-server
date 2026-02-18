@@ -6,7 +6,7 @@ func newSetupCmd(a app) *cobra.Command {
 	cmd := &cobra.Command{Use: "setup", Short: "setup operations"}
 	cmd.AddCommand(&cobra.Command{
 		Use:   "init",
-		Short: "initialize setup/wsl/runtime directories",
+		Short: "initialize runtime directories",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return a.initRuntime()
 		},

@@ -38,23 +38,23 @@
 
 ## 構成
 
-- `setup/wsl/docker-compose.yml`
+- `infra/docker-compose.yml`
   - `world` コンテナ（`itzg/minecraft-server:java21`）
   - 公開ポート `25565`
   - `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を自動導入
-- `setup/wsl/runtime/world`
+- `runtime/world`
   - サーバーデータ永続化先
-- `setup/wsl/datapacks/world-base`
+- `datapacks/world-base`
   - ワールド初期化用 Datapack（runtime へそのままコピー）
-- `setup/wsl/worlds/*/world.env.yml`
+- `worlds/*/world.env.yml`
   - Multiverse 管理ワールド（`residence/resource/factory`）の作成/import用定義
-- `setup/wsl/worlds/*/world.policy.yml`
+- `worlds/*/world.policy.yml`
   - ワールド運用ポリシー（`mv modify` で適用）
-- `setup/wsl/worlds/*/setup.commands`
+- `worlds/*/setup.commands`
   - ワールド初期化コマンド（1行1コマンド）
-- `setup/wsl/worlds/*/worldguard.regions.yml.tmpl`
+- `worlds/*/worldguard.regions.yml.tmpl`
   - スポーン周辺保護リージョン定義テンプレート（WorldGuard）
-- `setup/wsl/worlds/mainhall/portals.yml.tmpl`
+- `worlds/mainhall/portals.yml.tmpl`
   - 帰還ポータル定義テンプレート（Multiverse-Portals）
 
 ## CLI 方針

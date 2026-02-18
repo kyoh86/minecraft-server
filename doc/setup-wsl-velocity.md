@@ -15,7 +15,7 @@
 
 ## 導入プラグイン
 
-`setup/wsl/docker-compose.yml` の `MODRINTH_PROJECTS` で以下を導入する。
+`infra/docker-compose.yml` の `MODRINTH_PROJECTS` で以下を導入する。
 
 - `multiverse-core`
 - `multiverse-portals`
@@ -25,12 +25,12 @@
 
 あわせて、ローカル配布プラグインを以下で導入する。
 
-- `setup/wsl/plugins/ClickMobs/config.yml`
+- `infra/plugins/ClickMobs/config.yml`
   - `ClickMobs` 本体設定
   - `whitelisted_mobs: [?all]` により全モブを捕獲可能にする
-- `setup/wsl/plugins/ClickMobsRegionGuard.jar`
+- `infra/plugins/ClickMobsRegionGuard.jar`
   - ワールドガードのリージョンIDに基づき `ClickMobs` を制御する
-- `setup/wsl/plugins/ClickMobsRegionGuard/config.yml`
+- `infra/plugins/ClickMobsRegionGuard/config.yml`
   - `allowed_regions.<world>` に許可リージョンIDを列挙する
 
 ## コマンド体系
@@ -74,12 +74,12 @@ wslctl world setup --world mainhall
 ```
 
 `mainhall` は `LEVEL` 基底ワールドのため `world.env.yml` は持たず、
-`setup/wsl/worlds/mainhall/setup.commands` を読み込んで適用する。
-`mainhall` の MV 管理項目は `setup/wsl/worlds/mainhall/world.policy.yml` で管理する。
+`worlds/mainhall/setup.commands` を読み込んで適用する。
+`mainhall` の MV 管理項目は `worlds/mainhall/world.policy.yml` で管理する。
 `wslctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
 座標依存の反映は `wslctl world spawn profile/stage/apply` で行う。
-テンプレートは `setup/wsl/worlds/mainhall/portals.yml.tmpl` と
-`setup/wsl/worlds/<world>/worldguard.regions.yml.tmpl` を使用する。
+テンプレートは `worlds/mainhall/portals.yml.tmpl` と
+`worlds/<world>/worldguard.regions.yml.tmpl` を使用する。
 
 ## ワールド再生成
 

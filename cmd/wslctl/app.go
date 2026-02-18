@@ -20,7 +20,7 @@ type worldPolicy struct {
 
 type app struct {
 	repoRoot string
-	wslDir   string
+	baseDir  string
 }
 
 func newApp() (app, error) {
@@ -28,7 +28,11 @@ func newApp() (app, error) {
 	if err != nil {
 		return app{}, err
 	}
-	return app{repoRoot: repoRoot, wslDir: filepath.Join(repoRoot, "setup", "wsl")}, nil
+	return app{repoRoot: repoRoot, baseDir: repoRoot}, nil
+}
+
+func (a app) composeFilePath() string {
+	return filepath.Join(a.baseDir, "infra", "docker-compose.yml")
 }
 
 func findRepoRoot() (string, error) {
@@ -37,12 +41,13 @@ func findRepoRoot() (string, error) {
 		return "", err
 	}
 	for dir := cwd; ; dir = filepath.Dir(dir) {
-		if fileExists(filepath.Join(dir, "setup", "wsl")) {
+		if fileExists(filepath.Join(dir, "infra", "docker-compose.yml")) &&
+			fileExists(filepath.Join(dir, "worlds", "schema.json")) {
 			return dir, nil
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return "", errors.New("could not find repo root (setup/wsl not found)")
+			return "", errors.New("could not find repo root (infra/docker-compose.yml not found)")
 		}
 	}
 }

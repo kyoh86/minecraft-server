@@ -42,38 +42,38 @@
 
 ## 定義場所
 
-- `setup/wsl/worlds/schema.json`
+- `worlds/schema.json`
   - `world.env.yml` 用 JSON Schema
-- `setup/wsl/worlds/policy.schema.json`
+- `worlds/policy.schema.json`
   - `world.policy.yml` 用 JSON Schema
-- `setup/wsl/worlds/<name>/world.env.yml`
+- `worlds/<name>/world.env.yml`
   - 対象は Multiverse 管理ワールド（`residence` / `resource` / `factory`）
   - 先頭に `# yaml-language-server: $schema=../schema.json` を記述
   - `name` / `environment` / `world_type` / `seed` / `deletable`
-- `setup/wsl/worlds/<name>/world.policy.yml`
+- `worlds/<name>/world.policy.yml`
   - 対象は全ワールド（`mainhall` を含む）
   - 先頭に `# yaml-language-server: $schema=../policy.schema.json` を記述
   - `mv_set` に `mv modify <world> set ...` の項目を記述する
   - `mainhall` は `gamemode=adventure` などの Hub 制約を管理し、
     `residence/resource/factory` は `difficulty/pvp/gamemode` を管理する
-- `setup/wsl/worlds/<name>/setup.commands`
+- `worlds/<name>/setup.commands`
   - 対象は全ワールド（`mainhall` を含む）
   - 1行1コマンドで記述する
   - `wslctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
   - `mv` 系コマンドはここに書かず、`world.policy.yml` に記述する
   - 座標依存の function 実行はここに書かない
-- `setup/wsl/worlds/<name>/worldguard.regions.yml.tmpl`
+- `worlds/<name>/worldguard.regions.yml.tmpl`
   - `WorldGuard` のリージョン定義テンプレート
   - `wslctl world spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ描画する
-- `setup/wsl/worlds/mainhall/portals.yml.tmpl`
+- `worlds/mainhall/portals.yml.tmpl`
   - `Multiverse-Portals` 用のポータル定義テンプレート
   - `wslctl world spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
 
 ## Datapack とセットアップ
 
-- Datapack 配置元: `setup/wsl/datapacks/world-base`
-- Datapack 出力先: `setup/wsl/runtime/world/mainhall/datapacks/world-base`
-- `mainhall` の地形生成は `setup/wsl/docker-compose.yml` の `LEVEL_TYPE=FLAT` で制御する
+- Datapack 配置元: `datapacks/world-base`
+- Datapack 出力先: `runtime/world/mainhall/datapacks/world-base`
+- `mainhall` の地形生成は `infra/docker-compose.yml` の `LEVEL_TYPE=FLAT` で制御する
 - `mainhall` のセットアップは `minecraft:overworld` を対象に実行する
 - それ以外のワールドは `minecraft:<world>` を対象に実行する
 
@@ -154,8 +154,8 @@ wslctl world spawn apply
 
 ## ClickMobs のリージョン制御
 
-`setup/wsl/plugins/ClickMobsRegionGuard.jar` を導入し、
-`setup/wsl/plugins/ClickMobsRegionGuard/config.yml` の
+`infra/plugins/ClickMobsRegionGuard.jar` を導入し、
+`infra/plugins/ClickMobsRegionGuard/config.yml` の
 `allowed_regions.<world>` に許可リージョンIDを列挙する。
 
 ```yaml
@@ -171,6 +171,6 @@ allowed_regions:
 
 列挙したリージョン内でのみ `ClickMobs` の捕獲・設置操作を許可する。
 リージョン外では `ClickMobs` 操作イベントをキャンセルする。
-`setup/wsl/plugins/ClickMobs/config.yml` では `whitelisted_mobs: [?all]` を固定する。
+`infra/plugins/ClickMobs/config.yml` では `whitelisted_mobs: [?all]` を固定する。
 標準では `residence/resource/factory` の `clickmobs_allowed`
 （Hub 周辺 `x,z=-64..64`）を許可リージョンにする。

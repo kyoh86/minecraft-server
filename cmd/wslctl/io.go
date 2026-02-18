@@ -16,7 +16,7 @@ func (a app) sendConsole(command string) error {
 	if err := a.waitWorldReady(90 * time.Second); err != nil {
 		return err
 	}
-	composeFile := filepath.Join(a.wslDir, "docker-compose.yml")
+	composeFile := a.composeFilePath()
 	return runCommand(
 		"docker", "compose", "-f", composeFile,
 		"exec", "-T", "--user", "1000", "world", "mc-send-to-console", command,
@@ -24,7 +24,7 @@ func (a app) sendConsole(command string) error {
 }
 
 func (a app) waitWorldReady(timeout time.Duration) error {
-	composeFile := filepath.Join(a.wslDir, "docker-compose.yml")
+	composeFile := a.composeFilePath()
 	deadline := time.Now().Add(timeout)
 
 	for {

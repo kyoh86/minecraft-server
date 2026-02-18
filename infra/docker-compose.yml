@@ -20,7 +20,7 @@ services:
       HANGAR_PROJECTS: "LuckPerms"
       MODRINTH_PROJECTS: "multiverse-core,multiverse-portals,worldedit,worldguard,clickmobs"
     volumes:
-      - ./runtime/world:/data
+      - ../runtime/world:/data
       - ./plugins/ClickMobs/config.yml:/data/plugins/ClickMobs/config.yml
       - ./plugins/ClickMobsRegionGuard.jar:/data/plugins/ClickMobsRegionGuard.jar:ro
       - ./plugins/ClickMobsRegionGuard:/data/plugins/ClickMobsRegionGuard

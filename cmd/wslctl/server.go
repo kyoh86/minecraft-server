@@ -1,9 +1,7 @@
 package main
 
-import "path/filepath"
-
 func (a app) compose(args ...string) error {
-	composeFile := filepath.Join(a.wslDir, "docker-compose.yml")
+	composeFile := a.composeFilePath()
 	base := []string{"compose", "-f", composeFile}
 	base = append(base, args...)
 	return runCommand("docker", base...)

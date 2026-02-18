@@ -40,4 +40,4 @@ override.tf.json
 terraform.rc
 
 # Local runtime data for WSL verification environment
-setup/wsl/runtime/
+runtime/

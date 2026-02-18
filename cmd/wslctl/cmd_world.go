@@ -7,7 +7,7 @@ func newWorldCmd(a app) *cobra.Command {
 
 	cmd.AddCommand(&cobra.Command{
 		Use:   "ensure",
-		Short: "create/import worlds from setup/wsl/worlds definitions",
+		Short: "create/import worlds from worlds definitions",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return a.worldEnsure()
 		},
