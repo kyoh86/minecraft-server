@@ -1,9 +1,8 @@
-import { connectBot, snapshotPosition } from './bot.js'
+import { connectBot } from './bot.js'
 import { loadConfig } from './config.js'
 import { createLogger } from './logger.js'
-import { loadPortals } from './portals.js'
-import { addCheck, createReport, finalizeReport, writeReport } from './report.js'
 import { scenarios } from './scenarios/index.js'
+import { runScenarioOnce } from './scenario_runner.js'
 
 const cfg = loadConfig()
 const logger = createLogger()
@@ -22,10 +21,8 @@ if (!scenario) {
 
 const username = process.env.BOT_USERNAME || 'codexbot'
 let bot = null
-const report = createReport({ scenario: scenarioName, logger })
 
 async function main() {
-  const portals = loadPortals(cfg.portalsPath)
   bot = await connectBot({
     host: cfg.host,
     port: cfg.port,
@@ -41,30 +38,18 @@ async function main() {
     logger.log('kicked', { reason: String(reason) })
   })
 
-  const initial = snapshotPosition(bot)
-  report.start = {
-    dimension: 'overworld',
-    pos: initial,
-  }
-
-  const result = await scenario({
+  const { report, file, passed, error } = await runScenarioOnce({
+    name: scenarioName,
     bot,
-    portals,
-    log: logger.log,
-    report,
-    addCheck,
+    logger,
+    reportDir: cfg.reportDir,
+    portalsPath: cfg.portalsPath,
   })
-
-  const passed = report.checks.every((c) => c.pass)
-  finalizeReport(report, {
-    end: { dimension: 'overworld', pos: result.end },
-    result: passed ? 'pass' : 'fail',
-    error: null,
-  })
-
-  const file = writeReport(cfg.reportDir, report)
   logger.log('scenario finished', { file, result: report.result, duration_ms: report.duration_ms })
   console.log(`report: ${file}`)
+  if (error) {
+    throw error
+  }
   if (!passed) {
     process.exitCode = 1
   }
@@ -72,15 +57,6 @@ async function main() {
 
 main()
   .catch((err) => {
-    logger.log('scenario error', { error: err.message })
-    const endPos = bot ? snapshotPosition(bot) : null
-    finalizeReport(report, {
-      end: { dimension: 'overworld', pos: endPos },
-      result: 'fail',
-      error: err.message,
-    })
-    const file = writeReport(cfg.reportDir, report)
-    console.error(`report: ${file}`)
     console.error(err)
     process.exitCode = 1
   })

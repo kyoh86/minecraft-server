@@ -11,9 +11,10 @@
 
 - Bot 実装は Mineflayer を採用する
 - 検証用 Bot は 1 体
-- 自動シナリオは 2 本
+- 自動シナリオは 3 本
   - `world_transfer_command_roundtrip`（基盤確認用）
   - `portal_resource_to_mainhall`（ポータル不具合再現用）
+  - `smoke`（主要2シナリオ連続実行）
 - 結果レポートは `runtime/bot-reports/` に JSON で保存する
 
 ## 運用コマンド
@@ -24,15 +25,21 @@
 - `make bot-test SCENARIO=world_transfer_command_roundtrip`
   - シナリオを実行し、`pass/fail` を判定する
   - 実行時のみ `ONLINE_MODE=FALSE` でサーバーを再起動し、終了後は `ONLINE_MODE=TRUE` に戻す
+- `make bot-test SCENARIO=smoke`
+  - ポータルと転送の主要確認を連続実行する
 - `make bot-down`
   - Bot を停止する
 - `make bot-report-latest`
   - 最新レポートを表示する
 
+Codex からの操作は `tools/bot/src/control.js` を使い、標準入出力で JSON Lines を扱う。
+`make` は補助手段とし、主要インターフェースは機械可読プロトコルとする。
+
 前提:
 
 - Docker ネットワーク `infra_mcnet` が利用可能であること
 - Bot 接続認証は `BOT_AUTH=offline` を前提とする
+- `BOT_AUTH=offline` の実行時はサーバーを `ONLINE_MODE=FALSE` で起動すること
 - Bot 名は Minecraft 制限（16文字）以内に収まる形式で生成する
 
 ## シナリオ設計方針
@@ -80,6 +87,26 @@
 - `logs[]`（主要イベント）
 - `result`（`pass` / `fail`）
 - `error`（例外時）
+
+## コントロールプロトコル（JSON Lines）
+
+入力は1行1 JSON:
+
+```json
+{"id":"1","action":"connect"}
+{"id":"2","action":"runScenario","name":"smoke"}
+{"id":"3","action":"snapshot"}
+{"id":"4","action":"quit"}
+```
+
+応答も1行1 JSON:
+
+```json
+{"id":"1","ok":true,"connected":true}
+{"id":"2","ok":true,"scenario":"smoke","result":"pass","report":"..."}
+{"id":"3","ok":true,"pos":{"x":0.5,"y":81,"z":-8}}
+{"id":"4","ok":true,"quitting":true}
+```
 
 ## ディレクトリ構成
 
