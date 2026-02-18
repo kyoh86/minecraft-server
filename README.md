@@ -3,6 +3,39 @@
 このリポジトリは、`WSL2/Ubuntu` 上で Minecraft Java サーバー（Paper 1.21.11）を
 ローカル検証するための構成を管理する。
 
+## プレイヤー向け概要
+
+### ワールド構成
+
+- `mainhall`: 移動ハブ（Adventure / Peaceful / PvP無効 / モブ湧き無効）
+- `residence`: 生活・拠点建築（Survival / Normal）
+- `resource`: 資源採取（Survival / Hard）
+- `factory`: 装置・自動化（Survival / Normal）
+
+### 移動
+
+- ワールド移動は `mainhall` のゲート経由
+- `residence` / `resource` / `factory` には `mainhall` 戻りゲートあり
+
+### ハブ周辺の保護
+
+- 建築保護エリア（`spawn_protected`）
+  - 範囲 `x,z=-32..32`, `y=-64..319`
+  - ブロック設置・破壊・爆発破壊を禁止
+  - 回路操作の右クリックは許可
+
+### ClickMobs
+
+- 全モブ捕獲を有効化
+- 利用可能エリア（`clickmobs_allowed`）
+  - `residence` / `resource` / `factory` の `x,z=-64..64`, `y=-64..319`
+- `mainhall` では無効
+
+### ワールド境界
+
+- `residence` / `factory`: 中心 `0,0`、直径 `10000`
+- `resource`: 境界設定なし
+
 ## 構成
 
 - `setup/wsl/docker-compose.yml`
