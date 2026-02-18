@@ -116,3 +116,4 @@ wslctl world setup --world resource
 - WSL 手順: `doc/setup-wsl-velocity.md`
 - Ubuntu 手順: `doc/setup-ubuntu.md`
 - ワールド再現方針: `doc/world-layout.md`
+- Codex 運用: `doc/codex-operations.md`
