@@ -95,7 +95,7 @@
   - profile を必須入力として、`.tmpl` を runtime に描画する
   - `worldguard.regions.yml.tmpl` / `portals.yml.tmpl` を反映する
   - `reload` / `wg reload` / `mvp config enforce-portal-access false` / `mv reload` を実行する
-  - `spawn_protected` の Y 範囲は `surface_y-11 .. surface_y+17` とする
+  - `spawn_protected` / `clickmobs_allowed` の Y 範囲は `-64 .. 319` とする
   - `*_to_mainhall` ポータルの Y 範囲は `surface_y .. surface_y+3` とする
 - `wslctl world spawn apply`
   - `mainhall` では `mcserver:mainhall/hub_layout` を適用する
@@ -136,6 +136,8 @@ wslctl world function run mcserver:mainhall/hub_layout
 同時に `worldguard.regions.yml.tmpl` の描画結果により
 スポーン周辺での建設・破壊・爆破を禁止する。
 ただし回路操作のため、`spawn_protected` では `interact` / `use` を許可する。
+`ClickMobs` の利用可否は `ClickMobsRegionGuard` の設定で制御する。
+`ClickMobs` 本体は `whitelisted_mobs: [?all]` とし、全モブ捕獲を有効化する。
 
 `Multiverse-Portals` と `WorldGuard` のテンプレート反映:
 
@@ -149,3 +151,26 @@ wslctl world spawn apply
 （`residence` は `z=-9` 面、`factory` は `x=-9` 面）。
 `factory` 入口のみ `check-destination-safety: false` とし、
 着地点安全判定による遷移拒否を防ぐ。
+
+## ClickMobs のリージョン制御
+
+`setup/wsl/plugins/ClickMobsRegionGuard.jar` を導入し、
+`setup/wsl/plugins/ClickMobsRegionGuard/config.yml` の
+`allowed_regions.<world>` に許可リージョンIDを列挙する。
+
+```yaml
+allowed_regions:
+  mainhall: []
+  residence:
+    - clickmobs_allowed
+  resource:
+    - clickmobs_allowed
+  factory:
+    - clickmobs_allowed
+```
+
+列挙したリージョン内でのみ `ClickMobs` の捕獲・設置操作を許可する。
+リージョン外では `ClickMobs` 操作イベントをキャンセルする。
+`setup/wsl/plugins/ClickMobs/config.yml` では `whitelisted_mobs: [?all]` を固定する。
+標準では `residence/resource/factory` の `clickmobs_allowed`
+（Hub 周辺 `x,z=-64..64`）を許可リージョンにする。

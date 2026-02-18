@@ -1,0 +1,7 @@
+# ClickMobs を許可するリージョンIDをワールドごとに列挙する。
+# ここに含まれないリージョンでは clickmobs.pickup/place は false になる。
+allowed_regions:
+  mainhall: []
+  residence: []
+  resource: []
+  factory: []

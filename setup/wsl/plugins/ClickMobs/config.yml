@@ -1,0 +1,23 @@
+# ---------------------------------------------------------
+# ClickMobs Config (managed by repository)
+# ---------------------------------------------------------
+
+_version: 8
+language: en_US
+check_update: true
+per_mob_permissions: false
+enable_dispensers: true
+
+# 全モブを捕獲可能にする。
+whitelisted_mobs:
+- ?all
+
+# ホワイトリスト優先のため空にしておく。
+blacklisted_mobs: []
+
+# 手持ちアイテムによる制限は設けない。
+blacklisted_items_in_hand: []
+
+custom_model_data:
+  creeper: 0
+  skeleton: 0

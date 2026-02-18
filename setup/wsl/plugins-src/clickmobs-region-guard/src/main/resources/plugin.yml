@@ -1,0 +1,12 @@
+name: ClickMobsRegionGuard
+version: '0.1.0'
+main: dev.kyoh86.mcserver.ClickMobsRegionGuardPlugin
+api-version: '1.21'
+authors: [kyoh86]
+description: Restrict ClickMobs by WorldGuard region flag.
+softdepend: [WorldGuard, ClickMobs]
+depend: [WorldGuard]
+permissions:
+  clickmobsregionguard.bypass:
+    description: Bypass region-based ClickMobs restriction.
+    default: op

@@ -23,6 +23,16 @@
 - `worldguard`
 - `clickmobs`
 
+あわせて、ローカル配布プラグインを以下で導入する。
+
+- `setup/wsl/plugins/ClickMobs/config.yml`
+  - `ClickMobs` 本体設定
+  - `whitelisted_mobs: [?all]` により全モブを捕獲可能にする
+- `setup/wsl/plugins/ClickMobsRegionGuard.jar`
+  - ワールドガードのリージョンIDに基づき `ClickMobs` を制御する
+- `setup/wsl/plugins/ClickMobsRegionGuard/config.yml`
+  - `allowed_regions.<world>` に許可リージョンIDを列挙する
+
 ## コマンド体系
 
 - `wslctl setup init`

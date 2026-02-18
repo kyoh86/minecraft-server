@@ -1,13 +1,13 @@
 regions:
   spawn_protected:
     min:
-      x: -24
-      y: {{(index .Worlds "residence").RegionMinY}}
-      z: -24
+      x: -32
+      y: -64
+      z: -32
     max:
-      x: 24
-      y: {{(index .Worlds "residence").RegionMaxY}}
-      z: 24
+      x: 32
+      y: 319
+      z: 32
     members: {}
     owners: {}
     flags:
@@ -23,5 +23,20 @@ regions:
       wither-damage: deny
     type: cuboid
     priority: 10
+  clickmobs_allowed:
+    min:
+      x: -64
+      y: -64
+      z: -64
+    max:
+      x: 64
+      y: 319
+      z: 64
+    members: {}
+    owners: {}
+    flags:
+      passthrough: allow
+    type: cuboid
+    priority: 5
 global:
   flags: {}
