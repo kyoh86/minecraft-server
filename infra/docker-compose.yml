@@ -14,7 +14,7 @@ services:
       MEMORY: "4G"
       SERVER_NAME: "mainhall"
       MOTD: "Main Server"
-      ONLINE_MODE: "TRUE"
+      ONLINE_MODE: "${ONLINE_MODE:-TRUE}"
       ENABLE_RCON: "FALSE"
       CREATE_CONSOLE_IN_PIPE: "true"
       HANGAR_PROJECTS: "LuckPerms"

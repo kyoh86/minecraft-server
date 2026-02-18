@@ -110,9 +110,14 @@ wslctl world setup --world resource
 - `make world-spawn-profile`
 - `make world-spawn-stage`
 - `make world-spawn-apply`
+- `make bot-up`
+- `make bot-test SCENARIO=world_transfer_command_roundtrip`
+- `make bot-report-latest`
+- `make bot-down`
 
 ## ドキュメント
 
 - WSL 手順: `doc/setup-wsl-velocity.md`
 - Ubuntu 手順: `doc/setup-ubuntu.md`
 - ワールド再現方針: `doc/world-layout.md`
+- Bot 検証基盤仕様: `doc/bot-testing.md`
