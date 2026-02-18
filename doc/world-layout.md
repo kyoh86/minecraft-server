@@ -135,6 +135,7 @@ wslctl world function run mcserver:mainhall/hub_layout
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
 同時に `worldguard.regions.yml.tmpl` の描画結果により
 スポーン周辺での建設・破壊・爆破を禁止する。
+ただし回路操作のため、`spawn_protected` では `interact` / `use` を許可する。
 
 `Multiverse-Portals` と `WorldGuard` のテンプレート反映:
 

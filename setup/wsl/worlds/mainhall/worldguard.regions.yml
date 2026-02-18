@@ -14,6 +14,8 @@ regions:
       build: deny
       block-break: deny
       block-place: deny
+      interact: allow
+      use: allow
       tnt: deny
       creeper-explosion: deny
       other-explosion: deny
