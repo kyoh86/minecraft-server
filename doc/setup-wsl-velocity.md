@@ -13,6 +13,16 @@
 - Docker Desktop + WSL integration 有効、または WSL 側 Docker Engine が利用可能
 - `go` コマンドが利用可能（`cmd/wslctl` 実行に使用）
 
+## 導入プラグイン
+
+`setup/wsl/docker-compose.yml` の `MODRINTH_PROJECTS` で以下を導入する。
+
+- `multiverse-core`
+- `multiverse-portals`
+- `worldedit`
+- `worldguard`
+- `clickmobs`
+
 ## コマンド体系
 
 - `wslctl setup init`
