@@ -21,8 +21,7 @@ const primaryWorldName = "mainhall"
 const spawnProfilePath = "runtime/world/.wslctl/spawn-profile.yml"
 
 func (a app) initRuntime() error {
-	runtimeDir := filepath.Join(a.baseDir, "runtime", "world")
-	if err := os.MkdirAll(runtimeDir, 0o755); err != nil {
+	if err := a.ensureRuntimeWorldWritable(); err != nil {
 		return err
 	}
 	fmt.Printf("Initialized: %s\n", filepath.Join(a.baseDir, "runtime"))

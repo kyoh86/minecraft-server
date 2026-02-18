@@ -45,6 +45,9 @@
 `running + healthy` になり、`/tmp/minecraft-console-in` パイプが生成されるまで
 待機してから実行される。
 
+`wslctl setup init` は `runtime/world` 配下の必要ディレクトリを作成し、
+書き込み不可（root 所有など）の場合は Docker 経由で所有権を現在ユーザーへ補正する。
+
 ## 初回セットアップ
 
 ```console

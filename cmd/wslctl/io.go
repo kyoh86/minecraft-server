@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -86,6 +87,67 @@ func runCommandOutput(name string, args ...string) (string, error) {
 		out += serr
 	}
 	return out, err
+}
+
+func (a app) runtimeWorldDir() string {
+	return filepath.Join(a.baseDir, "runtime", "world")
+}
+
+func (a app) ensureRuntimeWorldLayout() error {
+	for _, dir := range []string{
+		filepath.Join(a.baseDir, "runtime"),
+		a.runtimeWorldDir(),
+		filepath.Join(a.runtimeWorldDir(), ".wslctl"),
+		filepath.Join(a.runtimeWorldDir(), "plugins"),
+		filepath.Join(a.runtimeWorldDir(), "plugins", "ClickMobs"),
+		filepath.Join(a.runtimeWorldDir(), "plugins", "WorldGuard", "worlds"),
+		filepath.Join(a.runtimeWorldDir(), "plugins", "Multiverse-Core"),
+		filepath.Join(a.runtimeWorldDir(), "plugins", "Multiverse-Portals"),
+	} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (a app) ensureRuntimeWorldWritable() error {
+	if err := a.ensureRuntimeWorldLayout(); err != nil {
+		if !errors.Is(err, os.ErrPermission) {
+			return err
+		}
+		if err := a.fixRuntimeWorldOwnership(); err != nil {
+			return fmt.Errorf("repair runtime ownership: %w", err)
+		}
+		if err := a.ensureRuntimeWorldLayout(); err != nil {
+			return err
+		}
+	}
+
+	probePath := filepath.Join(a.runtimeWorldDir(), ".wslctl", ".writecheck")
+	if err := os.WriteFile(probePath, []byte("ok"), 0o644); err != nil {
+		if !errors.Is(err, os.ErrPermission) {
+			return err
+		}
+		if err := a.fixRuntimeWorldOwnership(); err != nil {
+			return fmt.Errorf("repair runtime ownership: %w", err)
+		}
+		if err := os.WriteFile(probePath, []byte("ok"), 0o644); err != nil {
+			return err
+		}
+	}
+	_ = os.Remove(probePath)
+	return nil
+}
+
+func (a app) fixRuntimeWorldOwnership() error {
+	composeFile := a.composeFilePath()
+	cmd := fmt.Sprintf("chown -R %d:%d /data", os.Getuid(), os.Getgid())
+	return runCommand(
+		"docker", "compose", "-f", composeFile,
+		"run", "--rm", "--no-deps", "--user", "root", "--entrypoint", "sh",
+		"world", "-lc", cmd,
+	)
 }
 
 func copyDir(src, dst string) error {
