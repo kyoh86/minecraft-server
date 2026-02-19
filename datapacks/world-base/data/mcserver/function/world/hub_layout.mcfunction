@@ -73,3 +73,7 @@ fill ~-2 ~ ~-8 ~2 ~4 ~-8 obsidian outline
 fill ~-1 ~1 ~-8 ~1 ~3 ~-8 air
 setblock ~ ~ ~-6 oak_sign[rotation=0]
 data merge block ~ ~ ~-6 {front_text:{messages:[{text:"To Mainhall",color:"gold",bold:1b},"","",""]}}
+
+setblock ~-3 ~-3 3 command_block[facing=up]{auto:1b,Command:"function mcserver:region/init"} replace
+function mcserver:region/init
+kill @e[type=item]
