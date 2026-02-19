@@ -117,3 +117,4 @@ wslctl world setup --world resource
 - Ubuntu 手順: `doc/setup-ubuntu.md`
 - ワールド再現方針: `doc/world-layout.md`
 - 保護/許可エリア可視化: `doc/region-visualization.md`
+- 建築デザイン Mod 選定: `doc/building-mods.md`
