@@ -1,6 +1,5 @@
-export function createLogger(options = {}) {
+export function createLogger() {
   const logs = []
-  const useStderr = options.stderr === true
 
   function log(message, extra = {}) {
     const entry = {
@@ -9,13 +8,7 @@ export function createLogger(options = {}) {
       ...extra,
     }
     logs.push(entry)
-    const suffix = Object.keys(extra).length ? ` ${JSON.stringify(extra)}` : ''
-    const line = `[bot] ${entry.at} ${message}${suffix}\n`
-    if (useStderr) {
-      process.stderr.write(line)
-      return
-    }
-    process.stdout.write(line)
+    console.log(`[bot] ${entry.at} ${message}`, Object.keys(extra).length ? extra : '')
   }
 
   return { logs, log }

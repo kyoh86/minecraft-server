@@ -113,8 +113,6 @@ wslctl world setup --world resource
 - `make bot-up`
 - `make bot-test SCENARIO=world_transfer_command_roundtrip`
 - `make bot-report-latest`
-- `make bot-control BOT_AUTH=offline`
-- `make bot-monitor BOT_AUTH=offline BOT_MONITOR_SCENARIO=smoke BOT_MONITOR_INTERVAL_SEC=300`
 - `make bot-down`
 
 ## ドキュメント
@@ -123,4 +121,3 @@ wslctl world setup --world resource
 - Ubuntu 手順: `doc/setup-ubuntu.md`
 - ワールド再現方針: `doc/world-layout.md`
 - Bot 検証基盤仕様: `doc/bot-testing.md`
-- Bot 制御プロトコル: `doc/bot-control.md`

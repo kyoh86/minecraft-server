@@ -12,7 +12,7 @@ BOT_USERNAME ?= codexbot
 	world-ensure world-regenerate world-drop world-delete world-setup world-function \
 	world-spawn-profile world-spawn-stage world-spawn-apply \
 	player-op-grant player-op-revoke player-admin-grant player-admin-revoke \
-	bot-up bot-down bot-test bot-test-core bot-report-latest bot-control bot-monitor
+	bot-up bot-down bot-test bot-test-core bot-report-latest
 
 setup-init:
 	$(WSLCTL) setup init
@@ -141,17 +141,3 @@ bot-report-latest:
 	fi; \
 	echo "$$latest"; \
 	cat "$$latest"
-
-bot-control:
-	docker run --rm -i --network infra_mcnet --user $$(id -u):$$(id -g) \
-		-v $(PWD)/tools/bot:/work \
-		-v $(PWD)/runtime:/runtime \
-		-w /work \
-		$(BOT_IMAGE) sh -lc 'npm install --no-audit --no-fund && BOT_HOST=mc-world BOT_PORT=25565 BOT_AUTH=$(BOT_AUTH) BOT_VERSION=$(BOT_VERSION) BOT_USERNAME=$(BOT_USERNAME) BOT_REPORT_DIR=/runtime/bot-reports npm run control'
-
-bot-monitor:
-	docker run --rm --network infra_mcnet --user $$(id -u):$$(id -g) \
-		-v $(PWD)/tools/bot:/work \
-		-v $(PWD)/runtime:/runtime \
-		-w /work \
-		$(BOT_IMAGE) sh -lc 'npm install --no-audit --no-fund && BOT_HOST=mc-world BOT_PORT=25565 BOT_AUTH=$(BOT_AUTH) BOT_VERSION=$(BOT_VERSION) BOT_USERNAME=$(BOT_USERNAME) BOT_REPORT_DIR=/runtime/bot-reports BOT_MONITOR_SCENARIO=$${BOT_MONITOR_SCENARIO:-smoke} BOT_MONITOR_INTERVAL_SEC=$${BOT_MONITOR_INTERVAL_SEC:-300} npm run monitor'

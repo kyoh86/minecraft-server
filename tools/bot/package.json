@@ -4,9 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "control": "node src/control.js",
     "idle": "node src/idle.js",
-    "monitor": "node src/monitor.js",
     "test": "node src/test.js"
   },
   "dependencies": {
