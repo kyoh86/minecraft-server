@@ -46,3 +46,6 @@ runtime/
 secrets/*
 !secrets/.gitkeep
 !secrets/*.example
+
+# Maven build outputs
+**/target/
