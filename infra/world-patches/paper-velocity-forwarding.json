@@ -1,0 +1,25 @@
+{
+  "file": "/data/config/paper-global.yml",
+  "ops": [
+    {
+      "$set": {
+        "path": "$.proxies.velocity.enabled",
+        "value": true,
+        "value-type": "bool"
+      }
+    },
+    {
+      "$set": {
+        "path": "$.proxies.velocity.online-mode",
+        "value": true,
+        "value-type": "bool"
+      }
+    },
+    {
+      "$set": {
+        "path": "$.proxies.velocity.secret",
+        "value": "mcserver-velocity-secret-2026"
+      }
+    }
+  ]
+}

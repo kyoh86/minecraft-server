@@ -1,0 +1,50 @@
+# Config version. Do not change this
+config-version = "2.7"
+
+bind = "0.0.0.0:25565"
+motd = "Hub Proxy"
+show-max-players = 100
+
+# Public users are authenticated by Mojang/Microsoft at proxy.
+online-mode = true
+force-key-authentication = true
+prevent-client-proxy-connections = false
+
+# Keep backend simple: Paper is offline and only reachable on internal network.
+player-info-forwarding-mode = "modern"
+forwarding-secret-file = "/config/forwarding.secret"
+
+announce-forge = false
+kick-existing-players = false
+ping-passthrough = "description"
+enable-player-address-logging = true
+
+[servers]
+mainhall = "world:25565"
+
+try = [
+  "mainhall"
+]
+
+[forced-hosts]
+
+[advanced]
+compression-threshold = 256
+compression-level = -1
+login-ratelimit = 3000
+connection-timeout = 5000
+read-timeout = 30000
+haproxy-protocol = false
+tcp-fast-open = false
+bungee-plugin-message-channel = true
+show-ping-requests = false
+failover-on-unexpected-server-disconnect = true
+announce-proxy-commands = true
+log-command-executions = false
+log-player-connections = true
+
+[query]
+enabled = false
+port = 25565
+map = "Velocity"
+show-plugins = false

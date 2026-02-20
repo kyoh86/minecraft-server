@@ -1,17 +1,22 @@
-# Minecraft server / WSL 検証構成（単一 Paper: world）
+# Minecraft サーバー構成（Paper + Velocity）
 
 ## 概要
 
-このドキュメントは、`WSL2 + Ubuntu` 上で単一 `Paper` サーバーを動かし、
-複数ワールド（`mainhall` / `residence` / `resource` / `factory`）を運用する手順を示す。
+このプロジェクトは以下の 2 層で動作する。
 
-ここでの方針は、合成コマンドではなくプリミティブな操作を明示的に実行すること。
+- `velocity`（公開入口）
+  - 公開ポート: `25565`
+  - Mojang/Microsoft 認証: `online-mode=true`
+  - `player-info-forwarding-mode=modern`
+- `world`（バックエンド Paper）
+  - 外部非公開
+  - `online-mode=false`
+  - `enforce-secure-profile=false`
+  - `proxies.velocity.enabled=true`
+  - `proxies.velocity.secret` は `infra/velocity/forwarding.secret` と一致させる
+  - `velocity` からのみ到達
 
-## 前提
-
-- WSL2 で Ubuntu が利用可能
-- Docker Desktop + WSL integration 有効、または WSL 側 Docker Engine が利用可能
-- `go` コマンドが利用可能（`cmd/wslctl` 実行に使用）
+Bot 検証時は、Bot を `world` 側へ直接接続できる。
 
 ## 導入プラグイン
 
@@ -35,18 +40,20 @@
 
 ## コマンド体系
 
+コマンドは以下の構成になっている。
+
 - `wslctl setup init`
-- `wslctl server up|down|restart|ps|logs|reload`
+    - ディレクトリ構成初期化
+    - runtimeディレクトリ作成と書き込み可能状態の保証を行う。
+- `wslctl server up|down|restart|ps|logs velocity|logs world|reload`
+    - サーバーの起動、停止、リスタート、状態やログの確認
 - `wslctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
 - `wslctl world drop|delete`
 - `wslctl player op ...|admin ...`
 
-`server/world/player` 系でコンソール送信を伴うコマンドは、`world` コンテナが
+`server/world/player` 系でコンソール送信を伴うコマンドは、コンテナが
 `running + healthy` になり、`/tmp/minecraft-console-in` パイプが生成されるまで
 待機してから実行される。
-
-`wslctl setup init` は `runtime/world` 配下の必要ディレクトリを作成し、
-書き込み不可（root 所有など）の場合は Docker 経由で所有権を現在ユーザーへ補正する。
 
 ## 初回セットアップ
 
@@ -153,3 +160,17 @@ wslctl server down
 - `make player-op-revoke PLAYER=<id>`
 - `make player-admin-grant PLAYER=<id>`
 - `make player-admin-revoke PLAYER=<id>`
+
+## ファイル構成
+
+- `runtime/world`: Paper 本体データ
+- `runtime/velocity`: Velocity 本体データとプラグインデータ
+- `infra/docker-compose.yml`
+  - `world` / `velocity` サービス定義
+- `infra/velocity/velocity.toml`
+  - Velocity のルーティング設定
+  - `mainhall = "world:25565"` へ転送
+- `infra/velocity/forwarding.secret`
+  - Velocity modern forwarding の共有シークレット
+- `infra/world-patches/paper-velocity-forwarding.json`
+  - `paper-global.yml` へ Velocity forwarding 設定を起動時に適用

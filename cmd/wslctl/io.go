@@ -93,7 +93,11 @@ func (a app) runtimeWorldDir() string {
 	return filepath.Join(a.baseDir, "runtime", "world")
 }
 
-func (a app) ensureRuntimeWorldLayout() error {
+func (a app) runtimeVelocityDir() string {
+	return filepath.Join(a.baseDir, "runtime", "velocity")
+}
+
+func (a app) ensureRuntimeLayout() error {
 	for _, dir := range []string{
 		filepath.Join(a.baseDir, "runtime"),
 		a.runtimeWorldDir(),
@@ -103,6 +107,9 @@ func (a app) ensureRuntimeWorldLayout() error {
 		filepath.Join(a.runtimeWorldDir(), "plugins", "WorldGuard", "worlds"),
 		filepath.Join(a.runtimeWorldDir(), "plugins", "Multiverse-Core"),
 		filepath.Join(a.runtimeWorldDir(), "plugins", "Multiverse-Portals"),
+		a.runtimeVelocityDir(),
+		filepath.Join(a.runtimeVelocityDir(), ".wslctl"),
+		filepath.Join(a.runtimeVelocityDir(), "plugins"),
 	} {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
@@ -111,33 +118,49 @@ func (a app) ensureRuntimeWorldLayout() error {
 	return nil
 }
 
-func (a app) ensureRuntimeWorldWritable() error {
-	if err := a.ensureRuntimeWorldLayout(); err != nil {
+func (a app) ensureRuntimeWritable() error {
+	if err := a.ensureRuntimeLayout(); err != nil {
 		if !errors.Is(err, os.ErrPermission) {
 			return err
 		}
-		if err := a.fixRuntimeWorldOwnership(); err != nil {
-			return fmt.Errorf("repair runtime ownership: %w", err)
+		if err := a.fixRuntimeOwnership(); err != nil {
+			return fmt.Errorf("repair runtime ownership (layout): %w", err)
 		}
-		if err := a.ensureRuntimeWorldLayout(); err != nil {
+		if err := a.ensureRuntimeLayout(); err != nil {
 			return err
 		}
 	}
 
-	probePath := filepath.Join(a.runtimeWorldDir(), ".wslctl", ".writecheck")
-	if err := os.WriteFile(probePath, []byte("ok"), 0o644); err != nil {
-		if !errors.Is(err, os.ErrPermission) {
-			return err
-		}
-		if err := a.fixRuntimeWorldOwnership(); err != nil {
-			return fmt.Errorf("repair runtime ownership: %w", err)
-		}
-		if err := os.WriteFile(probePath, []byte("ok"), 0o644); err != nil {
-			return err
-		}
+	probeChecks := []struct {
+		dir string
+		fix func() error
+	}{
+		{dir: a.runtimeWorldDir(), fix: a.fixRuntimeWorldOwnership},
+		{dir: a.runtimeVelocityDir(), fix: a.fixRuntimeVelocityOwnership},
 	}
-	_ = os.Remove(probePath)
+	for _, check := range probeChecks {
+		probePath := filepath.Join(check.dir, ".wslctl", ".writecheck")
+		if err := os.WriteFile(probePath, []byte("ok"), 0o644); err != nil {
+			if !errors.Is(err, os.ErrPermission) {
+				return err
+			}
+			if err := check.fix(); err != nil {
+				return fmt.Errorf("repair runtime ownership (%s): %w", check.dir, err)
+			}
+			if err := os.WriteFile(probePath, []byte("ok"), 0o644); err != nil {
+				return err
+			}
+		}
+		_ = os.Remove(probePath)
+	}
 	return nil
+}
+
+func (a app) fixRuntimeOwnership() error {
+	if err := a.fixRuntimeWorldOwnership(); err != nil {
+		return err
+	}
+	return a.fixRuntimeVelocityOwnership()
 }
 
 func (a app) fixRuntimeWorldOwnership() error {
@@ -147,6 +170,16 @@ func (a app) fixRuntimeWorldOwnership() error {
 		"docker", "compose", "-f", composeFile,
 		"run", "--rm", "--no-deps", "--user", "root", "--entrypoint", "sh",
 		"world", "-lc", cmd,
+	)
+}
+
+func (a app) fixRuntimeVelocityOwnership() error {
+	composeFile := a.composeFilePath()
+	cmd := fmt.Sprintf("chown -R %d:%d /server", os.Getuid(), os.Getgid())
+	return runCommand(
+		"docker", "compose", "-f", composeFile,
+		"run", "--rm", "--no-deps", "--user", "root", "--entrypoint", "sh",
+		"velocity", "-lc", cmd,
 	)
 }
 

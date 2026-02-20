@@ -1,7 +1,7 @@
 # minecraft-server
 
-このリポジトリは、`WSL2/Ubuntu` 上で Minecraft Java サーバー（Paper 1.21.11）を
-ローカル検証するための構成を管理する。
+このリポジトリは、Docker で Minecraft Java サーバー（Paper 1.21.11）を
+運用するための構成を管理する。
 
 ## プレイヤー向け概要
 
@@ -39,11 +39,13 @@
 ## 構成
 
 - `infra/docker-compose.yml`
-  - `world` コンテナ（`itzg/minecraft-server:java21`）
-  - 公開ポート `25565`
+  - `world` コンテナ（`itzg/minecraft-server:java21`、内部向け）
+  - `velocity` コンテナ（`itzg/mc-proxy:java21`、公開入口 `25565`）
   - `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を自動導入
 - `runtime/world`
   - サーバーデータ永続化先
+- `runtime/velocity`
+  - Velocity と Velocity プラグインの永続化先
 - `datapacks/world-base`
   - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `worlds/*/world.env.yml`
@@ -113,7 +115,7 @@ wslctl world setup --world resource
 
 ## ドキュメント
 
-- WSL 手順: `doc/setup-wsl-velocity.md`
+- セットアップ手順: `doc/setup-wsl-velocity.md`
 - Ubuntu 手順: `doc/setup-ubuntu.md`
 - ワールド再現方針: `doc/world-layout.md`
 - 保護/許可エリア可視化: `doc/region-visualization.md`

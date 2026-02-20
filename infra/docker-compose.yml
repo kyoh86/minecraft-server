@@ -3,8 +3,6 @@ services:
     image: itzg/minecraft-server:java21
     container_name: mc-world
     restart: unless-stopped
-    ports:
-      - "25565:25565"
     environment:
       EULA: "TRUE"
       TYPE: PAPER
@@ -14,9 +12,11 @@ services:
       MEMORY: "4G"
       SERVER_NAME: "mainhall"
       MOTD: "Main Server"
-      ONLINE_MODE: "TRUE"
+      ONLINE_MODE: "FALSE"
+      ENFORCE_SECURE_PROFILE: "FALSE"
       ENABLE_RCON: "FALSE"
       CREATE_CONSOLE_IN_PIPE: "true"
+      PATCH_DEFINITIONS: /patches
       HANGAR_PROJECTS: "LuckPerms"
       MODRINTH_PROJECTS: "multiverse-core,multiverse-portals,worldedit,worldguard,clickmobs"
     volumes:
@@ -24,6 +24,30 @@ services:
       - ./plugins/ClickMobs/config.yml:/data/plugins/ClickMobs/config.yml
       - ./plugins/ClickMobsRegionGuard.jar:/data/plugins/ClickMobsRegionGuard.jar:ro
       - ./plugins/ClickMobsRegionGuard:/data/plugins/ClickMobsRegionGuard
+      - ./world-patches:/patches:ro
+    networks:
+      - mcnet
+  velocity:
+    image: itzg/mc-proxy:java21
+    container_name: mc-velocity
+    restart: unless-stopped
+    depends_on:
+      - world
+    ports:
+      - "25565:25565"
+    environment:
+      TYPE: VELOCITY
+      MEMORY: "512M"
+      REPLACE_ENV_VARIABLES: "TRUE"
+      REPLACE_ENV_VARIABLE_PREFIX: "CFG_"
+    command:
+      - sh
+      - -lc
+      - |-
+        exec /usr/bin/run-bungeecord.sh
+    volumes:
+      - ../runtime/velocity:/server
+      - ./velocity:/config:ro
     networks:
       - mcnet
 
