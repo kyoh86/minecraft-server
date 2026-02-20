@@ -41,3 +41,8 @@ terraform.rc
 
 # Local runtime data for WSL verification environment
 runtime/
+
+# Local secrets (Docker secrets source files)
+secrets/*
+!secrets/.gitkeep
+!secrets/*.example

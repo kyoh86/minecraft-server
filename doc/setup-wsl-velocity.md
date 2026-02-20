@@ -43,8 +43,8 @@ Bot 検証時は、Bot を `world` 側へ直接接続できる。
 
 ReWhitelist はデフォルトで全グループ無効。
 `default` を有効化すると、許可エントリに一致しないプレイヤーを拒否する。
-この構成では `infra/velocity/whitelists/default.toml` を `enabled = true` で配布し、
-再起動時点で拒否を有効化する。
+この構成では初回起動時のみ `infra/velocity/whitelists/default.toml` を
+`runtime/velocity/whitelists/default.toml` へ投入する。
 
 初期 PoC の操作:
 
@@ -65,6 +65,38 @@ wslctl server restart velocity
   - `enabled = true`
   - 初期状態は全拒否
 
+## Discord `/mc link`（PoC）
+
+`mclink` コンテナが Discord の `/mc link <code>` を受け取り、
+ReWhitelist の `default.toml` にエントリを追加する。
+
+### 必要な設定
+
+1. Bot token を secret に保存する
+
+```console
+cp secrets/mclink_discord_bot_token.txt.example secrets/mclink_discord_bot_token.txt
+chmod 600 secrets/mclink_discord_bot_token.txt
+```
+
+2. `infra/docker-compose.yml` の `mclink.environment.MCLINK_DISCORD_GUILD_ID` に対象 Guild ID を設定する
+
+### 運用手順（最小）
+
+1. 管理者がワンタイムコードを発行する
+
+```console
+wslctl link issue --nick kyoh86 --ttl 10m
+```
+
+2. 利用者が Discord で `/mc link code:<発行コード>` を実行する
+
+3. 反映のため Velocity を再起動する
+
+```console
+wslctl server restart velocity
+```
+
 ## コマンド体系
 
 コマンドは以下の構成になっている。
@@ -77,6 +109,7 @@ wslctl server restart velocity
 - `wslctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
 - `wslctl world drop|delete`
 - `wslctl player op ...|admin ...`
+- `wslctl link issue --nick <name>|--uuid <uuid> [--ttl 10m]`
 
 `server/world/player` 系でコンソール送信を伴うコマンドは、コンテナが
 `running + healthy` になり、`/tmp/minecraft-console-in` パイプが生成されるまで

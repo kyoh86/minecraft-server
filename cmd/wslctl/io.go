@@ -100,6 +100,7 @@ func (a app) runtimeVelocityDir() string {
 func (a app) ensureRuntimeLayout() error {
 	for _, dir := range []string{
 		filepath.Join(a.baseDir, "runtime"),
+		filepath.Join(a.baseDir, "runtime", "mclink"),
 		a.runtimeWorldDir(),
 		filepath.Join(a.runtimeWorldDir(), ".wslctl"),
 		filepath.Join(a.runtimeWorldDir(), "plugins"),
