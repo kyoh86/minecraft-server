@@ -41,7 +41,7 @@
 - `infra/docker-compose.yml`
   - `world` コンテナ（`itzg/minecraft-server:java21`、内部向け）
   - `velocity` コンテナ（`itzg/mc-proxy:java21`、公開入口 `25565`）
-  - `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を自動導入
+  - `ReWhitelist` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を自動導入
 - `runtime/world`
   - サーバーデータ永続化先
 - `runtime/velocity`

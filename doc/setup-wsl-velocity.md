@@ -27,6 +27,7 @@ Bot 検証時は、Bot を `world` 側へ直接接続できる。
 - `worldedit`
 - `worldguard`
 - `clickmobs`
+- `rewhitelist`（Velocity）
 
 あわせて、ローカル配布プラグインを以下で導入する。
 
@@ -37,6 +38,32 @@ Bot 検証時は、Bot を `world` 側へ直接接続できる。
   - ワールドガードのリージョンIDに基づき `ClickMobs` を制御する
 - `infra/plugins/ClickMobsRegionGuard/config.yml`
   - `allowed_regions.<world>` に許可リージョンIDを列挙する
+
+## Velocity ホワイトリスト（ReWhitelist）
+
+ReWhitelist はデフォルトで全グループ無効。
+`default` を有効化すると、許可エントリに一致しないプレイヤーを拒否する。
+この構成では `infra/velocity/whitelists/default.toml` を `enabled = true` で配布し、
+再起動時点で拒否を有効化する。
+
+初期 PoC の操作:
+
+```console
+# 拒否状態の反映
+wslctl server restart velocity
+
+# 許可エントリ追加（ゲーム内 or Velocity コンソール）
+/whitelist add nick kyoh86
+
+# 一覧確認
+/whitelist list
+```
+
+設定ファイル:
+
+- `infra/velocity/whitelists/default.toml`
+  - `enabled = true`
+  - 初期状態は全拒否
 
 ## コマンド体系
 

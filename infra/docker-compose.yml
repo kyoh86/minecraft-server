@@ -38,12 +38,15 @@ services:
     environment:
       TYPE: VELOCITY
       MEMORY: "512M"
+      PLUGINS: "https://cdn.modrinth.com/data/dC25u16c/versions/FYB4IP1H/ReWhitelist-1.0.4.jar"
       REPLACE_ENV_VARIABLES: "TRUE"
       REPLACE_ENV_VARIABLE_PREFIX: "CFG_"
     command:
       - sh
       - -lc
       - |-
+        mkdir -p /server/whitelists
+        cp /config/whitelists/default.toml /server/whitelists/default.toml
         exec /usr/bin/run-bungeecord.sh
     volumes:
       - ../runtime/velocity:/server
