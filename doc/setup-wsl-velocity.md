@@ -73,7 +73,7 @@ wslctl server restart velocity
 ReWhitelist の `default.toml` にエントリを追加する。
 コードは Velocity の `LinkCodeGate` がホワイトリスト拒否時に自動発行し、
 キックメッセージに表示する。
-ワンタイムコードは `runtime/velocity/.wslctl/mclink-codes.tsv` に保存される。
+ワンタイムコードは Redis（`runtime/redis`）に保存される。
 
 ### 必要な設定
 

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"path/filepath"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,11 +44,17 @@ func newLinkIssueCmd(a app) *cobra.Command {
 				return err
 			}
 
-			storePath := filepath.Join(a.baseDir, "runtime", "velocity", ".wslctl", "mclink-codes.tsv")
-			store, err := mclink.LoadStore(storePath)
+			redisDB, err := strconv.Atoi(strings.TrimSpace(envOr("MCLINK_REDIS_DB", "0")))
 			if err != nil {
-				return err
+				return fmt.Errorf("invalid MCLINK_REDIS_DB: %w", err)
 			}
+			redisCfg := mclink.RedisConfig{
+				Addr:     envOr("MCLINK_REDIS_ADDR", "127.0.0.1:16379"),
+				Password: envOr("MCLINK_REDIS_PASSWORD", ""),
+				DB:       redisDB,
+			}
+			rdb := mclink.NewRedisClient(redisCfg)
+			defer rdb.Close()
 
 			entryType := mclink.EntryTypeNick
 			value := nick
@@ -56,13 +64,13 @@ func newLinkIssueCmd(a app) *cobra.Command {
 			}
 
 			expiresAt := time.Now().Add(ttl).UTC()
-			store.Codes[code] = mclink.CodeEntry{
+			entry := mclink.CodeEntry{
 				Code:      code,
 				Type:      entryType,
 				Value:     value,
 				ExpiresAt: expiresAt,
 			}
-			if err := mclink.SaveStore(storePath, store); err != nil {
+			if err := mclink.SaveCode(context.Background(), rdb, entry); err != nil {
 				return err
 			}
 
@@ -75,4 +83,12 @@ func newLinkIssueCmd(a app) *cobra.Command {
 	cmd.Flags().StringVar(&uuid, "uuid", "", "Minecraft player UUID")
 	cmd.Flags().DurationVar(&ttl, "ttl", 10*time.Minute, "code lifetime")
 	return cmd
+}
+
+func envOr(key, fallback string) string {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		return fallback
+	}
+	return v
 }

@@ -97,10 +97,15 @@ func (a app) runtimeVelocityDir() string {
 	return filepath.Join(a.baseDir, "runtime", "velocity")
 }
 
+func (a app) runtimeRedisDir() string {
+	return filepath.Join(a.baseDir, "runtime", "redis")
+}
+
 func (a app) ensureRuntimeLayout() error {
 	for _, dir := range []string{
 		filepath.Join(a.baseDir, "runtime"),
 		filepath.Join(a.baseDir, "runtime", "mclink"),
+		a.runtimeRedisDir(),
 		a.runtimeWorldDir(),
 		filepath.Join(a.runtimeWorldDir(), ".wslctl"),
 		filepath.Join(a.runtimeWorldDir(), "plugins"),

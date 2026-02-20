@@ -1,4 +1,18 @@
 services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: mc-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+    ports:
+      - "16379:6379"
+    volumes:
+      - ../runtime/redis:/data
+    networks:
+      - mcnet
   world:
     image: itzg/minecraft-server:java21
     container_name: mc-world
@@ -32,6 +46,7 @@ services:
     container_name: mc-velocity
     restart: unless-stopped
     depends_on:
+      - redis
       - world
     ports:
       - "25565:25565"
@@ -41,6 +56,8 @@ services:
       PLUGINS: "https://cdn.modrinth.com/data/dC25u16c/versions/FYB4IP1H/ReWhitelist-1.0.4.jar"
       REPLACE_ENV_VARIABLES: "TRUE"
       REPLACE_ENV_VARIABLE_PREFIX: "CFG_"
+      MCLINK_REDIS_ADDR: "redis:6379"
+      MCLINK_REDIS_DB: "0"
     command:
       - sh
       - -lc
@@ -70,10 +87,12 @@ services:
     container_name: mc-link-bot
     restart: unless-stopped
     depends_on:
+      - redis
       - velocity
     environment:
       MCLINK_DISCORD_GUILD_ID: "1474080174038585508"
-      MCLINK_STORE_PATH: "/data/velocity/.wslctl/mclink-codes.tsv"
+      MCLINK_REDIS_ADDR: "redis:6379"
+      MCLINK_REDIS_DB: "0"
       MCLINK_WHITELIST_PATH: "/data/velocity/whitelists/default.toml"
       MCLINK_CONSOLE_FIFO_PATH: "/data/velocity/.wslctl/velocity-console-in"
     secrets:

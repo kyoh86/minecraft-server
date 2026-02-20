@@ -41,13 +41,15 @@
 - `infra/docker-compose.yml`
   - `world` コンテナ（`itzg/minecraft-server:java21`、内部向け）
   - `velocity` コンテナ（`itzg/mc-proxy:java21`、公開入口 `25565`）
+  - `redis` コンテナ（`/mc link` ワンタイムコード保存）
   - `mclink` コンテナ（Discord `/mc link` 連携）
   - `ReWhitelist` / `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を導入
 - `runtime/world`
   - サーバーデータ永続化先
 - `runtime/velocity`
   - Velocity と Velocity プラグインの永続化先
-  - `/mc link` ワンタイムコードは `runtime/velocity/.wslctl/mclink-codes.tsv`
+- `runtime/redis`
+  - `/mc link` ワンタイムコードの Redis 永続化先（AOF）
 - `datapacks/world-base`
   - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `worlds/*/world.env.yml`

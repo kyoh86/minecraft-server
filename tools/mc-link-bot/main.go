@@ -1,21 +1,26 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/kyoh86/minecraft-server/internal/mclink"
+	"github.com/redis/go-redis/v9"
 )
 
 type config struct {
 	TokenPath     string
 	GuildID       string
-	StorePath     string
+	RedisAddr     string
+	RedisPassword string
+	RedisDB       int
 	WhitelistPath string
 	ConsoleFIFO   string
 }
@@ -72,10 +77,16 @@ func loadConfig() (config, error) {
 	cfg := config{
 		TokenPath:     env("MCLINK_DISCORD_BOT_TOKEN_FILE", "/run/secrets/mclink_discord_bot_token"),
 		GuildID:       strings.TrimSpace(os.Getenv("MCLINK_DISCORD_GUILD_ID")),
-		StorePath:     env("MCLINK_STORE_PATH", "/data/velocity/.wslctl/mclink-codes.tsv"),
+		RedisAddr:     env("MCLINK_REDIS_ADDR", "redis:6379"),
+		RedisPassword: env("MCLINK_REDIS_PASSWORD", ""),
 		WhitelistPath: env("MCLINK_WHITELIST_PATH", "/data/velocity/whitelists/default.toml"),
 		ConsoleFIFO:   env("MCLINK_CONSOLE_FIFO_PATH", "/data/velocity/.wslctl/velocity-console-in"),
 	}
+	db, err := strconv.Atoi(env("MCLINK_REDIS_DB", "0"))
+	if err != nil {
+		return config{}, errors.New("MCLINK_REDIS_DB must be integer")
+	}
+	cfg.RedisDB = db
 	if cfg.GuildID == "" {
 		return config{}, errors.New("MCLINK_DISCORD_GUILD_ID is required")
 	}
@@ -125,12 +136,19 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 		return
 	}
 
-	store, err := mclink.LoadStore(cfg.StorePath)
+	ctx := context.Background()
+	rdb := mclink.NewRedisClient(mclink.RedisConfig{
+		Addr:     cfg.RedisAddr,
+		Password: cfg.RedisPassword,
+		DB:       cfg.RedisDB,
+	})
+	defer rdb.Close()
+
+	entry, ok, err := mclink.LoadCode(ctx, rdb, code)
 	if err != nil {
 		respond(s, i, "内部エラー: code storage を読めませんでした。")
 		return
 	}
-	entry, ok := store.Codes[code]
 	if !ok {
 		respond(s, i, "無効なコードです。")
 		return
@@ -156,8 +174,7 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 	entry.Claimed = true
 	entry.ClaimedBy = i.Member.User.ID
 	entry.ClaimedAt = time.Now().UTC()
-	store.Codes[code] = entry
-	if err := mclink.SaveStore(cfg.StorePath, store); err != nil {
+	if err := saveClaimed(ctx, rdb, entry); err != nil {
 		respond(s, i, "内部エラー: code の確定保存に失敗しました。")
 		return
 	}
@@ -191,5 +208,26 @@ func sendConsoleCommand(path, cmd string) error {
 	}
 	defer f.Close()
 	_, err = fmt.Fprintf(f, "%s\n", strings.TrimSpace(cmd))
+	return err
+}
+
+func saveClaimed(ctx context.Context, rdb *redis.Client, entry mclink.CodeEntry) error {
+	ttl := time.Until(entry.ExpiresAt)
+	if ttl <= 0 {
+		ttl = time.Minute
+	}
+	pipe := rdb.TxPipeline()
+	key := "mclink:code:" + entry.Code
+	pipe.HSet(ctx, key,
+		"code", entry.Code,
+		"type", string(entry.Type),
+		"value", entry.Value,
+		"expires_unix", entry.ExpiresAt.Unix(),
+		"claimed", "true",
+		"claimed_by", entry.ClaimedBy,
+		"claimed_at_unix", entry.ClaimedAt.Unix(),
+	)
+	pipe.Expire(ctx, key, ttl)
+	_, err := pipe.Exec(ctx)
 	return err
 }
