@@ -72,7 +72,7 @@ func loadConfig() (config, error) {
 	cfg := config{
 		TokenPath:     env("MCLINK_DISCORD_BOT_TOKEN_FILE", "/run/secrets/mclink_discord_bot_token"),
 		GuildID:       strings.TrimSpace(os.Getenv("MCLINK_DISCORD_GUILD_ID")),
-		StorePath:     env("MCLINK_STORE_PATH", "/data/mclink/codes.json"),
+		StorePath:     env("MCLINK_STORE_PATH", "/data/velocity/.wslctl/mclink-codes.tsv"),
 		WhitelistPath: env("MCLINK_WHITELIST_PATH", "/data/velocity/whitelists/default.toml"),
 		ConsoleFIFO:   env("MCLINK_CONSOLE_FIFO_PATH", "/data/velocity/.wslctl/velocity-console-in"),
 	}

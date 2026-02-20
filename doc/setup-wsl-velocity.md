@@ -38,6 +38,8 @@ Bot 検証時は、Bot を `world` 側へ直接接続できる。
   - ワールドガードのリージョンIDに基づき `ClickMobs` を制御する
 - `infra/plugins/ClickMobsRegionGuard/config.yml`
   - `allowed_regions.<world>` に許可リージョンIDを列挙する
+- `infra/plugins/LinkCodeGate.jar`
+  - ReWhitelist 拒否時にワンタイムコードを発行し、キック文へ表示する（Velocity）
 
 ## Velocity ホワイトリスト（ReWhitelist）
 
@@ -69,6 +71,9 @@ wslctl server restart velocity
 
 `mclink` コンテナが Discord の `/mc link <code>` を受け取り、
 ReWhitelist の `default.toml` にエントリを追加する。
+コードは Velocity の `LinkCodeGate` がホワイトリスト拒否時に自動発行し、
+キックメッセージに表示する。
+ワンタイムコードは `runtime/velocity/.wslctl/mclink-codes.tsv` に保存される。
 
 ### 必要な設定
 
@@ -83,15 +88,15 @@ chmod 600 secrets/mclink_discord_bot_token.txt
 
 ### 運用手順（最小）
 
-1. 管理者がワンタイムコードを発行する
+1. 利用者がサーバー接続を試み、拒否メッセージでコードを受け取る
+2. Discord で `/mc link code:<表示されたコード>` を実行する
+3. Bot が `whitelist reload` を自動実行し、そのまま反映される
+
+補助コマンド（デバッグ用途）:
 
 ```console
 wslctl link issue --nick kyoh86 --ttl 10m
 ```
-
-2. 利用者が Discord で `/mc link code:<発行コード>` を実行する
-
-3. Bot が `whitelist reload` を自動実行し、そのまま反映される
 
 ## コマンド体系
 

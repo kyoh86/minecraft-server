@@ -1,0 +1,10 @@
+{
+  "id": "linkcodegate",
+  "name": "LinkCodeGate",
+  "version": "0.1.0",
+  "description": "Issue one-time link codes when whitelist denies login.",
+  "authors": [
+    "kyoh86"
+  ],
+  "main": "dev.kyoh86.mcserver.LinkCodeGatePlugin"
+}

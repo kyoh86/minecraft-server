@@ -42,7 +42,7 @@ func newLinkIssueCmd(a app) *cobra.Command {
 				return err
 			}
 
-			storePath := filepath.Join(a.baseDir, "runtime", "mclink", "codes.json")
+			storePath := filepath.Join(a.baseDir, "runtime", "velocity", ".wslctl", "mclink-codes.tsv")
 			store, err := mclink.LoadStore(storePath)
 			if err != nil {
 				return err

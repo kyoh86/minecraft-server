@@ -42,13 +42,12 @@
   - `world` コンテナ（`itzg/minecraft-server:java21`、内部向け）
   - `velocity` コンテナ（`itzg/mc-proxy:java21`、公開入口 `25565`）
   - `mclink` コンテナ（Discord `/mc link` 連携）
-  - `ReWhitelist` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を自動導入
+  - `ReWhitelist` / `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を導入
 - `runtime/world`
   - サーバーデータ永続化先
 - `runtime/velocity`
   - Velocity と Velocity プラグインの永続化先
-- `runtime/mclink`
-  - `/mc link` ワンタイムコード保管先
+  - `/mc link` ワンタイムコードは `runtime/velocity/.wslctl/mclink-codes.tsv`
 - `datapacks/world-base`
   - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `worlds/*/world.env.yml`

@@ -59,6 +59,7 @@ services:
         exec /usr/bin/run-bungeecord.sh <&3
     volumes:
       - ../runtime/velocity:/server
+      - ./plugins/LinkCodeGate.jar:/plugins/LinkCodeGate.jar:ro
       - ./velocity:/config:ro
     networks:
       - mcnet
@@ -72,7 +73,7 @@ services:
       - velocity
     environment:
       MCLINK_DISCORD_GUILD_ID: "1474080174038585508"
-      MCLINK_STORE_PATH: "/data/mclink/codes.json"
+      MCLINK_STORE_PATH: "/data/velocity/.wslctl/mclink-codes.tsv"
       MCLINK_WHITELIST_PATH: "/data/velocity/whitelists/default.toml"
       MCLINK_CONSOLE_FIFO_PATH: "/data/velocity/.wslctl/velocity-console-in"
     secrets:
