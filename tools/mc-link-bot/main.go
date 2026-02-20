@@ -17,6 +17,7 @@ type config struct {
 	GuildID       string
 	StorePath     string
 	WhitelistPath string
+	ConsoleFIFO   string
 }
 
 func main() {
@@ -73,6 +74,7 @@ func loadConfig() (config, error) {
 		GuildID:       strings.TrimSpace(os.Getenv("MCLINK_DISCORD_GUILD_ID")),
 		StorePath:     env("MCLINK_STORE_PATH", "/data/mclink/codes.json"),
 		WhitelistPath: env("MCLINK_WHITELIST_PATH", "/data/velocity/whitelists/default.toml"),
+		ConsoleFIFO:   env("MCLINK_CONSOLE_FIFO_PATH", "/data/velocity/.wslctl/velocity-console-in"),
 	}
 	if cfg.GuildID == "" {
 		return config{}, errors.New("MCLINK_DISCORD_GUILD_ID is required")
@@ -146,6 +148,10 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 		respond(s, i, "内部エラー: whitelist 更新に失敗しました。")
 		return
 	}
+	if err := sendConsoleCommand(cfg.ConsoleFIFO, "whitelist reload"); err != nil {
+		respond(s, i, "内部エラー: whitelist reload に失敗しました。")
+		return
+	}
 
 	entry.Claimed = true
 	entry.ClaimedBy = i.Member.User.ID
@@ -156,7 +162,7 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 		return
 	}
 
-	msg := fmt.Sprintf("リンク完了: `%s:%s` を whitelist に追加しました。反映には `wslctl server restart velocity` が必要です。", entry.Type, entry.Value)
+	msg := fmt.Sprintf("リンク完了: `%s:%s` を whitelist に追加し、`whitelist reload` を実行しました。", entry.Type, entry.Value)
 	respond(s, i, msg)
 }
 
@@ -176,4 +182,14 @@ func env(key, fallback string) string {
 		return fallback
 	}
 	return v
+}
+
+func sendConsoleCommand(path, cmd string) error {
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = fmt.Fprintf(f, "%s\n", strings.TrimSpace(cmd))
+	return err
 }

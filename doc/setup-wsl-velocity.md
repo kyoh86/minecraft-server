@@ -91,11 +91,7 @@ wslctl link issue --nick kyoh86 --ttl 10m
 
 2. 利用者が Discord で `/mc link code:<発行コード>` を実行する
 
-3. 反映のため Velocity を再起動する
-
-```console
-wslctl server restart velocity
-```
+3. Bot が `whitelist reload` を自動実行し、そのまま反映される
 
 ## コマンド体系
 

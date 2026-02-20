@@ -45,11 +45,18 @@ services:
       - sh
       - -lc
       - |-
+        mkdir -p /server/.wslctl
         mkdir -p /server/whitelists
         if [ ! -f /server/whitelists/default.toml ]; then
           cp /config/whitelists/default.toml /server/whitelists/default.toml
         fi
-        exec /usr/bin/run-bungeecord.sh
+        if [ ! -p /server/.wslctl/velocity-console-in ]; then
+          rm -f /server/.wslctl/velocity-console-in
+          mkfifo /server/.wslctl/velocity-console-in
+        fi
+        chmod 666 /server/.wslctl/velocity-console-in
+        exec 3<>/server/.wslctl/velocity-console-in
+        exec /usr/bin/run-bungeecord.sh <&3
     volumes:
       - ../runtime/velocity:/server
       - ./velocity:/config:ro
@@ -64,9 +71,10 @@ services:
     depends_on:
       - velocity
     environment:
-      MCLINK_DISCORD_GUILD_ID: ""
+      MCLINK_DISCORD_GUILD_ID: "1474080174038585508"
       MCLINK_STORE_PATH: "/data/mclink/codes.json"
       MCLINK_WHITELIST_PATH: "/data/velocity/whitelists/default.toml"
+      MCLINK_CONSOLE_FIFO_PATH: "/data/velocity/.wslctl/velocity-console-in"
     secrets:
       - mclink_discord_bot_token
     volumes:

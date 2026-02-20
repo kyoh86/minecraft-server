@@ -1,0 +1,7 @@
+.git
+.github
+runtime
+secrets
+tools/bot/node_modules
+**/node_modules
+*.log
