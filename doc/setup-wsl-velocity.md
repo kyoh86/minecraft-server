@@ -220,6 +220,7 @@ wslctl server down
 
 - `runtime/world`: Paper 本体データ
 - `runtime/velocity`: Velocity 本体データとプラグインデータ
+- `runtime/redis`: Redis 永続データ（`LOCAL_UID`/`LOCAL_GID` で所有者を固定）
 - `infra/docker-compose.yml`
   - `world` / `velocity` サービス定義
 - `infra/velocity/velocity.toml`

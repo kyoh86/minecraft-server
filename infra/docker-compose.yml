@@ -3,6 +3,7 @@ services:
     image: redis:7.4-alpine
     container_name: mc-redis
     restart: unless-stopped
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     command:
       - redis-server
       - --appendonly
@@ -17,6 +18,7 @@ services:
     image: itzg/minecraft-server:java21
     container_name: mc-world
     restart: unless-stopped
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     environment:
       EULA: "TRUE"
       TYPE: PAPER
@@ -53,6 +55,7 @@ services:
     image: itzg/mc-proxy:java21
     container_name: mc-velocity
     restart: unless-stopped
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     depends_on:
       - limbo
       - redis
