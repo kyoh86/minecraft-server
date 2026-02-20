@@ -16,6 +16,7 @@
 
 - ワールド移動は `mainhall` のゲート経由
 - `residence` / `resource` / `factory` には `mainhall` 戻りゲートあり
+- 未登録プレイヤーは最初に `limbo`（認証待機）へ誘導される
 
 ### ハブ周辺の保護
 
@@ -40,16 +41,20 @@
 
 - `infra/docker-compose.yml`
   - `world` コンテナ（`itzg/minecraft-server:java21`、内部向け）
+  - `limbo` コンテナ（`ghcr.io/quozul/picolimbo:latest`、未認証プレイヤー待機用）
   - `velocity` コンテナ（`itzg/mc-proxy:java21`、公開入口 `25565`）
   - `redis` コンテナ（`/mc link` ワンタイムコード保存）
   - `mclink` コンテナ（Discord `/mc link` 連携）
-  - `ReWhitelist` / `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を導入
+  - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard` を導入
 - `runtime/world`
   - サーバーデータ永続化先
 - `runtime/velocity`
   - Velocity と Velocity プラグインの永続化先
+  - 認可リスト: `runtime/velocity/.wslctl/allowlist.yml`
 - `runtime/redis`
   - `/mc link` ワンタイムコードの Redis 永続化先（AOF）
+- `infra/pico-limbo/server.toml`
+  - PicoLimbo の待機サーバー設定（Velocity MODERN forwarding）
 - `datapacks/world-base`
   - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `worlds/*/world.env.yml`

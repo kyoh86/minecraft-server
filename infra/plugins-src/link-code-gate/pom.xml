@@ -9,7 +9,7 @@
   <packaging>jar</packaging>
 
   <name>LinkCodeGate</name>
-  <description>Issue one-time link code when whitelist denies login on Velocity.</description>
+  <description>Route unlinked players to limbo and issue one-time link code on Velocity.</description>
 
   <properties>
     <maven.compiler.source>21</maven.compiler.source>

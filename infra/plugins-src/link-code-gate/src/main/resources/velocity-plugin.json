@@ -2,7 +2,7 @@
   "id": "linkcodegate",
   "name": "LinkCodeGate",
   "version": "0.1.0",
-  "description": "Issue one-time link codes when whitelist denies login.",
+  "description": "Route unlinked players to limbo and issue one-time link codes.",
   "authors": [
     "kyoh86"
   ],

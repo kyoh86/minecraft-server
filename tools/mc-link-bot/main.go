@@ -21,8 +21,7 @@ type config struct {
 	RedisAddr     string
 	RedisPassword string
 	RedisDB       int
-	WhitelistPath string
-	ConsoleFIFO   string
+	AllowlistPath string
 }
 
 func main() {
@@ -79,8 +78,7 @@ func loadConfig() (config, error) {
 		GuildID:       strings.TrimSpace(os.Getenv("MCLINK_DISCORD_GUILD_ID")),
 		RedisAddr:     env("MCLINK_REDIS_ADDR", "redis:6379"),
 		RedisPassword: env("MCLINK_REDIS_PASSWORD", ""),
-		WhitelistPath: env("MCLINK_WHITELIST_PATH", "/data/velocity/whitelists/default.toml"),
-		ConsoleFIFO:   env("MCLINK_CONSOLE_FIFO_PATH", "/data/velocity/.wslctl/velocity-console-in"),
+		AllowlistPath: env("MCLINK_ALLOWLIST_PATH", "/data/velocity/.wslctl/allowlist.yml"),
 	}
 	db, err := strconv.Atoi(env("MCLINK_REDIS_DB", "0"))
 	if err != nil {
@@ -162,12 +160,8 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 		return
 	}
 
-	if err := mclink.AddWhitelistEntry(cfg.WhitelistPath, entry.Type, entry.Value); err != nil {
-		respond(s, i, "内部エラー: whitelist 更新に失敗しました。")
-		return
-	}
-	if err := sendConsoleCommand(cfg.ConsoleFIFO, "whitelist reload"); err != nil {
-		respond(s, i, "内部エラー: whitelist reload に失敗しました。")
+	if err := mclink.AddAllowlistEntry(cfg.AllowlistPath, entry.Type, entry.Value); err != nil {
+		respond(s, i, "内部エラー: allowlist 更新に失敗しました。")
 		return
 	}
 
@@ -179,7 +173,7 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 		return
 	}
 
-	msg := fmt.Sprintf("リンク完了: `%s:%s` を whitelist に追加し、`whitelist reload` を実行しました。", entry.Type, entry.Value)
+	msg := fmt.Sprintf("リンク完了: `%s:%s` を allowlist に追加しました。", entry.Type, entry.Value)
 	respond(s, i, msg)
 }
 
@@ -199,16 +193,6 @@ func env(key, fallback string) string {
 		return fallback
 	}
 	return v
-}
-
-func sendConsoleCommand(path, cmd string) error {
-	f, err := os.OpenFile(path, os.O_WRONLY, 0)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = fmt.Fprintf(f, "%s\n", strings.TrimSpace(cmd))
-	return err
 }
 
 func saveClaimed(ctx context.Context, rdb *redis.Client, entry mclink.CodeEntry) error {

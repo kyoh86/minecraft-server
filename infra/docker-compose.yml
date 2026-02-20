@@ -41,11 +41,20 @@ services:
       - ./world-patches:/patches:ro
     networks:
       - mcnet
+  limbo:
+    image: ghcr.io/quozul/picolimbo:latest
+    container_name: mc-limbo
+    restart: unless-stopped
+    volumes:
+      - ./pico-limbo/server.toml:/usr/src/app/server.toml:ro
+    networks:
+      - mcnet
   velocity:
     image: itzg/mc-proxy:java21
     container_name: mc-velocity
     restart: unless-stopped
     depends_on:
+      - limbo
       - redis
       - world
     ports:
@@ -53,7 +62,6 @@ services:
     environment:
       TYPE: VELOCITY
       MEMORY: "512M"
-      PLUGINS: "https://cdn.modrinth.com/data/dC25u16c/versions/FYB4IP1H/ReWhitelist-1.0.4.jar"
       REPLACE_ENV_VARIABLES: "TRUE"
       REPLACE_ENV_VARIABLE_PREFIX: "CFG_"
       MCLINK_REDIS_ADDR: "redis:6379"
@@ -63,17 +71,10 @@ services:
       - -lc
       - |-
         mkdir -p /server/.wslctl
-        mkdir -p /server/whitelists
-        if [ ! -f /server/whitelists/default.toml ]; then
-          cp /config/whitelists/default.toml /server/whitelists/default.toml
+        if [ ! -f /server/.wslctl/allowlist.yml ]; then
+          cp /config/allowlist.yml /server/.wslctl/allowlist.yml
         fi
-        if [ ! -p /server/.wslctl/velocity-console-in ]; then
-          rm -f /server/.wslctl/velocity-console-in
-          mkfifo /server/.wslctl/velocity-console-in
-        fi
-        chmod 666 /server/.wslctl/velocity-console-in
-        exec 3<>/server/.wslctl/velocity-console-in
-        exec /usr/bin/run-bungeecord.sh <&3
+        exec /usr/bin/run-bungeecord.sh
     volumes:
       - ../runtime/velocity:/server
       - ./plugins/LinkCodeGate.jar:/plugins/LinkCodeGate.jar:ro
@@ -93,8 +94,7 @@ services:
       MCLINK_DISCORD_GUILD_ID: "1474080174038585508"
       MCLINK_REDIS_ADDR: "redis:6379"
       MCLINK_REDIS_DB: "0"
-      MCLINK_WHITELIST_PATH: "/data/velocity/whitelists/default.toml"
-      MCLINK_CONSOLE_FIFO_PATH: "/data/velocity/.wslctl/velocity-console-in"
+      MCLINK_ALLOWLIST_PATH: "/data/velocity/.wslctl/allowlist.yml"
     secrets:
       - mclink_discord_bot_token
     volumes:

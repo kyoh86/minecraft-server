@@ -4,54 +4,47 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
-	toml "github.com/pelletier/go-toml/v2"
+	"github.com/goccy/go-yaml"
 )
 
-type WhitelistEntry struct {
-	Type string `toml:"type"`
-	Nick string `toml:"nick,omitempty"`
-	UUID string `toml:"uuid,omitempty"`
+type Allowlist struct {
+	UUIDs []string `yaml:"uuids"`
+	Nicks []string `yaml:"nicks"`
 }
 
-type WhitelistFile struct {
-	Enabled   bool             `toml:"enabled"`
-	Servers   []string         `toml:"servers"`
-	Whitelist []WhitelistEntry `toml:"whitelist"`
-}
-
-func AddWhitelistEntry(path string, typ EntryType, value string) error {
+func AddAllowlistEntry(path string, typ EntryType, value string) error {
 	value = strings.TrimSpace(value)
 	if value == "" {
 		return errors.New("value must not be empty")
 	}
 
-	var cfg WhitelistFile
-	b, err := os.ReadFile(path)
-	if err != nil {
+	cfg := Allowlist{}
+	if b, err := os.ReadFile(path); err == nil {
+		if err := yaml.Unmarshal(b, &cfg); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
 		return err
 	}
-	if err := toml.Unmarshal(b, &cfg); err != nil {
-		return err
-	}
-
-	if hasEntry(cfg.Whitelist, typ, value) {
-		return nil
-	}
-
-	entry := WhitelistEntry{Type: string(typ)}
 	switch typ {
 	case EntryTypeNick:
-		entry.Nick = value
+		if !containsFold(cfg.Nicks, value) {
+			cfg.Nicks = append(cfg.Nicks, value)
+		}
 	case EntryTypeUUID:
-		entry.UUID = value
+		if !containsFold(cfg.UUIDs, value) {
+			cfg.UUIDs = append(cfg.UUIDs, value)
+		}
 	default:
 		return errors.New("unsupported entry type")
 	}
-	cfg.Whitelist = append(cfg.Whitelist, entry)
+	slices.Sort(cfg.Nicks)
+	slices.Sort(cfg.UUIDs)
 
-	out, err := toml.Marshal(cfg)
+	out, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
 	}
@@ -61,20 +54,10 @@ func AddWhitelistEntry(path string, typ EntryType, value string) error {
 	return os.WriteFile(path, out, 0o644)
 }
 
-func hasEntry(entries []WhitelistEntry, typ EntryType, value string) bool {
-	for _, e := range entries {
-		if e.Type != string(typ) {
-			continue
-		}
-		switch typ {
-		case EntryTypeNick:
-			if strings.EqualFold(e.Nick, value) {
-				return true
-			}
-		case EntryTypeUUID:
-			if strings.EqualFold(e.UUID, value) {
-				return true
-			}
+func containsFold(values []string, needle string) bool {
+	for _, v := range values {
+		if strings.EqualFold(v, needle) {
+			return true
 		}
 	}
 	return false

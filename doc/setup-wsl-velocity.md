@@ -2,7 +2,7 @@
 
 ## 概要
 
-このプロジェクトは以下の 2 層で動作する。
+このプロジェクトは以下の 3 層で動作する。
 
 - `velocity`（公開入口）
   - 公開ポート: `25565`
@@ -15,8 +15,15 @@
   - `proxies.velocity.enabled=true`
   - `proxies.velocity.secret` は `infra/velocity/forwarding.secret` と一致させる
   - `velocity` からのみ到達
+- `limbo`（認証待機 PicoLimbo）
+  - 外部非公開
+  - `bind=0.0.0.0:25565`
+  - MODERN forwarding (`infra/pico-limbo/server.toml`)
+  - `velocity` からのみ到達
 
 Bot 検証時は、Bot を `world` 側へ直接接続できる。
+
+未認証プレイヤーは `limbo`（認証待機用 PicoLimbo）へ接続される。
 
 ## 導入プラグイン
 
@@ -27,7 +34,6 @@ Bot 検証時は、Bot を `world` 側へ直接接続できる。
 - `worldedit`
 - `worldguard`
 - `clickmobs`
-- `rewhitelist`（Velocity）
 
 あわせて、ローカル配布プラグインを以下で導入する。
 
@@ -39,40 +45,28 @@ Bot 検証時は、Bot を `world` 側へ直接接続できる。
 - `infra/plugins/ClickMobsRegionGuard/config.yml`
   - `allowed_regions.<world>` に許可リージョンIDを列挙する
 - `infra/plugins/LinkCodeGate.jar`
-  - ReWhitelist 拒否時にワンタイムコードを発行し、キック文へ表示する（Velocity）
+  - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示する（Velocity）
+- `infra/pico-limbo/server.toml`
+  - PicoLimbo 本体の待機サーバー設定
 
-## Velocity ホワイトリスト（ReWhitelist）
+## 認可リスト（allowlist.yml）
 
-ReWhitelist はデフォルトで全グループ無効。
-`default` を有効化すると、許可エントリに一致しないプレイヤーを拒否する。
-この構成では初回起動時のみ `infra/velocity/whitelists/default.toml` を
-`runtime/velocity/whitelists/default.toml` へ投入する。
-
-初期 PoC の操作:
-
-```console
-# 拒否状態の反映
-wslctl server restart velocity
-
-# 許可エントリ追加（ゲーム内 or Velocity コンソール）
-/whitelist add nick kyoh86
-
-# 一覧確認
-/whitelist list
-```
+認可判定は `LinkCodeGate` が `allowlist.yml` を直接参照して行う。
+許可エントリは `mclink` が更新する。
 
 設定ファイル:
 
-- `infra/velocity/whitelists/default.toml`
-  - `enabled = true`
-  - 初期状態は全拒否
+- `infra/velocity/allowlist.yml`
+  - 初期テンプレート
+- `runtime/velocity/.wslctl/allowlist.yml`
+  - 実運用時の実体
 
 ## Discord `/mc link`（PoC）
 
 `mclink` コンテナが Discord の `/mc link <code>` を受け取り、
-ReWhitelist の `default.toml` にエントリを追加する。
-コードは Velocity の `LinkCodeGate` がホワイトリスト拒否時に自動発行し、
-キックメッセージに表示する。
+`runtime/velocity/.wslctl/allowlist.yml` にエントリを追加する。
+コードは Velocity の `LinkCodeGate` が未登録プレイヤー向けに自動発行し、
+`limbo` 内チャットに表示する。
 ワンタイムコードは Redis（`runtime/redis`）に保存される。
 
 ### 必要な設定
@@ -88,9 +82,9 @@ chmod 600 secrets/mclink_discord_bot_token.txt
 
 ### 運用手順（最小）
 
-1. 利用者がサーバー接続を試み、拒否メッセージでコードを受け取る
+1. 利用者がサーバー接続を試み、`limbo` のチャットでコードを受け取る
 2. Discord で `/mc link code:<表示されたコード>` を実行する
-3. Bot が `whitelist reload` を自動実行し、そのまま反映される
+3. Bot が `allowlist.yml` を更新し、そのまま反映される
 
 補助コマンド（デバッグ用途）:
 
