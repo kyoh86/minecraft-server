@@ -162,7 +162,6 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - 座標依存の反映は `mc-ctl world spawn profile/stage/apply` で行い、ポータル定義などを読み込む。
 - `mc-ctl world drop|delete`
 - `mc-ctl player op ...|admin ...`
-- `mc-ctl link issue --nick <name>|--uuid <uuid> [--ttl 10m]`
 
 `server/world/player` 系でコンソール送信を伴うコマンドは、コンテナが
 `running + healthy` になり、`/tmp/minecraft-console-in` パイプが生成されるまで

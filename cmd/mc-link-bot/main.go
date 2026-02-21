@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/kyoh86/minecraft-server/internal/mclink"
+	"github.com/kyoh86/minecraft-server/cmd/mc-link-bot/internal/mclink"
 	"github.com/redis/go-redis/v9"
 )
 
