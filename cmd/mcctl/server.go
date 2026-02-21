@@ -21,9 +21,6 @@ func (a app) serverDown() error {
 }
 
 func (a app) serverRestart(service string) error {
-	if service == "" {
-		service = "world"
-	}
 	return a.compose("restart", service)
 }
 
@@ -31,8 +28,11 @@ func (a app) serverPS() error {
 	return a.compose("ps")
 }
 
-func (a app) serverLogs(service string) error {
-	args := []string{"logs", "-f"}
+func (a app) serverLogs(service string, follow bool) error {
+	args := []string{"logs"}
+	if follow {
+		args = append(args, "--follow")
+	}
 	if service != "" {
 		args = append(args, service)
 	}
@@ -44,7 +44,7 @@ func (a app) serverReload() error {
 }
 
 func (a app) assetInit() error {
-	if err := a.ensureRuntimeWritable(); err != nil {
+	if err := a.ensureRuntimeLayout(); err != nil {
 		return err
 	}
 	fmt.Printf("Initialized assets: %s\n", filepath.Join(a.baseDir, "runtime"))
@@ -52,7 +52,7 @@ func (a app) assetInit() error {
 }
 
 func (a app) assetStage() error {
-	if err := a.ensureRuntimeWritable(); err != nil {
+	if err := a.ensureRuntimeLayout(); err != nil {
 		return err
 	}
 	fmt.Println("Staged runtime assets (directory checks only)")

@@ -42,17 +42,20 @@ func newServerCmd(a app) *cobra.Command {
 		},
 	})
 
-	cmd.AddCommand(&cobra.Command{
+	var follow bool
+	logsCmd := &cobra.Command{
 		Use:   "logs [service]",
-		Short: "follow logs (all services or one service)",
+		Short: "show logs (all services or one service)",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 {
-				return a.serverLogs(args[0])
+				return a.serverLogs(args[0], follow)
 			}
-			return a.serverLogs("")
+			return a.serverLogs("", follow)
 		},
-	})
+	}
+	logsCmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow logs or not")
+	cmd.AddCommand(logsCmd)
 
 	cmd.AddCommand(&cobra.Command{
 		Use:   "reload",
