@@ -64,7 +64,7 @@ func newWorldCmd(a app) *cobra.Command {
 	})
 	spawnCmd.AddCommand(&cobra.Command{
 		Use:   "stage",
-		Short: "render spawn templates into runtime and reload",
+		Short: "apply spawn runtime files and reload",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return a.worldSpawnStage()
 		},

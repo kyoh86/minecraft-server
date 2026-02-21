@@ -53,9 +53,9 @@
     - `mc-ctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
     - `mv` 系コマンドはここに書かず、`world.policy.yml` に記述する
     - 座標依存の function 実行はここに書かない
-- `worlds/<name>/worldguard.regions.yml.tmpl`
-    - `WorldGuard` のリージョン定義テンプレート
-    - `mc-ctl world spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ描画する
+- `worlds/<name>/worldguard.regions.yml`
+    - `WorldGuard` のリージョン定義
+    - `mc-ctl world spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へコピーする
 - `worlds/mainhall/portals.yml.tmpl`
     - `Multiverse-Portals` 用のポータル定義テンプレート
     - `mc-ctl world spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
@@ -87,8 +87,8 @@
     - 各ワールドに `mcserver_spawn_anchor_<world>` marker を配置する
     - `setworldspawn` と `mvsetspawn` を同期する
 - `mc-ctl world spawn stage`
-    - profile を必須入力として、`.tmpl` を runtime に描画する
-    - `worldguard.regions.yml.tmpl` / `portals.yml.tmpl` を反映する
+    - profile を必須入力として、`portals.yml.tmpl` を runtime に描画する
+    - `worldguard.regions.yml` を runtime にコピーし、`portals.yml.tmpl` を反映する
     - `reload` / `wg reload` / `mvp config enforce-portal-access false` / `mv reload` を実行する
     - `spawn_protected` / `clickmobs_allowed` の Y 範囲は `-64 .. 319` とする
     - `*_to_mainhall` ポータルの Y 範囲は `surface_y .. surface_y+3` とする
@@ -128,13 +128,13 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 `residence` / `resource` / `factory` の小ハブは
 `mc-ctl world spawn apply` が profile 座標を基準に構築する。
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
-同時に `worldguard.regions.yml.tmpl` の描画結果により
+同時に `worldguard.regions.yml` の反映結果により
 スポーン周辺での建設・破壊・爆破を禁止する。
 ただし回路操作のため、`spawn_protected` では `interact` / `use` を許可する。
 `ClickMobs` の利用可否は `ClickMobsRegionGuard` の設定で制御する。
 `ClickMobs` 本体は `whitelisted_mobs: [?all]` とし、全モブ捕獲を有効化する。
 
-`Multiverse-Portals` と `WorldGuard` のテンプレート反映:
+`Multiverse-Portals` のテンプレート反映と `WorldGuard` の設定反映:
 
 ```console
 mc-ctl world spawn profile

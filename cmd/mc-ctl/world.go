@@ -423,10 +423,10 @@ func (a app) worldSpawnStage() error {
 		return err
 	}
 	for _, worldName := range worldNames {
-		fmt.Printf("world spawn stage: rendering WorldGuard regions for %s...\n", worldName)
-		src := filepath.Join(a.baseDir, "worlds", worldName, "worldguard.regions.yml.tmpl")
+		fmt.Printf("world spawn stage: copying WorldGuard regions for %s...\n", worldName)
+		src := filepath.Join(a.baseDir, "worlds", worldName, "worldguard.regions.yml")
 		dst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
-		if err := renderTemplateFile(src, dst, data); err != nil {
+		if err := copyFile(src, dst); err != nil {
 			return err
 		}
 	}
@@ -647,6 +647,20 @@ func renderTemplateFile(src, dst string, data any) error {
 		return err
 	}
 	return os.WriteFile(dst, out.Bytes(), 0o644)
+}
+
+func copyFile(src, dst string) error {
+	if !fileExists(src) {
+		return fmt.Errorf("missing file: %s", src)
+	}
+	b, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(dst, b, 0o644)
 }
 
 func (a app) listWorldConfigs() ([]string, error) {
