@@ -42,7 +42,7 @@ func findRepoRoot() (string, error) {
 	}
 	for dir := cwd; ; dir = filepath.Dir(dir) {
 		if fileExists(filepath.Join(dir, "infra", "docker-compose.yml")) &&
-			fileExists(filepath.Join(dir, "worlds", "schema.json")) {
+			fileExists(filepath.Join(dir, "worlds", "env.schema.json")) {
 			return dir, nil
 		}
 		parent := filepath.Dir(dir)

@@ -37,7 +37,7 @@
     - ワールド生成に必要な情報群
     - `mainhall` は `LEVEL` 基底ワールドのため `world.env.yml` は持たない（全て固定値）
     - 対象は Multiverse 管理ワールド（`residence` / `resource` / `factory`）
-    - 先頭に `# yaml-language-server: $schema=../schema.json` を記述
+    - 先頭に `# yaml-language-server: $schema=../env.schema.json` を記述
     - `name` / `environment` / `world_type` / `seed` / `deletable`
 - `worlds/<name>/world.policy.yml`
     - MultiVerse で設定するワールドごとの特性情報群
@@ -58,7 +58,7 @@
 - `worlds/mainhall/portals.yml.tmpl`
     - `Multiverse-Portals` 用のポータル定義テンプレート
     - `mc-ctl world spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
-- `worlds/schema.json`
+- `worlds/env.schema.json`
     - `world.env.yml` 用 JSON Schema
 - `worlds/policy.schema.json`
     - `world.policy.yml` 用 JSON Schema
