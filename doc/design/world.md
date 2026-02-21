@@ -58,7 +58,7 @@
 - `worlds/mainhall/portals.yml.tmpl`
     - `Multiverse-Portals` 用のポータル定義テンプレート
     - `wslctl world spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
-- `worlds/schema.json` TODO: env.schema.jsonにしたほうが良さそう。実態も同時に。
+- `worlds/schema.json`
     - `world.env.yml` 用 JSON Schema
 - `worlds/policy.schema.json`
     - `world.policy.yml` 用 JSON Schema
@@ -176,21 +176,21 @@ allowed_regions:
 - 破壊不可能エリア（`spawn_protected`）
 - Mob 捕獲/放逐許可エリア（`clickmobs_allowed`）
 
-Datapack 関数でパーティクル境界を表示する。TODO: 実態にあってない
+Datapack 関数でパーティクル境界を表示する。
 
-- `spawn_protected`: `minecraft:flame` で境界表示
-- `clickmobs_allowed`: `minecraft:happy_villager` で境界表示
+- `spawn_protected`: `minecraft:cherry_leaves` で境界表示
+- `clickmobs_allowed`: `minecraft:end_rod` で境界表示
 
 表示はワールドごとの固定座標・固定Y基準で描画する
 
 ### 実装
 
-以下の関数を追加済み。TODO: 実態にあってない
+以下の関数を利用する。
 
 - `mcserver:region/show_spawn_protected`
 - `mcserver:region/show_clickmobs_allowed`
 - `mcserver:region/show_all`
-- `mcserver:region/show_all_init`
+- `mcserver:region/init`
 - `mcserver:region/show_all_loop`
 
 `show_spawn_protected` / `show_clickmobs_allowed` は
@@ -206,5 +206,5 @@ Datapack 関数でパーティクル境界を表示する。TODO: 実態にあ�
 ### 常設表示
 
 `world/hub_layout.mcfunction` では、Hub 内のリピートコマンドブロックを
-`function mcserver:region/show_all_init` 実行にしている。
-`show_all_init` が `show_all_loop` を開始し、以降は 1秒ごとに表示する。
+`function mcserver:region/init` 実行にしている。
+`init` が `show_all_loop` を開始し、以降は 1秒ごとに表示する。
