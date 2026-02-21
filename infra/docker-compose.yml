@@ -121,7 +121,7 @@ services:
   mclink:
     build:
       context: ..
-      dockerfile: tools/mc-link-bot/Dockerfile
+      dockerfile: infra/mclink/Dockerfile
     container_name: mc-link-bot
     restart: unless-stopped
     depends_on:
