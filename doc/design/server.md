@@ -106,24 +106,24 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `worlds/mainhall/portals.yml.tmpl`
         - 帰還ポータル定義テンプレート（Multiverse-Portals）
 
-## `wslctl`
+## `mcctl`
 
-ほとんどの管理作業を自動化するCLIとして `wslctl` というコマンドを用意した。
-`wslctl` は以下のようなプリミティブなサブコマンド構成になっている。
+ほとんどの管理作業を自動化するCLIとして `mcctl` というコマンドを用意した。
+`mcctl` は以下のようなプリミティブなサブコマンド構成になっている。
 
-- `wslctl asset init`
+- `mcctl asset init`
     - ディレクトリ構成初期化
     - runtimeディレクトリ作成と書き込み可能状態の保証を行う。
-- `wslctl asset stage`
+- `mcctl asset stage`
     - runtime ディレクトリの存在と書込可能状態を確認
-- `wslctl server up|down|restart|ps|logs velocity|logs world|reload`
+- `mcctl server up|down|restart|ps|logs velocity|logs world|reload`
     - サーバーの起動、停止、リスタート、状態やログの確認
-- `wslctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
-    - `wslctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
-    - 座標依存の反映は `wslctl world spawn profile/stage/apply` で行い、ポータル定義などを読み込む。
-- `wslctl world drop|delete`
-- `wslctl player op ...|admin ...`
-- `wslctl link issue --nick <name>|--uuid <uuid> [--ttl 10m]`
+- `mcctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
+    - `mcctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
+    - 座標依存の反映は `mcctl world spawn profile/stage/apply` で行い、ポータル定義などを読み込む。
+- `mcctl world drop|delete`
+- `mcctl player op ...|admin ...`
+- `mcctl link issue --nick <name>|--uuid <uuid> [--ttl 10m]`
 
 `server/world/player` 系でコンソール送信を伴うコマンドは、コンテナが
 `running + healthy` になり、`/tmp/minecraft-console-in` パイプが生成されるまで

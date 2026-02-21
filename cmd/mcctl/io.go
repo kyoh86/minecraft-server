@@ -107,7 +107,7 @@ func (a app) ensureRuntimeLayout() error {
 		filepath.Join(a.baseDir, "runtime", "mclink"),
 		a.runtimeRedisDir(),
 		a.runtimeWorldDir(),
-		filepath.Join(a.runtimeWorldDir(), ".wslctl"),
+		filepath.Join(a.runtimeWorldDir(), ".mcctl"),
 		filepath.Join(a.runtimeWorldDir(), "config"),
 		filepath.Join(a.runtimeWorldDir(), "plugins"),
 		filepath.Join(a.runtimeWorldDir(), "plugins", "ClickMobs"),

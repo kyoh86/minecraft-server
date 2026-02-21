@@ -9,10 +9,10 @@
 3. 作成したアプリを対象 Discord サーバーへインストールする
    （`applications.commands` と `bot` スコープを付与）。
 
-## `wslctl`
+## `mcctl`
 
-ほとんどの管理作業を自動化するCLIとして `wslctl` というコマンドを用意している
-実行はGo buildまたはGo runで `go run ./cmd/wslctl` のように使用する。
+ほとんどの管理作業を自動化するCLIとして `mcctl` というコマンドを用意している
+実行はGo buildまたはGo runで `go run ./cmd/mcctl` のように使用する。
 
 ## 初回セットアップ
 
@@ -39,17 +39,17 @@ sed -i "s/^secret = \".*\"$/secret = \"$SECRET\"/" infra/limbo/config/server.tom
 4. 以下コマンドの実行
 
 ```console
-wslctl asset init
-wslctl asset stage
-wslctl server up
-wslctl world ensure
-wslctl world setup
-wslctl world spawn profile
-wslctl world spawn stage
-wslctl world spawn apply
+mcctl asset init
+mcctl asset stage
+mcctl server up
+mcctl world ensure
+mcctl world setup
+mcctl world spawn profile
+mcctl world spawn stage
+mcctl world spawn apply
 ```
 
-`wslctl asset stage` は runtime ディレクトリの存在と書込可能状態を確認する。
+`mcctl asset stage` は runtime ディレクトリの存在と書込可能状態を確認する。
 設定反映自体は `server up`/`server restart` 時に実行される。
 `world` は起動時に `infra/world/config/bootstrap.sh` を実行し、
 `infra/world/plugins/dist/*` と `infra/velocity/config/forwarding.secret` を `/data` 側へ反映する。
@@ -59,15 +59,15 @@ wslctl world spawn apply
 各種ワールドに対する設定の変更を反映する場合は次を実行する。
 
 ```console
-wslctl world setup
-wslctl world spawn stage
-wslctl world spawn apply
+mcctl world setup
+mcctl world spawn stage
+mcctl world spawn apply
 ```
 
 特定ワールドだけセットアップを適用したい場合:
 
 ```console
-wslctl world setup --world mainhall
+mcctl world setup --world mainhall
 ```
 
 ## ワールド再生成
@@ -75,18 +75,18 @@ wslctl world setup --world mainhall
 `deletable: true` のワールドだけ再生成できるてんに注意
 
 ```console
-wslctl world regenerate resource
-wslctl world setup --world resource
-wslctl world spawn profile
-wslctl world spawn stage
-wslctl world spawn apply
+mcctl world regenerate resource
+mcctl world setup --world resource
+mcctl world spawn profile
+mcctl world spawn stage
+mcctl world spawn apply
 ```
 
 ## ワールド drop / delete
 
 ```console
-wslctl world drop resource
-wslctl world delete --yes resource
+mcctl world drop resource
+mcctl world delete --yes resource
 ```
 
 - `drop` は unload + remove だけ実行し、ワールドディスクは残す。
@@ -99,20 +99,20 @@ wslctl world delete --yes resource
 ## 任意 function 実行
 
 ```console
-wslctl world function run mcserver:hello
+mcctl world function run mcserver:hello
 ```
 
 ## プレイヤー権限管理の変更
 
 ```console
-wslctl player op grant kyoh86
-wslctl player op revoke kyoh86
-wslctl player admin grant kyoh86
-wslctl player admin revoke kyoh86
+mcctl player op grant kyoh86
+mcctl player op revoke kyoh86
+mcctl player admin grant kyoh86
+mcctl player admin revoke kyoh86
 ```
 
 ## 停止
 
 ```console
-wslctl server down
+mcctl server down
 ```

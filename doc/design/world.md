@@ -49,15 +49,15 @@
 - `worlds/<name>/setup.commands`
     - 対象は全ワールド（`mainhall` を含む）
     - ワールド内で発行する固定値の初期設定コマンド群。1行1コマンドで記述する
-    - `wslctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
+    - `mcctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
     - `mv` 系コマンドはここに書かず、`world.policy.yml` に記述する
     - 座標依存の function 実行はここに書かない
 - `worlds/<name>/worldguard.regions.yml.tmpl`
     - `WorldGuard` のリージョン定義テンプレート
-    - `wslctl world spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ描画する
+    - `mcctl world spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ描画する
 - `worlds/mainhall/portals.yml.tmpl`
     - `Multiverse-Portals` 用のポータル定義テンプレート
-    - `wslctl world spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
+    - `mcctl world spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
 - `worlds/schema.json`
     - `world.env.yml` 用 JSON Schema
 - `worlds/policy.schema.json`
@@ -73,30 +73,30 @@
 
 ## プリミティブ操作
 
-- `wslctl world ensure`
+- `mcctl world ensure`
     - world 定義に従って create/import する
     - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
-- `wslctl world setup [--world <name>]`
+- `mcctl world setup [--world <name>]`
     - `setup.commands` を対象次元で実行する
     - `world.policy.yml` に定義された MV 管理項目を適用する
     - `world-base` datapack を runtime へそのままコピーする
-- `wslctl world spawn profile`
+- `mcctl world spawn profile`
     - `residence/resource/factory` の地表Y（`motion_blocking_no_leaves`）を検出する
     - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
     - 各ワールドに `mcserver_spawn_anchor_<world>` marker を配置する
     - `setworldspawn` と `mvsetspawn` を同期する
-- `wslctl world spawn stage`
+- `mcctl world spawn stage`
     - profile を必須入力として、`.tmpl` を runtime に描画する
     - `worldguard.regions.yml.tmpl` / `portals.yml.tmpl` を反映する
     - `reload` / `wg reload` / `mvp config enforce-portal-access false` / `mv reload` を実行する
     - `spawn_protected` / `clickmobs_allowed` の Y 範囲は `-64 .. 319` とする
     - `*_to_mainhall` ポータルの Y 範囲は `surface_y .. surface_y+3` とする
-- `wslctl world spawn apply`
+- `mcctl world spawn apply`
     - `mainhall` では `mcserver:mainhall/hub_layout` を適用する
     - `residence/resource/factory` では profile の `surface_y` を使い、
       `execute in <dimension> run execute positioned ...` で
       `mcserver:world/hub_layout` を適用する
-- `wslctl world regenerate <name>`
+- `mcctl world regenerate <name>`
     - world を削除して再生成する（`deletable: true` のみ）
 
 ## 補足
@@ -109,7 +109,7 @@
 `mainhall` の初期スポーン付近に、導線確認用のデモ建築を配置できる。
 
 ```console
-wslctl world function run mcserver:mainhall/hub_layout
+mcctl world function run mcserver:mainhall/hub_layout
 ```
 
 この function は、御殿風の簡易ハブと `residence` / `resource` / `factory` 行きの
@@ -122,10 +122,10 @@ wslctl world function run mcserver:mainhall/hub_layout
 初回ログイン時の安全スポーン補正で屋根上に出ないよう、
 中心座標（`0 -51 0`）の天井を開口している。
 
-`mainhall` のハブは `wslctl world spawn apply` が
+`mainhall` のハブは `mcctl world spawn apply` が
 `mcserver:mainhall/hub_layout` を実行して構築する。
 `residence` / `resource` / `factory` の小ハブは
-`wslctl world spawn apply` が profile 座標を基準に構築する。
+`mcctl world spawn apply` が profile 座標を基準に構築する。
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
 同時に `worldguard.regions.yml.tmpl` の描画結果により
 スポーン周辺での建設・破壊・爆破を禁止する。
@@ -136,9 +136,9 @@ wslctl world function run mcserver:mainhall/hub_layout
 `Multiverse-Portals` と `WorldGuard` のテンプレート反映:
 
 ```console
-wslctl world spawn profile
-wslctl world spawn stage
-wslctl world spawn apply
+mcctl world spawn profile
+mcctl world spawn stage
+mcctl world spawn apply
 ```
 
 `mainhall` の入口ポータルはゲート面に合わせて定義する

@@ -1,5 +1,5 @@
 GO_ENV := GOCACHE=/tmp/minecraft-server-go-cache GOPATH=/tmp/minecraft-server-go
-WSLCTL := $(GO_ENV) go run ./cmd/wslctl
+MCCTL := $(GO_ENV) go run ./cmd/mcctl
 
 .PHONY: \
 	asset-init asset-stage \
@@ -9,76 +9,76 @@ WSLCTL := $(GO_ENV) go run ./cmd/wslctl
 	player-op-grant player-op-revoke player-admin-grant player-admin-revoke
 
 asset-init:
-	$(WSLCTL) asset init
+	$(MCCTL) asset init
 
 asset-stage:
-	$(WSLCTL) asset stage
+	$(MCCTL) asset stage
 
 server-up:
-	$(WSLCTL) server up
+	$(MCCTL) server up
 
 server-down:
-	$(WSLCTL) server down
+	$(MCCTL) server down
 
 server-restart:
-	$(WSLCTL) server restart world
+	$(MCCTL) server restart world
 
 server-ps:
-	$(WSLCTL) server ps
+	$(MCCTL) server ps
 
 server-logs:
-	$(WSLCTL) server logs world
+	$(MCCTL) server logs world
 
 server-reload:
-	$(WSLCTL) server reload
+	$(MCCTL) server reload
 
 world-ensure:
-	$(WSLCTL) world ensure
+	$(MCCTL) world ensure
 
 world-regenerate:
 	@test -n "$(WORLD)" || (echo "WORLD is required. e.g. make world-regenerate WORLD=resource" && exit 1)
-	$(WSLCTL) world regenerate $(WORLD)
+	$(MCCTL) world regenerate $(WORLD)
 
 world-drop:
 	@test -n "$(WORLD)" || (echo "WORLD is required. e.g. make world-drop WORLD=resource" && exit 1)
-	$(WSLCTL) world drop $(WORLD)
+	$(MCCTL) world drop $(WORLD)
 
 world-delete:
 	@test -n "$(WORLD)" || (echo "WORLD is required. e.g. make world-delete WORLD=resource" && exit 1)
-	$(WSLCTL) world delete --yes $(WORLD)
+	$(MCCTL) world delete --yes $(WORLD)
 
 world-setup:
 	@if [ -n "$(WORLD)" ]; then \
-		$(WSLCTL) world setup --world $(WORLD); \
+		$(MCCTL) world setup --world $(WORLD); \
 	else \
-		$(WSLCTL) world setup; \
+		$(MCCTL) world setup; \
 	fi
 
 world-function:
 	@test -n "$(FUNCTION)" || (echo "FUNCTION is required. e.g. make world-function FUNCTION=mcserver:world_settings" && exit 1)
-	$(WSLCTL) world function run $(FUNCTION)
+	$(MCCTL) world function run $(FUNCTION)
 
 world-spawn-profile:
-	$(WSLCTL) world spawn profile
+	$(MCCTL) world spawn profile
 
 world-spawn-stage:
-	$(WSLCTL) world spawn stage
+	$(MCCTL) world spawn stage
 
 world-spawn-apply:
-	$(WSLCTL) world spawn apply
+	$(MCCTL) world spawn apply
 
 player-op-grant:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make player-op-grant PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) player op grant $(PLAYER)
+	$(MCCTL) player op grant $(PLAYER)
 
 player-op-revoke:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make player-op-revoke PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) player op revoke $(PLAYER)
+	$(MCCTL) player op revoke $(PLAYER)
 
 player-admin-grant:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make player-admin-grant PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) player admin grant $(PLAYER)
+	$(MCCTL) player admin grant $(PLAYER)
 
 player-admin-revoke:
 	@test -n "$(PLAYER)" || (echo "PLAYER is required. e.g. make player-admin-revoke PLAYER=kyoh86" && exit 1)
-	$(WSLCTL) player admin revoke $(PLAYER)
+	$(MCCTL) player admin revoke $(PLAYER)
