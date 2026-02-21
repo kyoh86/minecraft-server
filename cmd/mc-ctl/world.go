@@ -172,6 +172,7 @@ func (a app) worldDelete(target string, yes bool) error {
 
 func (a app) worldSetup(target string) error {
 	target = strings.TrimSpace(target)
+	fmt.Println("world setup: syncing runtime datapack scaffold...")
 	if err := a.ensureRuntimeDatapackScaffold(); err != nil {
 		return err
 	}
@@ -184,9 +185,11 @@ func (a app) worldSetup(target string) error {
 			}
 			target = cfg.Name
 		}
+		fmt.Printf("world setup: applying setup.commands to %s...\n", target)
 		if err := a.applyWorldSetupCommands(target); err != nil {
 			return err
 		}
+		fmt.Printf("world setup: applying world.policy.yml to %s...\n", target)
 		if err := a.applyWorldPolicy(target); err != nil {
 			return err
 		}
@@ -194,6 +197,7 @@ func (a app) worldSetup(target string) error {
 		return nil
 	}
 
+	fmt.Printf("world setup: applying setup.commands to %s...\n", primaryWorldName)
 	if err := a.applyWorldSetupCommands(primaryWorldName); err != nil {
 		return err
 	}
@@ -209,13 +213,16 @@ func (a app) worldSetup(target string) error {
 		if cfg.Name == primaryWorldName {
 			continue
 		}
+		fmt.Printf("world setup: applying setup.commands to %s...\n", cfg.Name)
 		if err := a.applyWorldSetupCommands(cfg.Name); err != nil {
 			return err
 		}
+		fmt.Printf("world setup: applying world.policy.yml to %s...\n", cfg.Name)
 		if err := a.applyWorldPolicy(cfg.Name); err != nil {
 			return err
 		}
 	}
+	fmt.Printf("world setup: applying world.policy.yml to %s...\n", primaryWorldName)
 	if err := a.applyWorldPolicy(primaryWorldName); err != nil {
 		return err
 	}
@@ -357,6 +364,7 @@ func (a app) worldSpawnProfile() error {
 	}
 	profile := spawnProfile{Worlds: map[string]spawnProfileWorld{}}
 	for _, worldName := range worldNames {
+		fmt.Printf("world spawn profile: probing surface Y for %s...\n", worldName)
 		y, ok, err := a.resolveWorldSurfaceY(worldName)
 		if err != nil {
 			return err
@@ -367,6 +375,7 @@ func (a app) worldSpawnProfile() error {
 		anchorY := y - 32
 		dimension := worldDimensionID(worldName)
 		worldTag := "mcserver_spawn_anchor_" + worldName
+		fmt.Printf("world spawn profile: applying anchor/spawn for %s (surface=%d anchor=%d)...\n", worldName, y, anchorY)
 		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add 0 0", dimension)); err != nil {
 			return err
 		}
@@ -414,17 +423,20 @@ func (a app) worldSpawnStage() error {
 		return err
 	}
 	for _, worldName := range worldNames {
+		fmt.Printf("world spawn stage: rendering WorldGuard regions for %s...\n", worldName)
 		src := filepath.Join(a.baseDir, "worlds", worldName, "worldguard.regions.yml.tmpl")
 		dst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
 		if err := renderTemplateFile(src, dst, data); err != nil {
 			return err
 		}
 	}
+	fmt.Println("world spawn stage: rendering portals.yml...")
 	portalsSrc := filepath.Join(a.baseDir, "worlds", primaryWorldName, "portals.yml.tmpl")
 	portalsDst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
 	if err := renderTemplateFile(portalsSrc, portalsDst, data); err != nil {
 		return err
 	}
+	fmt.Println("world spawn stage: reloading server/plugins...")
 	if err := a.sendConsole("reload"); err != nil {
 		return err
 	}
@@ -453,9 +465,11 @@ func (a app) worldSpawnApply() error {
 	if _, err := buildSpawnTemplateData(worldNames, profile); err != nil {
 		return err
 	}
+	fmt.Println("world spawn apply: reloading datapacks...")
 	if err := a.sendConsole("reload"); err != nil {
 		return err
 	}
+	fmt.Println("world spawn apply: applying mainhall hub layout...")
 	if err := a.sendConsole("execute in minecraft:overworld run forceload add -1 -1 0 0"); err != nil {
 		return err
 	}
@@ -468,6 +482,7 @@ func (a app) worldSpawnApply() error {
 	for _, worldName := range worldNames {
 		p := profile.Worlds[worldName]
 		dimension := worldDimensionID(worldName)
+		fmt.Printf("world spawn apply: applying %s hub layout at y=%d...\n", worldName, p.SurfaceY)
 		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add 0 0", dimension)); err != nil {
 			return err
 		}
