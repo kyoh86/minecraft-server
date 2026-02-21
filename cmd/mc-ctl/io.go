@@ -92,6 +92,7 @@ func (a app) ensureRuntimeLayout() error {
 	for _, dir := range []string{
 		filepath.Join(a.baseDir, "runtime"),
 		filepath.Join(a.baseDir, "runtime", "mc-link"),
+		filepath.Join(a.baseDir, "runtime", "limbo"),
 		filepath.Join(a.baseDir, "runtime", "redis"),
 		filepath.Join(a.baseDir, "runtime", "world"),
 		filepath.Join(a.baseDir, "runtime", "world", "config"),

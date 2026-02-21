@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 )
 
 func (a app) compose(args ...string) error {
@@ -43,10 +42,16 @@ func (a app) serverReload() error {
 	return a.sendConsole("reload")
 }
 
-func (a app) assetInit() error {
+func (a app) init() error {
 	if err := a.ensureRuntimeLayout(); err != nil {
 		return err
 	}
-	fmt.Printf("Initialized assets: %s\n", filepath.Join(a.baseDir, "runtime"))
+	if err := a.ensureSecrets(); err != nil {
+		return err
+	}
+	if err := a.renderLimboConfig(); err != nil {
+		return err
+	}
+	fmt.Printf("Initialized runtime and secrets under %s\n", a.baseDir)
 	return nil
 }

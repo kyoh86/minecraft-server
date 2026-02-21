@@ -49,7 +49,7 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ./velocity/config/forwarding.secret
+        source: ../secrets/mc_forwarding_secret.txt
         target: /config/forwarding.secret
         read_only: true
         bind:
@@ -68,7 +68,7 @@ services:
     restart: unless-stopped
     volumes:
       - type: bind
-        source: ./limbo/config/server.toml
+        source: ../runtime/limbo/server.toml
         target: /usr/src/app/server.toml
         read_only: true
         bind:
@@ -105,6 +105,12 @@ services:
       - type: bind
         source: ./velocity/config
         target: /config
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../secrets/mc_forwarding_secret.txt
+        target: /config/forwarding.secret
         read_only: true
         bind:
           create_host_path: false

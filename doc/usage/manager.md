@@ -19,27 +19,10 @@
 最初のサーバー開設時は以下の手順を実行すれば良い。
 すべての設定がデフォルトなので、そのまますべての機能を使用することはできない点に注意。
 
-1. Bot token を secret に保存する
+1. 以下コマンドを実行する
 
 ```console
-cp secrets/mc_link_discord_bot_token.txt.example secrets/mc_link_discord_bot_token.txt
-chmod 600 secrets/mc_link_discord_bot_token.txt
-```
-
-2. `infra/docker-compose.yml` の `mc_link.environment.MCLINK_DISCORD_GUILD_ID` に対象 Guild ID を設定する
-
-3. Velocity / Limbo の forwarding secret を同一値で設定する
-
-```console
-SECRET="$(openssl rand -hex 24)"
-printf '%s\n' "$SECRET" > infra/velocity/config/forwarding.secret
-sed -i "s/^secret = \".*\"$/secret = \"$SECRET\"/" infra/limbo/config/server.toml
-```
-
-4. 以下コマンドの実行
-
-```console
-mc-ctl asset init
+mc-ctl init
 mc-ctl server up
 mc-ctl world ensure
 mc-ctl world setup
@@ -48,9 +31,16 @@ mc-ctl world spawn stage
 mc-ctl world spawn apply
 ```
 
+2. `infra/docker-compose.yml` の `mc-link.environment.MCLINK_DISCORD_GUILD_ID` に対象 Guild ID を設定する
+
+`mc-ctl init` は対話入力で secret 設定を促す。
+未入力のまま進めた場合は `secrets/mc_link_discord_bot_token.txt` にプレースホルダ、
+`secrets/mc_forwarding_secret.txt` に自動生成値を設定し、
+`runtime/limbo/server.toml` を描画する。
+
 設定反映は `server up`/`server restart` 時に実行される。
 `world` は起動時に `infra/world/config/bootstrap.sh` を実行し、
-image に同梱されたプラグイン資産と `infra/velocity/config/forwarding.secret` を `/data` 側へ反映する。
+image に同梱されたプラグイン資産と `secrets/mc_forwarding_secret.txt` を `/data` 側へ反映する。
 
 ## 各種ワールド設定変更の反映
 

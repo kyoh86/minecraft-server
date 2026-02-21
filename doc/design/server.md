@@ -13,12 +13,12 @@
     - `online-mode=false`
     - `enforce-secure-profile=false`
     - `proxies.velocity.enabled=true`
-    - `proxies.velocity.secret` は `infra/velocity/config/forwarding.secret` と一致させる
+    - `proxies.velocity.secret` は `secrets/mc_forwarding_secret.txt` と一致させる
     - `velocity` からのみ到達
 - `limbo`（認証待機 PicoLimbo）
     - 外部非公開
     - `bind=0.0.0.0:25565`
-    - MODERN forwarding (`infra/limbo/config/server.toml`)
+    - MODERN forwarding (`runtime/limbo/server.toml`)
     - `velocity` からのみ到達
 
 ## 導入プラグイン
@@ -75,9 +75,9 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `/mc link` ワンタイムコードの保存先として利用
 - `infra/docker-compose.yml`
     - 各種サービス定義
-    - `world` コンテナ（`itzg/minecraft-server:java21`、内部向け）
+    - `world` コンテナ（`itzg/minecraft-server:java25`、内部向け）
     - `limbo` コンテナ（`ghcr.io/quozul/picolimbo:latest`、未認証プレイヤー待機用）
-    - `velocity` コンテナ（`itzg/mc-proxy:java21`、公開入口 `25565`）
+    - `velocity` コンテナ（`itzg/mc-proxy:java25`、公開入口 `25565`）
     - `redis` コンテナ（`/mc link` ワンタイムコード保存）
     - `mc-link` コンテナ（Discord `/mc link` 連携）
     - 各種ローカル / リモートプラグイン の導入
@@ -85,12 +85,12 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `infra/velocity/config/velocity.toml`
     - Velocity のルーティング設定
     - `mainhall = "world:25565"` へ転送
-- `infra/velocity/config/forwarding.secret`
+- `secrets/mc_forwarding_secret.txt`
     - Velocity modern forwarding の共有シークレット
 - `infra/world/config/bootstrap.sh`
     - `world` 起動時に `/plugins`（imageに同梱したプラグイン資産）と forwarding secret を `/data` へ反映
-- `infra/limbo/config/server.toml`
-    - PicoLimbo 本体の待機サーバー設定
+- `runtime/limbo/server.toml`
+    - `mc-ctl init` が `infra/limbo/config/server.toml` から描画する PicoLimbo 設定
 - `datapacks/world-base`
     - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `worlds`
@@ -111,9 +111,10 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 ほとんどの管理作業を自動化するCLIとして `mc-ctl` というコマンドを用意した。
 `mc-ctl` は以下のようなプリミティブなサブコマンド構成になっている。
 
-- `mc-ctl asset init`
-    - ディレクトリ構成初期化
-    - runtimeディレクトリ作成と書き込み可能状態の保証を行う。
+- `mc-ctl init`
+    - runtime ディレクトリ初期化
+    - secrets 設定（対話入力。未入力時は既定値で補完）
+    - `runtime/limbo/server.toml` 描画
 - `mc-ctl server up|down|restart|ps|logs velocity|logs world|reload`
     - サーバーの起動、停止、リスタート、状態やログの確認
 - `mc-ctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
