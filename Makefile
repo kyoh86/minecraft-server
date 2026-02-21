@@ -2,14 +2,17 @@ GO_ENV := GOCACHE=/tmp/minecraft-server-go-cache GOPATH=/tmp/minecraft-server-go
 WSLCTL := $(GO_ENV) go run ./cmd/wslctl
 
 .PHONY: \
-	setup-init \
+	asset-init asset-stage \
 	server-up server-down server-restart server-ps server-logs server-reload \
 	world-ensure world-regenerate world-drop world-delete world-setup world-function \
 	world-spawn-profile world-spawn-stage world-spawn-apply \
 	player-op-grant player-op-revoke player-admin-grant player-admin-revoke
 
-setup-init:
-	$(WSLCTL) setup init
+asset-init:
+	$(WSLCTL) asset init
+
+asset-stage:
+	$(WSLCTL) asset stage
 
 server-up:
 	$(WSLCTL) server up

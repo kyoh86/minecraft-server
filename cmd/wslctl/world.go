@@ -20,14 +20,6 @@ import (
 const primaryWorldName = "mainhall"
 const spawnProfilePath = "runtime/world/.wslctl/spawn-profile.yml"
 
-func (a app) initRuntime() error {
-	if err := a.ensureRuntimeWritable(); err != nil {
-		return err
-	}
-	fmt.Printf("Initialized: %s\n", filepath.Join(a.baseDir, "runtime"))
-	return nil
-}
-
 type spawnProfile struct {
 	Worlds map[string]spawnProfileWorld `yaml:"worlds"`
 }

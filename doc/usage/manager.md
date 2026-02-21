@@ -39,7 +39,8 @@ sed -i "s/^secret = \".*\"$/secret = \"$SECRET\"/" infra/pico-limbo/server.toml
 4. 以下コマンドの実行
 
 ```console
-wslctl setup init
+wslctl asset init
+wslctl asset stage
 wslctl server up
 wslctl world ensure
 wslctl world setup
@@ -47,6 +48,11 @@ wslctl world spawn profile
 wslctl world spawn stage
 wslctl world spawn apply
 ```
+
+`wslctl asset stage` は runtime ディレクトリの存在と書込可能状態を確認する。
+設定反映自体は `server up`/`server restart` 時に実行される。
+`world` は起動時に `infra/world/bootstrap.sh` を実行し、
+`infra/plugins/*` と `infra/velocity/forwarding.secret` を `/data` 側へ反映する。
 
 ## 各種ワールド設定変更の反映
 

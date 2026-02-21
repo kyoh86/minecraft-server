@@ -108,13 +108,13 @@ func (a app) ensureRuntimeLayout() error {
 		a.runtimeRedisDir(),
 		a.runtimeWorldDir(),
 		filepath.Join(a.runtimeWorldDir(), ".wslctl"),
+		filepath.Join(a.runtimeWorldDir(), "config"),
 		filepath.Join(a.runtimeWorldDir(), "plugins"),
 		filepath.Join(a.runtimeWorldDir(), "plugins", "ClickMobs"),
 		filepath.Join(a.runtimeWorldDir(), "plugins", "WorldGuard", "worlds"),
 		filepath.Join(a.runtimeWorldDir(), "plugins", "Multiverse-Core"),
 		filepath.Join(a.runtimeWorldDir(), "plugins", "Multiverse-Portals"),
 		a.runtimeVelocityDir(),
-		filepath.Join(a.runtimeVelocityDir(), ".wslctl"),
 		filepath.Join(a.runtimeVelocityDir(), "plugins"),
 	} {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -145,7 +145,7 @@ func (a app) ensureRuntimeWritable() error {
 		{dir: a.runtimeVelocityDir(), fix: a.fixRuntimeVelocityOwnership},
 	}
 	for _, check := range probeChecks {
-		probePath := filepath.Join(check.dir, ".wslctl", ".writecheck")
+		probePath := filepath.Join(check.dir, ".writecheck")
 		if err := os.WriteFile(probePath, []byte("ok"), 0o644); err != nil {
 			if !errors.Is(err, os.ErrPermission) {
 				return err

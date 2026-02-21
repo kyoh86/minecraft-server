@@ -6,9 +6,9 @@ func newRootCmd(a app) *cobra.Command {
 	root := &cobra.Command{
 		Use:   "wslctl",
 		Short: "WSL Minecraft server helper",
-		Long:  "wslctl manages setup, server operations, worlds, and players.",
+		Long:  "wslctl manages assets, server operations, worlds, and players.",
 	}
-	root.AddCommand(newSetupCmd(a))
+	root.AddCommand(newAssetCmd(a))
 	root.AddCommand(newServerCmd(a))
 	root.AddCommand(newWorldCmd(a))
 	root.AddCommand(newPlayerCmd(a))

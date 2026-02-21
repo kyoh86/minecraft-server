@@ -11,7 +11,11 @@ services:
     ports:
       - "16379:6379"
     volumes:
-      - ../runtime/redis:/data
+      - type: bind
+        source: ../runtime/redis
+        target: /data
+        bind:
+          create_host_path: false
     networks:
       - mcnet
   world:
@@ -32,15 +36,34 @@ services:
       ENFORCE_SECURE_PROFILE: "FALSE"
       ENABLE_RCON: "FALSE"
       CREATE_CONSOLE_IN_PIPE: "true"
-      PATCH_DEFINITIONS: /patches
       HANGAR_PROJECTS: "LuckPerms"
       MODRINTH_PROJECTS: "multiverse-core,multiverse-portals,worldedit,worldguard,clickmobs"
+    entrypoint:
+      - /bootstrap.sh
     volumes:
-      - ../runtime/world:/data
-      - ./plugins/ClickMobs/config.yml:/data/plugins/ClickMobs/config.yml
-      - ./plugins/ClickMobsRegionGuard.jar:/data/plugins/ClickMobsRegionGuard.jar:ro
-      - ./plugins/ClickMobsRegionGuard:/data/plugins/ClickMobsRegionGuard
-      - ./world-patches:/patches:ro
+      - type: bind
+        source: ../runtime/world
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./plugins
+        target: /plugins
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./velocity/forwarding.secret
+        target: /config/forwarding.secret
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./world/bootstrap.sh
+        target: /bootstrap.sh
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - mcnet
   limbo:
@@ -48,7 +71,12 @@ services:
     container_name: mc-limbo
     restart: unless-stopped
     volumes:
-      - ./pico-limbo/server.toml:/usr/src/app/server.toml:ro
+      - type: bind
+        source: ./pico-limbo/server.toml
+        target: /usr/src/app/server.toml
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - mcnet
   velocity:
@@ -69,19 +97,25 @@ services:
       REPLACE_ENV_VARIABLE_PREFIX: "CFG_"
       MCLINK_REDIS_ADDR: "redis:6379"
       MCLINK_REDIS_DB: "0"
-    command:
-      - sh
-      - -lc
-      - |-
-        mkdir -p /server/.wslctl
-        if [ ! -f /server/.wslctl/allowlist.yml ]; then
-          cp /config/allowlist.yml /server/.wslctl/allowlist.yml
-        fi
-        exec /usr/bin/run-bungeecord.sh
+      MCLINK_ALLOWLIST_PATH: "/server/allowlist.yml"
     volumes:
-      - ../runtime/velocity:/server
-      - ./plugins/LinkCodeGate.jar:/plugins/LinkCodeGate.jar:ro
-      - ./velocity:/config:ro
+      - type: bind
+        source: ../runtime/velocity
+        target: /server
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./plugins/LinkCodeGate.jar
+        target: /plugins/LinkCodeGate.jar
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./velocity
+        target: /config
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - mcnet
   mclink:
@@ -97,11 +131,15 @@ services:
       MCLINK_DISCORD_GUILD_ID: "1474080174038585508"
       MCLINK_REDIS_ADDR: "redis:6379"
       MCLINK_REDIS_DB: "0"
-      MCLINK_ALLOWLIST_PATH: "/data/velocity/.wslctl/allowlist.yml"
+      MCLINK_ALLOWLIST_PATH: "/data/velocity/allowlist.yml"
     secrets:
       - mclink_discord_bot_token
     volumes:
-      - ../runtime:/data
+      - type: bind
+        source: ../runtime/velocity
+        target: /data/velocity
+        bind:
+          create_host_path: false
     networks:
       - mcnet
 

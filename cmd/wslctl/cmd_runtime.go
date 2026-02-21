@@ -2,13 +2,20 @@ package main
 
 import "github.com/spf13/cobra"
 
-func newSetupCmd(a app) *cobra.Command {
-	cmd := &cobra.Command{Use: "setup", Short: "setup operations"}
+func newAssetCmd(a app) *cobra.Command {
+	cmd := &cobra.Command{Use: "asset", Short: "asset operations"}
 	cmd.AddCommand(&cobra.Command{
 		Use:   "init",
-		Short: "initialize runtime directories",
+		Short: "initialize runtime asset directories",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return a.initRuntime()
+			return a.assetInit()
+		},
+	})
+	cmd.AddCommand(&cobra.Command{
+		Use:   "stage",
+		Short: "stage runtime assets from infra definitions",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return a.assetStage()
 		},
 	})
 	return cmd

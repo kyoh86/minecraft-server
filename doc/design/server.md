@@ -45,21 +45,22 @@
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
     - 本体ファイル: `infra/plugins/LinkCodeGate.jar`
 
+`world` コンテナは `runtime/world` を `/data` として bind mount し、
+起動時に `infra/world/bootstrap.sh` で `/config` から設定を反映する。
+
 ## 認可管理
 
 認可の判定はローカルプラグイン `LinkCodeGate` が `allowlist.yml` を直接参照して行う。
 許可エントリは 認可処理Discord bot `mclink` （後述）が更新する。
 
-- `infra/velocity/allowlist.yml`
-    - 初期テンプレート
-- `runtime/velocity/.wslctl/allowlist.yml`
+- `runtime/velocity/allowlist.yml`
     - 実運用時の実体
 
 未登録プレイヤーがログインしようとすると、Velocity の `LinkCodeGate` 一時コードを自動発行する。
 当該ユーザーを `limbo`（認証待機用 PicoLimbo）へ接続させたうえで、`limbo` 内チャットに一時コードとDiscordでの操作案内を表示する。
 NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される。
 
-`mclink` コンテナが Discord の `/mc link <code>` を受け取り、`runtime/velocity/.wslctl/allowlist.yml` にエントリを追加します。
+`mclink` コンテナが Discord の `/mc link <code>` を受け取り、`runtime/velocity/allowlist.yml` にエントリを追加します。
 
 ## ファイル構成
 
@@ -67,7 +68,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - Paper 本体データ
 - `runtime/velocity`
     - Velocity 本体データとプラグインデータ
-    - `runtime/velocity/.wslctl/allowlist.yml`
+    - `runtime/velocity/allowlist.yml`
         - 認可リスト
 - `runtime/redis`
     - Redis データ
@@ -86,8 +87,8 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `mainhall = "world:25565"` へ転送
 - `infra/velocity/forwarding.secret`
     - Velocity modern forwarding の共有シークレット
-- `infra/world-patches/paper-velocity-forwarding.json`
-    - `paper-global.yml` へ Velocity forwarding 設定を起動時に適用
+- `infra/world/bootstrap.sh`
+    - `world` 起動時に `infra/plugins/*` と forwarding secret を `/data` へ反映
 - `infra/pico-limbo/server.toml`
     - PicoLimbo 本体の待機サーバー設定
 - `datapacks/world-base`
@@ -110,9 +111,11 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 ほとんどの管理作業を自動化するCLIとして `wslctl` というコマンドを用意した。
 `wslctl` は以下のようなプリミティブなサブコマンド構成になっている。
 
-- `wslctl setup init`
+- `wslctl asset init`
     - ディレクトリ構成初期化
     - runtimeディレクトリ作成と書き込み可能状態の保証を行う。
+- `wslctl asset stage`
+    - runtime ディレクトリの存在と書込可能状態を確認
 - `wslctl server up|down|restart|ps|logs velocity|logs world|reload`
     - サーバーの起動、停止、リスタート、状態やログの確認
 - `wslctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`

@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"path/filepath"
+)
+
 func (a app) compose(args ...string) error {
 	composeFile := a.composeFilePath()
 	base := []string{"compose", "-f", composeFile}
@@ -36,4 +41,20 @@ func (a app) serverLogs(service string) error {
 
 func (a app) serverReload() error {
 	return a.sendConsole("reload")
+}
+
+func (a app) assetInit() error {
+	if err := a.ensureRuntimeWritable(); err != nil {
+		return err
+	}
+	fmt.Printf("Initialized assets: %s\n", filepath.Join(a.baseDir, "runtime"))
+	return nil
+}
+
+func (a app) assetStage() error {
+	if err := a.ensureRuntimeWritable(); err != nil {
+		return err
+	}
+	fmt.Println("Staged runtime assets (directory checks only)")
+	return nil
 }

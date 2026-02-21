@@ -78,7 +78,7 @@ func loadConfig() (config, error) {
 		GuildID:       strings.TrimSpace(os.Getenv("MCLINK_DISCORD_GUILD_ID")),
 		RedisAddr:     env("MCLINK_REDIS_ADDR", "redis:6379"),
 		RedisPassword: env("MCLINK_REDIS_PASSWORD", ""),
-		AllowlistPath: env("MCLINK_ALLOWLIST_PATH", "/data/velocity/.wslctl/allowlist.yml"),
+		AllowlistPath: env("MCLINK_ALLOWLIST_PATH", "/data/velocity/allowlist.yml"),
 	}
 	db, err := strconv.Atoi(env("MCLINK_REDIS_DB", "0"))
 	if err != nil {

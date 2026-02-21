@@ -46,7 +46,7 @@ public final class LinkCodeGatePlugin {
   private static final long TTL_SECONDS = 10 * 60;
   private static final String MAINHALL_SERVER = "mainhall";
   private static final String LIMBO_SERVER = "limbo";
-  private static final String DEFAULT_ALLOWLIST_PATH = "/server/.wslctl/allowlist.yml";
+  private static final String DEFAULT_ALLOWLIST_PATH = "/server/allowlist.yml";
   private static final long NOTICE_INTERVAL_MILLIS = 3_000;
 
   private final ProxyServer proxy;
