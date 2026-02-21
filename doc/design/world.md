@@ -148,7 +148,8 @@ mc-ctl world spawn apply
 
 ## ClickMobs のリージョン制御
 
-`infra/world/plugins/dist/ClickMobsRegionGuard.jar` を導入し、
+`infra/world/plugins/src/clickmobs-region-guard` から build された
+`ClickMobsRegionGuard.jar` を導入し、
 `infra/world/plugins/dist/ClickMobsRegionGuard/config.yml` の
 `allowed_regions.<world>` に許可リージョンIDを列挙する。
 

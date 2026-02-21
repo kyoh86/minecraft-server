@@ -19,7 +19,9 @@ services:
     networks:
       - mcnet
   world:
-    image: itzg/minecraft-server:java21
+    build:
+      context: ..
+      dockerfile: infra/world/Dockerfile
     container_name: mc-world
     restart: unless-stopped
     user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
@@ -44,12 +46,6 @@ services:
       - type: bind
         source: ../runtime/world
         target: /data
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ./world/plugins/dist
-        target: /plugins
-        read_only: true
         bind:
           create_host_path: false
       - type: bind
@@ -80,7 +76,9 @@ services:
     networks:
       - mcnet
   velocity:
-    image: itzg/mc-proxy:java21
+    build:
+      context: ..
+      dockerfile: infra/velocity/Dockerfile
     container_name: mc-velocity
     restart: unless-stopped
     user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
@@ -102,12 +100,6 @@ services:
       - type: bind
         source: ../runtime/velocity
         target: /server
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ./velocity/plugins/dist/LinkCodeGate.jar
-        target: /plugins/LinkCodeGate.jar
-        read_only: true
         bind:
           create_host_path: false
       - type: bind

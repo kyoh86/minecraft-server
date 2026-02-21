@@ -38,12 +38,12 @@
 
 - `ClickMobsRegionGuard`
     - `WorldGuard` のリージョンIDに基づき `ClickMobs` を制御する
-    - 本体ファイル: `infra/world/plugins/dist/ClickMobsRegionGuard.jar`
+    - 本体は `infra/world/plugins/src/clickmobs-region-guard` を `infra/world/Dockerfile` の build 時に生成
     - 設定: `infra/world/plugins/dist/ClickMobsRegionGuard/config.yml`
         - `allowed_regions.<world>` に許可リージョンIDを列挙する
 - `LinkCodeGate`
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
-    - 本体ファイル: `infra/velocity/plugins/dist/LinkCodeGate.jar`
+    - 本体は `infra/velocity/plugins/src/link-code-gate` を `infra/velocity/Dockerfile` の build 時に生成
 
 `world` コンテナは `runtime/world` を `/data` として bind mount し、
 起動時に `infra/world/config/bootstrap.sh` で `/config` から設定を反映する。
@@ -88,7 +88,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `infra/velocity/config/forwarding.secret`
     - Velocity modern forwarding の共有シークレット
 - `infra/world/config/bootstrap.sh`
-    - `world` 起動時に `infra/world/plugins/dist/*` と forwarding secret を `/data` へ反映
+    - `world` 起動時に `/plugins`（imageに同梱したプラグイン資産）と forwarding secret を `/data` へ反映
 - `infra/limbo/config/server.toml`
     - PicoLimbo 本体の待機サーバー設定
 - `datapacks/world-base`
