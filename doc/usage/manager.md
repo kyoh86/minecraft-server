@@ -37,8 +37,11 @@ mc-ctl world spawn apply
 未入力のまま進めた場合は `secrets/mc_link_discord_bot_token.txt` にプレースホルダ、
 `secrets/mc_forwarding_secret.txt` に自動生成値を設定し、
 `runtime/limbo/server.toml` を描画する。
+また、`runtime` 配下の所有者が実行ユーザーと一致しない場合はエラーで停止する。
 
 設定反映は `server up`/`server restart` 時に実行される。
+`mc-ctl server up` は `docker compose up` 後、全サービスが `running` かつ
+（healthcheckがある場合は）`healthy` になるまで待機し、未到達時はエラーを返す。
 `world` は起動時に `infra/world/config/bootstrap.sh` を実行し、
 image に同梱されたプラグイン資産と `secrets/mc_forwarding_secret.txt` を `/data` 側へ反映する。
 

@@ -12,7 +12,7 @@ prevent-client-proxy-connections = false
 
 # Keep backend simple: Paper is offline and only reachable on internal network.
 player-info-forwarding-mode = "modern"
-forwarding-secret-file = "/config/forwarding.secret"
+forwarding-secret-file = "/run/secrets/mc_forwarding_secret.txt"
 
 announce-forge = false
 kick-existing-players = false

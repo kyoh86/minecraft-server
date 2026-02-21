@@ -82,6 +82,12 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `mc-link` コンテナ（Discord `/mc link` 連携）
     - 各種ローカル / リモートプラグイン の導入
         - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard`
+    - healthcheck
+        - `redis`: `redis-cli ping`
+        - `world`: `mc-health`
+        - `velocity`: `pgrep -f velocity`
+        - `mc-link`: `pgrep -f mc-link-bot`
+        - `limbo`: `pico_limbo --help`
 - `infra/velocity/config/velocity.toml`
     - Velocity のルーティング設定
     - `mainhall = "world:25565"` へ転送

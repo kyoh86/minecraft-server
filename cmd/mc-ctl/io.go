@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -25,9 +26,12 @@ func (a app) sendConsole(command string) error {
 
 func (a app) waitWorldReady(timeout time.Duration) error {
 	composeFile := a.composeFilePath()
+	started := time.Now()
 	deadline := time.Now().Add(timeout)
+	lastReport := time.Time{}
 
 	for {
+		status := "world=missing"
 		containerID, err := runCommandOutput("docker", "compose", "-f", composeFile, "ps", "-q", "world")
 		if err == nil {
 			containerID = strings.TrimSpace(containerID)
@@ -39,8 +43,10 @@ func (a app) waitWorldReady(timeout time.Duration) error {
 				)
 				if err == nil {
 					parts := strings.Fields(strings.TrimSpace(state))
-					if len(parts) >= 2 && parts[0] == "running" && (parts[1] == "healthy" || parts[1] == "none") {
-						if a.worldConsolePipeReady(composeFile) {
+					if len(parts) >= 2 {
+						pipeReady := a.worldConsolePipeReady(composeFile)
+						status = fmt.Sprintf("world=%s/%s pipe=%t", parts[0], parts[1], pipeReady)
+						if parts[0] == "running" && (parts[1] == "healthy" || parts[1] == "none") && pipeReady {
 							return nil
 						}
 					}
@@ -51,7 +57,85 @@ func (a app) waitWorldReady(timeout time.Duration) error {
 		if time.Now().After(deadline) {
 			return fmt.Errorf("world container is not ready within %s", timeout)
 		}
+		if lastReport.IsZero() || time.Since(lastReport) >= 3*time.Second {
+			fmt.Printf("Waiting for world readiness (%s elapsed): %s\n", time.Since(started).Truncate(time.Second), status)
+			lastReport = time.Now()
+		}
 		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func (a app) waitServicesReady(timeout time.Duration) error {
+	composeFile := a.composeFilePath()
+	started := time.Now()
+	deadline := time.Now().Add(timeout)
+	lastReport := time.Time{}
+
+	servicesOut, err := runCommandOutput("docker", "compose", "-f", composeFile, "config", "--services")
+	if err != nil {
+		return err
+	}
+	services := []string{}
+	for _, line := range strings.Split(servicesOut, "\n") {
+		name := strings.TrimSpace(line)
+		if name != "" {
+			services = append(services, name)
+		}
+	}
+	if len(services) == 0 {
+		return fmt.Errorf("no services found in compose file: %s", composeFile)
+	}
+
+	for {
+		allReady := true
+		statuses := make([]string, 0, len(services))
+		for _, service := range services {
+			containerID, err := runCommandOutput("docker", "compose", "-f", composeFile, "ps", "-q", service)
+			containerID = strings.TrimSpace(containerID)
+			if err != nil || containerID == "" {
+				allReady = false
+				statuses = append(statuses, fmt.Sprintf("%s=missing", service))
+				continue
+			}
+
+			state, err := runCommandOutput(
+				"docker", "inspect",
+				"--format", "{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
+				containerID,
+			)
+			if err != nil {
+				allReady = false
+				statuses = append(statuses, fmt.Sprintf("%s=inspect_error", service))
+				continue
+			}
+
+			parts := strings.Fields(strings.TrimSpace(state))
+			if len(parts) < 2 {
+				allReady = false
+				statuses = append(statuses, fmt.Sprintf("%s=unknown", service))
+				continue
+			}
+			status := parts[0]
+			health := parts[1]
+			ready := status == "running" && (health == "healthy" || health == "none")
+			if !ready {
+				allReady = false
+			}
+			statuses = append(statuses, fmt.Sprintf("%s=%s/%s", service, status, health))
+		}
+
+		if allReady {
+			return nil
+		}
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("services are not ready within %s: %s", timeout, strings.Join(statuses, ", "))
+		}
+		if lastReport.IsZero() || time.Since(lastReport) >= 3*time.Second {
+			fmt.Printf("Waiting for services (%s elapsed): %s\n", time.Since(started).Truncate(time.Second), strings.Join(statuses, ", "))
+			lastReport = time.Now()
+		}
+		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -114,6 +198,33 @@ func (a app) ensureRuntimeLayout() error {
 		_ = os.Remove(probePath)
 	}
 	return nil
+}
+
+func (a app) checkRuntimeOwnership() error {
+	root := filepath.Join(a.baseDir, "runtime")
+	wantUID := uint32(os.Getuid())
+	wantGID := uint32(os.Getgid())
+
+	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		st, ok := info.Sys().(*syscall.Stat_t)
+		if !ok {
+			return nil
+		}
+		if st.Uid != wantUID || st.Gid != wantGID {
+			return fmt.Errorf(
+				"ownership mismatch: %s is %d:%d, expected %d:%d (fix with: sudo chown -R %d:%d runtime)",
+				path, st.Uid, st.Gid, wantUID, wantGID, wantUID, wantGID,
+			)
+		}
+		return nil
+	})
 }
 
 func copyDir(src, dst string) error {

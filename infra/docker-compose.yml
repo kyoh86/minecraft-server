@@ -10,6 +10,12 @@ services:
       - "yes"
     ports:
       - "16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
+      start_period: 3s
     volumes:
       - type: bind
         source: ../runtime/redis
@@ -42,6 +48,12 @@ services:
       MODRINTH_PROJECTS: "multiverse-core,multiverse-portals,worldedit,worldguard,clickmobs"
     entrypoint:
       - /bootstrap.sh
+    healthcheck:
+      test: ["CMD", "mc-health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
     volumes:
       - type: bind
         source: ../runtime/world
@@ -66,6 +78,12 @@ services:
     image: ghcr.io/quozul/picolimbo:latest
     container_name: mc-limbo
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pico_limbo", "--help"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 3s
     volumes:
       - type: bind
         source: ../runtime/limbo/server.toml
@@ -96,6 +114,12 @@ services:
       MCLINK_REDIS_ADDR: "redis:6379"
       MCLINK_REDIS_DB: "0"
       MCLINK_ALLOWLIST_PATH: "/server/allowlist.yml"
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f velocity >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
     volumes:
       - type: bind
         source: ../runtime/velocity
@@ -110,7 +134,7 @@ services:
           create_host_path: false
       - type: bind
         source: ../secrets/mc_forwarding_secret.txt
-        target: /config/forwarding.secret
+        target: /run/secrets/mc_forwarding_secret.txt
         read_only: true
         bind:
           create_host_path: false
@@ -130,6 +154,12 @@ services:
       MCLINK_REDIS_ADDR: "redis:6379"
       MCLINK_REDIS_DB: "0"
       MCLINK_ALLOWLIST_PATH: "/data/velocity/allowlist.yml"
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f mc-link-bot >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
     secrets:
       - mc_link_discord_bot_token
     volumes:

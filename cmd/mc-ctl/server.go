@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 func (a app) compose(args ...string) error {
@@ -12,7 +13,14 @@ func (a app) compose(args ...string) error {
 }
 
 func (a app) serverUp() error {
-	return a.compose("up", "-d", "--remove-orphans")
+	if err := a.compose("up", "-d", "--remove-orphans"); err != nil {
+		return err
+	}
+	if err := a.waitServicesReady(120 * time.Second); err != nil {
+		return err
+	}
+	fmt.Println("All containers are running/healthy.")
+	return nil
 }
 
 func (a app) serverDown() error {
@@ -44,6 +52,9 @@ func (a app) serverReload() error {
 
 func (a app) init() error {
 	if err := a.ensureRuntimeLayout(); err != nil {
+		return err
+	}
+	if err := a.checkRuntimeOwnership(); err != nil {
 		return err
 	}
 	if err := a.ensureSecrets(); err != nil {
