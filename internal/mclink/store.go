@@ -46,7 +46,7 @@ func NewRedisClient(cfg RedisConfig) *redis.Client {
 }
 
 func keyForCode(code string) string {
-	return "mclink:code:" + strings.ToUpper(strings.TrimSpace(code))
+	return "mc-link:code:" + strings.ToUpper(strings.TrimSpace(code))
 }
 
 func SaveCode(ctx context.Context, cli *redis.Client, entry CodeEntry) error {

@@ -118,10 +118,10 @@ services:
           create_host_path: false
     networks:
       - mcnet
-  mclink:
+  mc-link:
     build:
       context: ..
-      dockerfile: infra/mclink/Dockerfile
+      dockerfile: infra/mc-link/Dockerfile
     container_name: mc-link-bot
     restart: unless-stopped
     depends_on:
@@ -133,7 +133,7 @@ services:
       MCLINK_REDIS_DB: "0"
       MCLINK_ALLOWLIST_PATH: "/data/velocity/allowlist.yml"
     secrets:
-      - mclink_discord_bot_token
+      - mc_link_discord_bot_token
     volumes:
       - type: bind
         source: ../runtime/velocity
@@ -148,5 +148,5 @@ networks:
     driver: bridge
 
 secrets:
-  mclink_discord_bot_token:
-    file: ../secrets/mclink_discord_bot_token.txt
+  mc_link_discord_bot_token:
+    file: ../secrets/mc_link_discord_bot_token.txt

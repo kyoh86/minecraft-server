@@ -74,7 +74,7 @@ func main() {
 
 func loadConfig() (config, error) {
 	cfg := config{
-		TokenPath:     env("MCLINK_DISCORD_BOT_TOKEN_FILE", "/run/secrets/mclink_discord_bot_token"),
+		TokenPath:     env("MCLINK_DISCORD_BOT_TOKEN_FILE", "/run/secrets/mc_link_discord_bot_token"),
 		GuildID:       strings.TrimSpace(os.Getenv("MCLINK_DISCORD_GUILD_ID")),
 		RedisAddr:     env("MCLINK_REDIS_ADDR", "redis:6379"),
 		RedisPassword: env("MCLINK_REDIS_PASSWORD", ""),
@@ -201,7 +201,7 @@ func saveClaimed(ctx context.Context, rdb *redis.Client, entry mclink.CodeEntry)
 		ttl = time.Minute
 	}
 	pipe := rdb.TxPipeline()
-	key := "mclink:code:" + entry.Code
+	key := "mc-link:code:" + entry.Code
 	pipe.HSet(ctx, key,
 		"code", entry.Code,
 		"type", string(entry.Type),

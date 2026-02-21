@@ -4,9 +4,9 @@ import "github.com/spf13/cobra"
 
 func newRootCmd(a app) *cobra.Command {
 	root := &cobra.Command{
-		Use:   "mcctl",
+		Use:   "mc-ctl",
 		Short: "Minecraft server helper",
-		Long:  "mcctl manages assets, server operations, worlds, and players.",
+		Long:  "mc-ctl manages assets, server operations, worlds, and players.",
 	}
 	root.AddCommand(newAssetCmd(a))
 	root.AddCommand(newServerCmd(a))

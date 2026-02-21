@@ -17,8 +17,10 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
-const primaryWorldName = "mainhall"
-const spawnProfilePath = "runtime/world/.mcctl/spawn-profile.yml"
+const (
+	primaryWorldName = "mainhall"
+	spawnProfilePath = "runtime/world/.mc-ctl/spawn-profile.yml"
+)
 
 type spawnProfile struct {
 	Worlds map[string]spawnProfileWorld `yaml:"worlds"`
@@ -563,7 +565,7 @@ func (a app) listManagedWorldNames() ([]string, error) {
 func (a app) loadSpawnProfile() (spawnProfile, error) {
 	path := filepath.Join(a.baseDir, spawnProfilePath)
 	if !fileExists(path) {
-		return spawnProfile{}, fmt.Errorf("spawn profile not found: run `mcctl world spawn profile` first")
+		return spawnProfile{}, fmt.Errorf("spawn profile not found: run `mc-ctl world spawn profile` first")
 	}
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -596,7 +598,7 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 	for _, worldName := range worldNames {
 		p, ok := profile.Worlds[worldName]
 		if !ok {
-			return spawnTemplateData{}, fmt.Errorf("spawn profile for world %q is missing: run `mcctl world spawn profile` first", worldName)
+			return spawnTemplateData{}, fmt.Errorf("spawn profile for world %q is missing: run `mc-ctl world spawn profile` first", worldName)
 		}
 		data.Worlds[worldName] = spawnTemplateWorld{
 			SurfaceY:       p.SurfaceY,

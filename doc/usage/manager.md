@@ -9,10 +9,10 @@
 3. 作成したアプリを対象 Discord サーバーへインストールする
    （`applications.commands` と `bot` スコープを付与）。
 
-## `mcctl`
+## `mc-ctl`
 
-ほとんどの管理作業を自動化するCLIとして `mcctl` というコマンドを用意している
-実行はGo buildまたはGo runで `go run ./cmd/mcctl` のように使用する。
+ほとんどの管理作業を自動化するCLIとして `mc-ctl` というコマンドを用意している
+実行はGo buildまたはGo runで `go run ./cmd/mc-ctl` のように使用する。
 
 ## 初回セットアップ
 
@@ -22,11 +22,11 @@
 1. Bot token を secret に保存する
 
 ```console
-cp secrets/mclink_discord_bot_token.txt.example secrets/mclink_discord_bot_token.txt
-chmod 600 secrets/mclink_discord_bot_token.txt
+cp secrets/mc_link_discord_bot_token.txt.example secrets/mc_link_discord_bot_token.txt
+chmod 600 secrets/mc_link_discord_bot_token.txt
 ```
 
-2. `infra/docker-compose.yml` の `mclink.environment.MCLINK_DISCORD_GUILD_ID` に対象 Guild ID を設定する
+2. `infra/docker-compose.yml` の `mc_link.environment.MCLINK_DISCORD_GUILD_ID` に対象 Guild ID を設定する
 
 3. Velocity / Limbo の forwarding secret を同一値で設定する
 
@@ -39,17 +39,17 @@ sed -i "s/^secret = \".*\"$/secret = \"$SECRET\"/" infra/limbo/config/server.tom
 4. 以下コマンドの実行
 
 ```console
-mcctl asset init
-mcctl asset stage
-mcctl server up
-mcctl world ensure
-mcctl world setup
-mcctl world spawn profile
-mcctl world spawn stage
-mcctl world spawn apply
+mc-ctl asset init
+mc-ctl asset stage
+mc-ctl server up
+mc-ctl world ensure
+mc-ctl world setup
+mc-ctl world spawn profile
+mc-ctl world spawn stage
+mc-ctl world spawn apply
 ```
 
-`mcctl asset stage` は runtime ディレクトリの存在と書込可能状態を確認する。
+`mc-ctl asset stage` は runtime ディレクトリの存在と書込可能状態を確認する。
 設定反映自体は `server up`/`server restart` 時に実行される。
 `world` は起動時に `infra/world/config/bootstrap.sh` を実行し、
 `infra/world/plugins/dist/*` と `infra/velocity/config/forwarding.secret` を `/data` 側へ反映する。
@@ -59,15 +59,15 @@ mcctl world spawn apply
 各種ワールドに対する設定の変更を反映する場合は次を実行する。
 
 ```console
-mcctl world setup
-mcctl world spawn stage
-mcctl world spawn apply
+mc-ctl world setup
+mc-ctl world spawn stage
+mc-ctl world spawn apply
 ```
 
 特定ワールドだけセットアップを適用したい場合:
 
 ```console
-mcctl world setup --world mainhall
+mc-ctl world setup --world mainhall
 ```
 
 ## ワールド再生成
@@ -75,18 +75,18 @@ mcctl world setup --world mainhall
 `deletable: true` のワールドだけ再生成できるてんに注意
 
 ```console
-mcctl world regenerate resource
-mcctl world setup --world resource
-mcctl world spawn profile
-mcctl world spawn stage
-mcctl world spawn apply
+mc-ctl world regenerate resource
+mc-ctl world setup --world resource
+mc-ctl world spawn profile
+mc-ctl world spawn stage
+mc-ctl world spawn apply
 ```
 
 ## ワールド drop / delete
 
 ```console
-mcctl world drop resource
-mcctl world delete --yes resource
+mc-ctl world drop resource
+mc-ctl world delete --yes resource
 ```
 
 - `drop` は unload + remove だけ実行し、ワールドディスクは残す。
@@ -99,20 +99,20 @@ mcctl world delete --yes resource
 ## 任意 function 実行
 
 ```console
-mcctl world function run mcserver:hello
+mc-ctl world function run mcserver:hello
 ```
 
 ## プレイヤー権限管理の変更
 
 ```console
-mcctl player op grant kyoh86
-mcctl player op revoke kyoh86
-mcctl player admin grant kyoh86
-mcctl player admin revoke kyoh86
+mc-ctl player op grant kyoh86
+mc-ctl player op revoke kyoh86
+mc-ctl player admin grant kyoh86
+mc-ctl player admin revoke kyoh86
 ```
 
 ## 停止
 
 ```console
-mcctl server down
+mc-ctl server down
 ```

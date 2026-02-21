@@ -170,7 +170,7 @@ public final class LinkCodeGatePlugin {
   }
 
   private void appendEntry(String code, String type, String value, long expiresAt) throws IOException {
-    String key = "mclink:code:" + code;
+    String key = "mc-link:code:" + code;
     try (Socket socket = new Socket(redisHost, redisPort);
          BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
          BufferedInputStream in = new BufferedInputStream(socket.getInputStream())) {

@@ -51,7 +51,7 @@
 ## 認可管理
 
 認可の判定はローカルプラグイン `LinkCodeGate` が `allowlist.yml` を直接参照して行う。
-許可エントリは 認可処理Discord bot `mclink` （後述）が更新する。
+許可エントリは 認可処理Discord bot `mc-link-bot` （後述）が更新する。
 
 - `runtime/velocity/allowlist.yml`
     - 実運用時の実体
@@ -60,7 +60,7 @@
 当該ユーザーを `limbo`（認証待機用 PicoLimbo）へ接続させたうえで、`limbo` 内チャットに一時コードとDiscordでの操作案内を表示する。
 NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される。
 
-`mclink` コンテナが Discord の `/mc link <code>` を受け取り、`runtime/velocity/allowlist.yml` にエントリを追加します。
+`mc-link` コンテナが Discord の `/mc link <code>` を受け取り、`runtime/velocity/allowlist.yml` にエントリを追加します。
 
 ## ファイル構成
 
@@ -79,7 +79,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `limbo` コンテナ（`ghcr.io/quozul/picolimbo:latest`、未認証プレイヤー待機用）
     - `velocity` コンテナ（`itzg/mc-proxy:java21`、公開入口 `25565`）
     - `redis` コンテナ（`/mc link` ワンタイムコード保存）
-    - `mclink` コンテナ（Discord `/mc link` 連携）
+    - `mc-link` コンテナ（Discord `/mc link` 連携）
     - 各種ローカル / リモートプラグイン の導入
         - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard`
 - `infra/velocity/config/velocity.toml`
@@ -106,24 +106,24 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `worlds/mainhall/portals.yml.tmpl`
         - 帰還ポータル定義テンプレート（Multiverse-Portals）
 
-## `mcctl`
+## `mc-ctl`
 
-ほとんどの管理作業を自動化するCLIとして `mcctl` というコマンドを用意した。
-`mcctl` は以下のようなプリミティブなサブコマンド構成になっている。
+ほとんどの管理作業を自動化するCLIとして `mc-ctl` というコマンドを用意した。
+`mc-ctl` は以下のようなプリミティブなサブコマンド構成になっている。
 
-- `mcctl asset init`
+- `mc-ctl asset init`
     - ディレクトリ構成初期化
     - runtimeディレクトリ作成と書き込み可能状態の保証を行う。
-- `mcctl asset stage`
+- `mc-ctl asset stage`
     - runtime ディレクトリの存在と書込可能状態を確認
-- `mcctl server up|down|restart|ps|logs velocity|logs world|reload`
+- `mc-ctl server up|down|restart|ps|logs velocity|logs world|reload`
     - サーバーの起動、停止、リスタート、状態やログの確認
-- `mcctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
-    - `mcctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
-    - 座標依存の反映は `mcctl world spawn profile/stage/apply` で行い、ポータル定義などを読み込む。
-- `mcctl world drop|delete`
-- `mcctl player op ...|admin ...`
-- `mcctl link issue --nick <name>|--uuid <uuid> [--ttl 10m]`
+- `mc-ctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
+    - `mc-ctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
+    - 座標依存の反映は `mc-ctl world spawn profile/stage/apply` で行い、ポータル定義などを読み込む。
+- `mc-ctl world drop|delete`
+- `mc-ctl player op ...|admin ...`
+- `mc-ctl link issue --nick <name>|--uuid <uuid> [--ttl 10m]`
 
 `server/world/player` 系でコンソール送信を伴うコマンドは、コンテナが
 `running + healthy` になり、`/tmp/minecraft-console-in` パイプが生成されるまで
