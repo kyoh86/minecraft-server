@@ -1,6 +1,6 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS plugin-build
 WORKDIR /src
-COPY infra/velocity/plugins/src/link-code-gate /src/link-code-gate
+COPY infra/velocity/plugins/link-code-gate /src/link-code-gate
 RUN mvn -f /src/link-code-gate/pom.xml -DskipTests package
 
 FROM itzg/mc-proxy:java25

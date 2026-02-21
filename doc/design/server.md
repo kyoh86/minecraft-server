@@ -36,7 +36,7 @@
 - `WorldEdit`
 - `WorldGuard`
 - `ClickMobs`
-    - `infra/world/plugins/dist/ClickMobs/config.yml`
+    - `infra/world/plugins/clickmobs/config/config.yml`
         - `ClickMobs` 本体設定
         - `whitelisted_mobs: [?all]` により全モブを捕獲可能にする
 
@@ -44,12 +44,12 @@
 
 - `ClickMobsRegionGuard`
     - `WorldGuard` のリージョンIDに基づき `ClickMobs` を制御する
-    - 本体は `infra/world/plugins/src/clickmobs-region-guard` を `infra/world/Dockerfile` の build 時に生成
-    - 設定: `infra/world/plugins/dist/ClickMobsRegionGuard/config.yml`
+    - 本体は `infra/world/plugins/clickmobs-region-guard/src` を `infra/world/Dockerfile` の build 時に生成
+    - 設定: `infra/world/plugins/clickmobs-region-guard/config/config.yml`
         - `allowed_regions.<world>` に許可リージョンIDを列挙する
 - `LinkCodeGate`
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
-    - 本体は `infra/velocity/plugins/src/link-code-gate` を `infra/velocity/Dockerfile` の build 時に生成
+    - 本体は `infra/velocity/plugins/link-code-gate/src` を `infra/velocity/Dockerfile` の build 時に生成
 
 `LuckPerms` は `infra/docker-compose.yml` の `SPIGET_RESOURCES` で導入している。
 
@@ -81,6 +81,8 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `runtime/redis`
     - Redis データ
     - `/mc link` ワンタイムコードの保存先として利用
+- `runtime/limbo/server.toml`
+    - `mc-ctl init` が `infra/limbo/config/server.toml` から描画する PicoLimbo 設定
 - `infra/docker-compose.yml`
     - 各種サービス定義
     - `world` コンテナ（`itzg/minecraft-server:java25`、内部向け）
@@ -96,15 +98,39 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
         - `velocity`: `pgrep -f velocity`
         - `mc-link`: `pgrep -f mc-link-bot`
         - `limbo`: `pico_limbo --help`
+- `infra/limbo/config/server.toml`
+    - PicoLimbo 設定テンプレート
+    - `mc-ctl init` が `secrets/mc_forwarding_secret.txt` を埋め込んで `runtime/limbo/server.toml` を生成する
+- `infra/velocity/Dockerfile`
+    - Velocity用カスタムイメージ定義
+    - `infra/velocity/plugins/link-code-gate/src` を Maven でビルドし、生成JARを `/plugins/LinkCodeGate.jar` へ同梱する
 - `infra/velocity/config/velocity.toml`
     - Velocity のルーティング設定
     - `mainhall = "world:25565"` へ転送
-- `secrets/mc_forwarding_secret.txt`
-    - Velocity modern forwarding の共有シークレット
+    - `secrets/mc_forwarding_secret.txt`
+        - Velocity modern forwarding の共有シークレット
+        - `mc-ctl init` がユーザーの入力としてここに保存する
+- `infra/velocity/plugins/link-code-gate`
+    - Velocity用ローカルプラグイン `LinkCodeGate` の管理ディレクトリ
+    - `src`: プラグイン実装（Mavenプロジェクト）
+    - `dist`: 配布設定ファイル置き場（現状未使用）
+- `infra/mc-link/Dockerfile`
+    - Discord連携Bot `mc-link-bot` のマルチステージビルド定義
+    - Goバイナリをビルドし、最小ランタイムイメージへ配置する
+- `infra/world/Dockerfile`
+    - world用カスタムイメージ定義
+    - `infra/world/plugins/clickmobs-region-guard/src` を Maven でビルドし、生成JARを `/plugins/ClickMobsRegionGuard.jar` へ同梱する
+    - `infra/world/plugins/clickmobs/config/config.yml` と
+      `infra/world/plugins/clickmobs-region-guard/config/config.yml` を同梱する
 - `infra/world/config/bootstrap.sh`
     - `world` 起動時に `/plugins`（imageに同梱したプラグイン資産）と forwarding secret を `/data` へ反映
-- `runtime/limbo/server.toml`
-    - `mc-ctl init` が `infra/limbo/config/server.toml` から描画する PicoLimbo 設定
+- `infra/world/plugins/clickmobs-region-guard`
+    - world用ローカルプラグイン `ClickMobsRegionGuard` のビルド環境
+    - `src`: プラグイン実装（Mavenプロジェクト）
+    - `config`: プラグイン設定ファイル
+- `infra/world/plugins/clickmobs`
+    - `ClickMobs` 設定ファイルの管理ディレクトリ
+    - `config/config.yml` を world イメージへ同梱する
 - `datapacks/world-base`
     - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `worlds`

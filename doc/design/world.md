@@ -149,9 +149,9 @@ mc-ctl world spawn apply
 
 ## ClickMobs のリージョン制御
 
-`infra/world/plugins/src/clickmobs-region-guard` から build された
+`infra/world/plugins/clickmobs-region-guard` から build された
 `ClickMobsRegionGuard.jar` を導入し、
-`infra/world/plugins/dist/ClickMobsRegionGuard/config.yml` の
+`infra/world/plugins/clickmobs-region-guard/config/config.yml` の
 `allowed_regions.<world>` に許可リージョンIDを列挙する。
 
 ```yaml
@@ -167,7 +167,7 @@ allowed_regions:
 
 列挙したリージョン内でのみ `ClickMobs` の捕獲・設置操作を許可する。
 リージョン外では `ClickMobs` 操作イベントをキャンセルする。
-`infra/world/plugins/dist/ClickMobs/config.yml` では `whitelisted_mobs: [?all]` を固定する。
+`infra/world/plugins/clickmobs/config/config.yml` では `whitelisted_mobs: [?all]` を固定する。
 標準では `residence/resource/factory` の `clickmobs_allowed`
 （Hub 周辺 `x,z=-64..64`）を許可リージョンにする。
 
