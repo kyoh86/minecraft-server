@@ -114,8 +114,6 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `mc-ctl asset init`
     - ディレクトリ構成初期化
     - runtimeディレクトリ作成と書き込み可能状態の保証を行う。
-- `mc-ctl asset stage`
-    - runtime ディレクトリの存在と書込可能状態を確認
 - `mc-ctl server up|down|restart|ps|logs velocity|logs world|reload`
     - サーバーの起動、停止、リスタート、状態やログの確認
 - `mc-ctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`

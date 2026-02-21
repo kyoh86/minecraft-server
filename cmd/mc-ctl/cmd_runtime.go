@@ -11,12 +11,5 @@ func newAssetCmd(a app) *cobra.Command {
 			return a.assetInit()
 		},
 	})
-	cmd.AddCommand(&cobra.Command{
-		Use:   "stage",
-		Short: "stage runtime assets from infra definitions",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return a.assetStage()
-		},
-	})
 	return cmd
 }

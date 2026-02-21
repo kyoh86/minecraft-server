@@ -40,7 +40,6 @@ sed -i "s/^secret = \".*\"$/secret = \"$SECRET\"/" infra/limbo/config/server.tom
 
 ```console
 mc-ctl asset init
-mc-ctl asset stage
 mc-ctl server up
 mc-ctl world ensure
 mc-ctl world setup
@@ -49,8 +48,7 @@ mc-ctl world spawn stage
 mc-ctl world spawn apply
 ```
 
-`mc-ctl asset stage` は runtime ディレクトリの存在と書込可能状態を確認する。
-設定反映自体は `server up`/`server restart` 時に実行される。
+設定反映は `server up`/`server restart` 時に実行される。
 `world` は起動時に `infra/world/config/bootstrap.sh` を実行し、
 image に同梱されたプラグイン資産と `infra/velocity/config/forwarding.secret` を `/data` 側へ反映する。
 

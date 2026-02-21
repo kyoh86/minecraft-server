@@ -50,11 +50,3 @@ func (a app) assetInit() error {
 	fmt.Printf("Initialized assets: %s\n", filepath.Join(a.baseDir, "runtime"))
 	return nil
 }
-
-func (a app) assetStage() error {
-	if err := a.ensureRuntimeLayout(); err != nil {
-		return err
-	}
-	fmt.Println("Staged runtime assets (directory checks only)")
-	return nil
-}
