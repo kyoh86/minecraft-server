@@ -52,7 +52,7 @@ wslctl world spawn apply
 `wslctl asset stage` は runtime ディレクトリの存在と書込可能状態を確認する。
 設定反映自体は `server up`/`server restart` 時に実行される。
 `world` は起動時に `infra/world/config/bootstrap.sh` を実行し、
-`infra/world/plugins/*` と `infra/velocity/config/forwarding.secret` を `/data` 側へ反映する。
+`infra/world/plugins/dist/*` と `infra/velocity/config/forwarding.secret` を `/data` 側へ反映する。
 
 ## 各種ワールド設定変更の反映
 

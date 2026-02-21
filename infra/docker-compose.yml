@@ -47,7 +47,7 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ./world/plugins
+        source: ./world/plugins/dist
         target: /plugins
         read_only: true
         bind:
@@ -105,7 +105,7 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ./velocity/plugins/LinkCodeGate.jar
+        source: ./velocity/plugins/dist/LinkCodeGate.jar
         target: /plugins/LinkCodeGate.jar
         read_only: true
         bind:

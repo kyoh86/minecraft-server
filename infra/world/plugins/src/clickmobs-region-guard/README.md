@@ -7,7 +7,7 @@ Paper プラグイン。
 
 ```console
 docker run --rm \
-  -v "$PWD/infra/world/plugins-src/clickmobs-region-guard:/workspace" \
+  -v "$PWD/infra/world/plugins/src/clickmobs-region-guard:/workspace" \
   -w /workspace \
   maven:3.9.9-eclipse-temurin-21 \
   mvn -DskipTests package
