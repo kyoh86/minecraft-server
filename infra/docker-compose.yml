@@ -47,19 +47,19 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ./plugins
+        source: ./world/plugins
         target: /plugins
         read_only: true
         bind:
           create_host_path: false
       - type: bind
-        source: ./velocity/forwarding.secret
+        source: ./velocity/config/forwarding.secret
         target: /config/forwarding.secret
         read_only: true
         bind:
           create_host_path: false
       - type: bind
-        source: ./world/bootstrap.sh
+        source: ./world/config/bootstrap.sh
         target: /bootstrap.sh
         read_only: true
         bind:
@@ -72,7 +72,7 @@ services:
     restart: unless-stopped
     volumes:
       - type: bind
-        source: ./pico-limbo/server.toml
+        source: ./limbo/config/server.toml
         target: /usr/src/app/server.toml
         read_only: true
         bind:
@@ -105,13 +105,13 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ./plugins/LinkCodeGate.jar
+        source: ./velocity/plugins/LinkCodeGate.jar
         target: /plugins/LinkCodeGate.jar
         read_only: true
         bind:
           create_host_path: false
       - type: bind
-        source: ./velocity
+        source: ./velocity/config
         target: /config
         read_only: true
         bind:

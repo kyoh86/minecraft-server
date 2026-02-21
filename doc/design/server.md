@@ -13,12 +13,12 @@
     - `online-mode=false`
     - `enforce-secure-profile=false`
     - `proxies.velocity.enabled=true`
-    - `proxies.velocity.secret` は `infra/velocity/forwarding.secret` と一致させる
+    - `proxies.velocity.secret` は `infra/velocity/config/forwarding.secret` と一致させる
     - `velocity` からのみ到達
 - `limbo`（認証待機 PicoLimbo）
     - 外部非公開
     - `bind=0.0.0.0:25565`
-    - MODERN forwarding (`infra/pico-limbo/server.toml`)
+    - MODERN forwarding (`infra/limbo/config/server.toml`)
     - `velocity` からのみ到達
 
 ## 導入プラグイン
@@ -30,7 +30,7 @@
 - `WorldEdit`
 - `WorldGuard`
 - `ClickMobs`
-    - `infra/plugins/ClickMobs/config.yml`
+    - `infra/world/plugins/ClickMobs/config.yml`
         - `ClickMobs` 本体設定
         - `whitelisted_mobs: [?all]` により全モブを捕獲可能にする
 
@@ -38,15 +38,15 @@
 
 - `ClickMobsRegionGuard`
     - `WorldGuard` のリージョンIDに基づき `ClickMobs` を制御する
-    - 本体ファイル: `infra/plugins/ClickMobsRegionGuard.jar`
-    - 設定: `infra/plugins/ClickMobsRegionGuard/config.yml`
+    - 本体ファイル: `infra/world/plugins/ClickMobsRegionGuard.jar`
+    - 設定: `infra/world/plugins/ClickMobsRegionGuard/config.yml`
         - `allowed_regions.<world>` に許可リージョンIDを列挙する
 - `LinkCodeGate`
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
-    - 本体ファイル: `infra/plugins/LinkCodeGate.jar`
+    - 本体ファイル: `infra/velocity/plugins/LinkCodeGate.jar`
 
 `world` コンテナは `runtime/world` を `/data` として bind mount し、
-起動時に `infra/world/bootstrap.sh` で `/config` から設定を反映する。
+起動時に `infra/world/config/bootstrap.sh` で `/config` から設定を反映する。
 
 ## 認可管理
 
@@ -82,14 +82,14 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `mclink` コンテナ（Discord `/mc link` 連携）
     - 各種ローカル / リモートプラグイン の導入
         - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard`
-- `infra/velocity/velocity.toml`
+- `infra/velocity/config/velocity.toml`
     - Velocity のルーティング設定
     - `mainhall = "world:25565"` へ転送
-- `infra/velocity/forwarding.secret`
+- `infra/velocity/config/forwarding.secret`
     - Velocity modern forwarding の共有シークレット
-- `infra/world/bootstrap.sh`
-    - `world` 起動時に `infra/plugins/*` と forwarding secret を `/data` へ反映
-- `infra/pico-limbo/server.toml`
+- `infra/world/config/bootstrap.sh`
+    - `world` 起動時に `infra/world/plugins/*` と forwarding secret を `/data` へ反映
+- `infra/limbo/config/server.toml`
     - PicoLimbo 本体の待機サーバー設定
 - `datapacks/world-base`
     - ワールド初期化用 Datapack（runtime へそのままコピー）

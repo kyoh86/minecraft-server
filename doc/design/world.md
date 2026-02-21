@@ -148,8 +148,8 @@ wslctl world spawn apply
 
 ## ClickMobs のリージョン制御
 
-`infra/plugins/ClickMobsRegionGuard.jar` を導入し、
-`infra/plugins/ClickMobsRegionGuard/config.yml` の
+`infra/world/plugins/ClickMobsRegionGuard.jar` を導入し、
+`infra/world/plugins/ClickMobsRegionGuard/config.yml` の
 `allowed_regions.<world>` に許可リージョンIDを列挙する。
 
 ```yaml
@@ -165,7 +165,7 @@ allowed_regions:
 
 列挙したリージョン内でのみ `ClickMobs` の捕獲・設置操作を許可する。
 リージョン外では `ClickMobs` 操作イベントをキャンセルする。
-`infra/plugins/ClickMobs/config.yml` では `whitelisted_mobs: [?all]` を固定する。
+`infra/world/plugins/ClickMobs/config.yml` では `whitelisted_mobs: [?all]` を固定する。
 標準では `residence/resource/factory` の `clickmobs_allowed`
 （Hub 周辺 `x,z=-64..64`）を許可リージョンにする。
 
