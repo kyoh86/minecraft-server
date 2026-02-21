@@ -2,7 +2,7 @@
 
 ## 概要
 
-このプロジェクトにおける各サーバーは以下の3層で動作する。
+このプロジェクトにおける各サーバーは以下の5コンテナで動作する。
 
 - `velocity`（公開入口）
     - 公開ポート: `25565`
@@ -20,6 +20,12 @@
     - `bind=0.0.0.0:25565`
     - MODERN forwarding (`runtime/limbo/server.toml`)
     - `velocity` からのみ到達
+- `mc-link`（Discord認証受付サーバー）
+    - 外部非公開
+    - Discord API への外向き接続のみで動作
+- `redis`（link-code 一時コード保存）
+    - 外部非公開
+    - `velocity` / `mc-link` から内部ネットワーク接続のみ許可
 
 ## 導入プラグイン
 
