@@ -39,6 +39,7 @@
     - 対象は Multiverse 管理ワールド（`residence` / `resource` / `factory`）
     - 先頭に `# yaml-language-server: $schema=../env.schema.json` を記述
     - `name` / `environment` / `world_type` / `seed` / `deletable`
+    - `seed` が空文字の場合は `mv create -s` を付与せず、ランダムシードで生成する
 - `worlds/<name>/world.policy.yml`
     - MultiVerse で設定するワールドごとの特性情報群
     - 対象は`mainhall` を含む全ワールド
