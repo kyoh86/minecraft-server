@@ -44,8 +44,8 @@ services:
       ENFORCE_SECURE_PROFILE: "FALSE"
       ENABLE_RCON: "FALSE"
       CREATE_CONSOLE_IN_PIPE: "true"
-      HANGAR_PROJECTS: "LuckPerms"
       MODRINTH_PROJECTS: "multiverse-core,multiverse-portals,worldedit,worldguard,clickmobs"
+      SPIGET_RESOURCES: "28140"
     entrypoint:
       - /bootstrap.sh
     healthcheck:

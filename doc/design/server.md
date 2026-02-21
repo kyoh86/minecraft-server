@@ -45,6 +45,8 @@
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
     - 本体は `infra/velocity/plugins/src/link-code-gate` を `infra/velocity/Dockerfile` の build 時に生成
 
+`LuckPerms` は `infra/docker-compose.yml` の `SPIGET_RESOURCES` で導入している。
+
 `world` コンテナは `runtime/world` を `/data` として bind mount し、
 起動時に `infra/world/config/bootstrap.sh` で `/config` から設定を反映する。
 
