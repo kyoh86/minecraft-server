@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -9,10 +10,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 )
 
 const limboSecretPlaceholder = "__MC_FORWARDING_SECRET__"
-const worldPaperGlobalSecretPlaceholder = "__MC_FORWARDING_SECRET__"
 
 func (a app) ensureSecrets() error {
 	secretsDir := filepath.Join(a.baseDir, "secrets")
@@ -173,16 +174,20 @@ func (a app) renderWorldPaperGlobal() error {
 		return err
 	}
 
-	content := strings.ReplaceAll(string(in), worldPaperGlobalSecretPlaceholder, secret)
-	if strings.Contains(content, worldPaperGlobalSecretPlaceholder) {
-		return fmt.Errorf("world paper-global placeholder is not resolved: %s", src)
+	tpl, err := template.New(filepath.Base(src)).Option("missingkey=error").Parse(string(in))
+	if err != nil {
+		return fmt.Errorf("parse template %s: %w", src, err)
+	}
+	var out bytes.Buffer
+	if err := tpl.Execute(&out, map[string]string{"ForwardingSecret": secret}); err != nil {
+		return fmt.Errorf("render template %s: %w", src, err)
 	}
 
 	dst := filepath.Join(a.baseDir, "secrets", "world", "paper-global.yml")
 	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
 		return err
 	}
-	return os.WriteFile(dst, []byte(content), 0o600)
+	return os.WriteFile(dst, out.Bytes(), 0o600)
 }
 
 func generateForwardingSecret() (string, error) {
