@@ -54,7 +54,7 @@
 `LuckPerms` は `infra/docker-compose.yml` の `SPIGET_RESOURCES` で導入している。
 
 `world` コンテナは `runtime/world` を `/data` として bind mount し、
-起動時に `infra/world/config/bootstrap.sh` で `/config` から設定を反映する。
+起動時に `/config`（composeで bind）から `/data/config` へ設定を同期する。
 
 ## 認可管理
 
@@ -122,8 +122,12 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `infra/world/plugins/clickmobs-region-guard/src` を Maven でビルドし、生成JARを `/plugins/ClickMobsRegionGuard.jar` へ同梱する
     - `infra/world/plugins/clickmobs/config/config.yml` と
       `infra/world/plugins/clickmobs-region-guard/config/config.yml` を同梱する
-- `infra/world/config/bootstrap.sh`
-    - `world` 起動時に `/plugins`（imageに同梱したプラグイン資産）と forwarding secret を `/data` へ反映
+- `infra/world/config/paper-global.yml.tmpl`
+    - Paper 用 `paper-global.yml` のテンプレート
+    - `mc-ctl init` が forwarding secret を埋め込んで `secrets/world/paper-global.yml` を生成する
+- `secrets/world/paper-global.yml`
+    - world 用の生成済み設定（secret 含む）
+    - compose で `/config/paper-global.yml` に bind し、起動時に `/data/config` へ同期される
 - `infra/world/plugins/clickmobs-region-guard`
     - world用ローカルプラグイン `ClickMobsRegionGuard` のビルド環境
     - `src`: プラグイン実装（Mavenプロジェクト）

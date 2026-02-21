@@ -44,8 +44,6 @@ services:
       CREATE_CONSOLE_IN_PIPE: "true"
       MODRINTH_PROJECTS: "multiverse-core,multiverse-portals,worldedit,worldguard,clickmobs"
       SPIGET_RESOURCES: "28140"
-    entrypoint:
-      - /bootstrap.sh
     healthcheck:
       test: ["CMD", "mc-health"]
       interval: 5s
@@ -59,14 +57,8 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ../secrets/mc_forwarding_secret.txt
-        target: /config/forwarding.secret
-        read_only: true
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ./world/config/bootstrap.sh
-        target: /bootstrap.sh
+        source: ../secrets/world/paper-global.yml
+        target: /config/paper-global.yml
         read_only: true
         bind:
           create_host_path: false

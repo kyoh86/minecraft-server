@@ -12,6 +12,7 @@ import (
 )
 
 const limboSecretPlaceholder = "__MC_FORWARDING_SECRET__"
+const worldPaperGlobalSecretPlaceholder = "__MC_FORWARDING_SECRET__"
 
 func (a app) ensureSecrets() error {
 	secretsDir := filepath.Join(a.baseDir, "secrets")
@@ -158,6 +159,30 @@ func (a app) renderLimboConfig() error {
 		return err
 	}
 	return os.WriteFile(dst, []byte(content), 0o644)
+}
+
+func (a app) renderWorldPaperGlobal() error {
+	secret, err := a.readForwardingSecret()
+	if err != nil {
+		return err
+	}
+
+	src := filepath.Join(a.baseDir, "infra", "world", "config", "paper-global.yml.tmpl")
+	in, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	content := strings.ReplaceAll(string(in), worldPaperGlobalSecretPlaceholder, secret)
+	if strings.Contains(content, worldPaperGlobalSecretPlaceholder) {
+		return fmt.Errorf("world paper-global placeholder is not resolved: %s", src)
+	}
+
+	dst := filepath.Join(a.baseDir, "secrets", "world", "paper-global.yml")
+	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(dst, []byte(content), 0o600)
 }
 
 func generateForwardingSecret() (string, error) {

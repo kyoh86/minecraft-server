@@ -60,6 +60,9 @@ func (a app) init() error {
 	if err := a.ensureSecrets(); err != nil {
 		return err
 	}
+	if err := a.renderWorldPaperGlobal(); err != nil {
+		return err
+	}
 	if err := a.renderLimboConfig(); err != nil {
 		return err
 	}

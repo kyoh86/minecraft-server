@@ -36,14 +36,14 @@ mc-ctl world spawn apply
 `mc-ctl init` は対話入力で secret 設定を促す。
 未入力のまま進めた場合は `secrets/mc_link_discord_bot_token.txt` にプレースホルダ、
 `secrets/mc_forwarding_secret.txt` に自動生成値を設定し、
-`runtime/limbo/server.toml` を描画する。
+`runtime/limbo/server.toml` と `secrets/world/paper-global.yml` を描画する。
 また、`runtime` 配下の所有者が実行ユーザーと一致しない場合はエラーで停止する。
 
 設定反映は `server up`/`server restart` 時に実行される。
 `mc-ctl server up` は `docker compose up` 後、全サービスが `running` かつ
 （healthcheckがある場合は）`healthy` になるまで待機し、未到達時はエラーを返す。
-`world` は起動時に `infra/world/config/bootstrap.sh` を実行し、
-image に同梱されたプラグイン資産と `secrets/mc_forwarding_secret.txt` を `/data` 側へ反映する。
+`world` は起動時に image 同梱プラグイン資産を `/data` 側へ反映し、
+`/config/paper-global.yml`（`secrets/world/paper-global.yml` を bind）を `/data/config` へ同期する。
 
 ## 各種ワールド設定変更の反映
 
