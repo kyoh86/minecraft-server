@@ -55,6 +55,15 @@ mc-ctl world spawn stage
 mc-ctl world spawn apply
 ```
 
+## プラグイン更新の反映
+
+`infra/docker-compose.yml` の `MODRINTH_PROJECTS` や `SPIGET_RESOURCES` を更新した場合は、
+`world` コンテナを再起動すれば反映される。
+
+```console
+mc-ctl server restart world
+```
+
 特定ワールドだけセットアップを適用したい場合:
 
 ```console
