@@ -143,7 +143,7 @@ services:
       MCLINK_DISCORD_GUILD_ID: "1474080174038585508"
       MCLINK_REDIS_ADDR: "redis:6379"
       MCLINK_REDIS_DB: "0"
-      MCLINK_ALLOWLIST_PATH: "/data/velocity/allowlist.yml"
+      MCLINK_ALLOWLIST_PATH: "/allowlist.yml"
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f mc-link-bot >/dev/null"]
       interval: 5s
@@ -154,8 +154,8 @@ services:
       - mc_link_discord_bot_token
     volumes:
       - type: bind
-        source: ../runtime/velocity
-        target: /data/velocity
+        source: ../runtime/velocity/allowlist.yml
+        target: /allowlist.yml
         bind:
           create_host_path: false
     networks:

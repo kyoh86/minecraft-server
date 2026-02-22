@@ -69,6 +69,8 @@
 NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される。
 
 `mc-link` コンテナが Discord の `/mc link <code>` を受け取り、`runtime/velocity/allowlist.yml` にエントリを追加します。
+`mc-link` が書き込む bind mount は `allowlist.yml` 単体のみとし、
+`runtime/velocity` 全体にはアクセスさせない。
 
 ## ファイル構成
 
@@ -90,6 +92,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `velocity` コンテナ（`itzg/mc-proxy:java25`、公開入口 `25565`）
     - `redis` コンテナ（`/mc link` ワンタイムコード保存）
     - `mc-link` コンテナ（Discord `/mc link` 連携）
+        - `../runtime/velocity/allowlist.yml` のみを `/allowlist.yml` として書き込みマウントする
     - 各種ローカル / リモートプラグイン の導入
         - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard`
     - healthcheck
