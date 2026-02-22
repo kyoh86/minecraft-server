@@ -101,9 +101,9 @@ services:
       MEMORY: "512M"
       REPLACE_ENV_VARIABLES: "TRUE"
       REPLACE_ENV_VARIABLE_PREFIX: "CFG_"
-      MCLINK_REDIS_ADDR: "redis:6379"
-      MCLINK_REDIS_DB: "0"
-      MCLINK_ALLOWLIST_PATH: "/server/allowlist.yml"
+      MC_LINK_REDIS_ADDR: "redis:6379"
+      MC_LINK_REDIS_DB: "0"
+      MC_LINK_ALLOWLIST_PATH: "/server/allowlist.yml"
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f velocity >/dev/null"]
       interval: 5s
@@ -140,10 +140,9 @@ services:
       - redis
       - velocity
     environment:
-      MCLINK_DISCORD_GUILD_ID: "1474080174038585508"
-      MCLINK_REDIS_ADDR: "redis:6379"
-      MCLINK_REDIS_DB: "0"
-      MCLINK_ALLOWLIST_PATH: "/allowlist.yml"
+      MC_LINK_REDIS_ADDR: "redis:6379"
+      MC_LINK_REDIS_DB: "0"
+      MC_LINK_ALLOWLIST_PATH: "/allowlist.yml"
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f mc-link-bot >/dev/null"]
       interval: 5s
@@ -151,7 +150,7 @@ services:
       retries: 20
       start_period: 5s
     secrets:
-      - mc_link_discord_bot_token
+      - mc_link_discord
     volumes:
       - type: bind
         source: ../runtime/velocity/allowlist.yml
@@ -166,5 +165,5 @@ networks:
     driver: bridge
 
 secrets:
-  mc_link_discord_bot_token:
-    file: ../secrets/mc_link_discord_bot_token.txt
+  mc_link_discord:
+    file: ../secrets/mc_link_discord.toml

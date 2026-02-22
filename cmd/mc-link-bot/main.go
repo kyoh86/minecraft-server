@@ -12,16 +12,26 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/kyoh86/minecraft-server/cmd/mc-link-bot/internal/mclink"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/redis/go-redis/v9"
 )
 
+const defaultDiscordSecretPath = "/run/secrets/mc_link_discord"
+
 type config struct {
-	TokenPath     string
+	Token         string
 	GuildID       string
+	AllowedRoleID map[string]struct{}
 	RedisAddr     string
 	RedisPassword string
 	RedisDB       int
 	AllowlistPath string
+}
+
+type discordSecret struct {
+	BotToken       string   `toml:"bot_token"`
+	GuildID        string   `toml:"guild_id"`
+	AllowedRoleIDs []string `toml:"allowed_role_ids"`
 }
 
 func main() {
@@ -30,16 +40,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	tokenBytes, err := os.ReadFile(cfg.TokenPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	token := strings.TrimSpace(string(tokenBytes))
-	if token == "" {
+	if cfg.Token == "" {
 		log.Fatal("bot token is empty")
 	}
 
-	dg, err := discordgo.New("Bot " + token)
+	dg, err := discordgo.New("Bot " + cfg.Token)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,19 +79,51 @@ func main() {
 
 func loadConfig() (config, error) {
 	cfg := config{
-		TokenPath:     env("MCLINK_DISCORD_BOT_TOKEN_FILE", "/run/secrets/mc_link_discord_bot_token"),
-		GuildID:       strings.TrimSpace(os.Getenv("MCLINK_DISCORD_GUILD_ID")),
-		RedisAddr:     env("MCLINK_REDIS_ADDR", "redis:6379"),
-		RedisPassword: env("MCLINK_REDIS_PASSWORD", ""),
-		AllowlistPath: env("MCLINK_ALLOWLIST_PATH", "/data/velocity/allowlist.yml"),
+		RedisAddr:     env("MC_LINK_REDIS_ADDR", "redis:6379"),
+		RedisPassword: env("MC_LINK_REDIS_PASSWORD", ""),
+		AllowlistPath: env("MC_LINK_ALLOWLIST_PATH", "/data/velocity/allowlist.yml"),
+		AllowedRoleID: map[string]struct{}{},
 	}
-	db, err := strconv.Atoi(env("MCLINK_REDIS_DB", "0"))
+	secretPath := env("MC_LINK_DISCORD_SECRET_FILE", defaultDiscordSecretPath)
+	secret, err := loadDiscordSecret(secretPath)
 	if err != nil {
-		return config{}, errors.New("MCLINK_REDIS_DB must be integer")
+		return config{}, err
+	}
+	cfg.Token = secret.BotToken
+	cfg.GuildID = secret.GuildID
+	for _, roleID := range secret.AllowedRoleIDs {
+		roleID = strings.TrimSpace(roleID)
+		if roleID != "" {
+			cfg.AllowedRoleID[roleID] = struct{}{}
+		}
+	}
+	db, err := strconv.Atoi(env("MC_LINK_REDIS_DB", "0"))
+	if err != nil {
+		return config{}, errors.New("MC_LINK_REDIS_DB must be integer")
 	}
 	cfg.RedisDB = db
 	if cfg.GuildID == "" {
-		return config{}, errors.New("MCLINK_DISCORD_GUILD_ID is required")
+		return config{}, errors.New("guild_id is missing in mc_link_discord secret")
+	}
+	return cfg, nil
+}
+
+func loadDiscordSecret(path string) (discordSecret, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return discordSecret{}, err
+	}
+	var cfg discordSecret
+	if err := toml.Unmarshal(b, &cfg); err != nil {
+		return discordSecret{}, fmt.Errorf("failed to parse mc_link_discord secret: %w", err)
+	}
+	cfg.BotToken = strings.TrimSpace(cfg.BotToken)
+	cfg.GuildID = strings.TrimSpace(cfg.GuildID)
+	if cfg.BotToken == "" || cfg.BotToken == "REPLACE_WITH_DISCORD_BOT_TOKEN" {
+		return discordSecret{}, errors.New("discord bot token is missing in mc_link_discord secret")
+	}
+	if cfg.GuildID == "" || cfg.GuildID == "REPLACE_WITH_DISCORD_GUILD_ID" {
+		return discordSecret{}, errors.New("discord guild id is missing in mc_link_discord secret")
 	}
 	return cfg, nil
 }
@@ -118,6 +155,11 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 }
 
 func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg config) {
+	if !isRoleAllowed(i, cfg.AllowedRoleID) {
+		respond(s, i, "このコマンドを実行する権限がありません。")
+		return
+	}
+
 	opt := i.ApplicationCommandData().Options
 	if len(opt) == 0 || opt[0].Name != "link" {
 		respond(s, i, "サポートされていないコマンドです。")
@@ -166,7 +208,7 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 	}
 
 	entry.Claimed = true
-	entry.ClaimedBy = i.Member.User.ID
+	entry.ClaimedBy = interactionUserID(i)
 	entry.ClaimedAt = time.Now().UTC()
 	if err := saveClaimed(ctx, rdb, entry); err != nil {
 		respond(s, i, "内部エラー: code の確定保存に失敗しました。")
@@ -188,6 +230,34 @@ func respond(s *discordgo.Session, i *discordgo.InteractionCreate, msg string) {
 			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
+}
+
+func isRoleAllowed(i *discordgo.InteractionCreate, allowed map[string]struct{}) bool {
+	if len(allowed) == 0 {
+		return true
+	}
+	if i == nil || i.Member == nil {
+		return false
+	}
+	for _, roleID := range i.Member.Roles {
+		if _, ok := allowed[roleID]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func interactionUserID(i *discordgo.InteractionCreate) string {
+	if i == nil {
+		return ""
+	}
+	if i.Member != nil && i.Member.User != nil {
+		return i.Member.User.ID
+	}
+	if i.User != nil {
+		return i.User.ID
+	}
+	return ""
 }
 
 func env(key, fallback string) string {

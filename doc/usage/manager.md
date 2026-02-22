@@ -31,14 +31,14 @@ mc-ctl world spawn stage
 mc-ctl world spawn apply
 ```
 
-2. `infra/docker-compose.yml` の `mc-link.environment.MCLINK_DISCORD_GUILD_ID` に対象 Guild ID を設定する
-
 `mc-ctl init` は対話入力で secret 設定を促す。
-未入力のまま進めた場合は `secrets/mc_link_discord_bot_token.txt` にプレースホルダ、
-`secrets/mc_forwarding_secret.txt` に自動生成値を設定し、
+未入力のまま進めた場合は `secrets/mc_link_discord.toml`（`bot_token` / `guild_id` / `allowed_role_ids`）に
+プレースホルダを設定し、`secrets/mc_forwarding_secret.txt` に自動生成値を設定し、
 `secrets/mc_link_discord_guild_name.txt` と `secrets/mc_link_discord_invite_url.txt` を含む
 設定ファイルを生成し、`secrets/limbo/server.toml` と `secrets/world/paper-global.yml` を描画する。
 また、`runtime` 配下の所有者が実行ユーザーと一致しない場合はエラーで停止する。
+Redis/allowlist の環境変数名は `MC_LINK_*` に統一されており、旧 `MCLINK_*` は使用しない。
+`mc-link` の secret ファイルパスは `MC_LINK_DISCORD_SECRET_FILE` で上書きできる（既定: `/run/secrets/mc_link_discord`）。
 
 設定反映は `server up`/`server restart` 時に実行される。
 `mc-ctl server up` は `docker compose up` 後、全サービスが `running` かつ

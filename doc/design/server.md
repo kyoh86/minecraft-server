@@ -65,6 +65,8 @@
 認可の判定はローカルプラグイン `LinkCodeGate` が `allowlist.yml` を直接参照して行う。
 許可エントリは 認可処理Discord bot `mc-link-bot` （後述）が更新する。
 判定キーは UUID のみを使用し、nickname によるフォールバックは行わない。
+`mc-link-bot` の `/mc link` 実行者は `secrets/mc_link_discord.toml` の
+`allowed_role_ids` で制限できる（空配列なら制限なし）。
 
 - `runtime/velocity/allowlist.yml`
     - 実運用時の実体
@@ -91,6 +93,9 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `secrets/limbo/server.toml`
     - `mc-ctl init` が `infra/limbo/config/server.toml.tmpl` から描画する PicoLimbo 設定
     - Discord のサーバー名/招待URLを含む案内文を埋め込む
+- `secrets/mc_link_discord.toml`
+    - `mc-link-bot` 用 secret
+    - `bot_token` / `guild_id` / `allowed_role_ids` を保持する
 - `infra/docker-compose.yml`
     - 各種サービス定義
     - `world` コンテナ（`itzg/minecraft-server:java25`、内部向け）
@@ -98,6 +103,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `velocity` コンテナ（`itzg/mc-proxy:java25`、公開入口 `25565`）
     - `redis` コンテナ（`/mc link` ワンタイムコード保存）
     - `mc-link` コンテナ（Discord `/mc link` 連携）
+        - `mc_link_discord.toml` を Docker secrets 経由で `/run/secrets/mc_link_discord` に注入する
         - `../runtime/velocity/allowlist.yml` のみを `/allowlist.yml` として書き込みマウントする
     - 各種ローカル / リモートプラグイン の導入
         - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard`

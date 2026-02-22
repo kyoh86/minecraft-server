@@ -11,7 +11,22 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/pelletier/go-toml/v2"
 )
+
+const (
+	discordBotTokenPlaceholder  = "REPLACE_WITH_DISCORD_BOT_TOKEN"
+	discordGuildIDPlaceholder   = "REPLACE_WITH_DISCORD_GUILD_ID"
+	discordGuildNamePlaceholder = "REPLACE_WITH_DISCORD_GUILD_NAME"
+	discordInviteURLPlaceholder = "REPLACE_WITH_DISCORD_INVITE_URL"
+)
+
+type mcLinkDiscordSecret struct {
+	BotToken       string   `toml:"bot_token"`
+	GuildID        string   `toml:"guild_id"`
+	AllowedRoleIDs []string `toml:"allowed_role_ids"`
+}
 
 func (a app) ensureSecrets() error {
 	secretsDir := filepath.Join(a.baseDir, "secrets")
@@ -19,8 +34,8 @@ func (a app) ensureSecrets() error {
 		return err
 	}
 
-	tokenPath := filepath.Join(secretsDir, "mc_link_discord_bot_token.txt")
-	if err := ensureDiscordBotToken(tokenPath); err != nil {
+	mcLinkDiscordPath := filepath.Join(secretsDir, "mc_link_discord.toml")
+	if err := ensureMcLinkDiscordSecret(mcLinkDiscordPath); err != nil {
 		return err
 	}
 
@@ -41,33 +56,161 @@ func (a app) ensureSecrets() error {
 	return nil
 }
 
-func ensureDiscordBotToken(path string) error {
-	placeholder := "REPLACE_WITH_DISCORD_BOT_TOKEN"
+func ensureMcLinkDiscordSecret(path string) error {
 	if !fileExists(path) {
 		token, err := promptSecret("Discord Bot tokenを入力してください（未設定のままにする場合はEnter）: ")
 		if err != nil {
 			return err
 		}
 		if token == "" {
-			token = placeholder
+			token = discordBotTokenPlaceholder
 		}
-		return os.WriteFile(path, []byte(token+"\n"), 0o600)
+		guildID, err := promptSecret("Discord Guild IDを入力してください（未設定のままにする場合はEnter）: ")
+		if err != nil {
+			return err
+		}
+		if guildID == "" {
+			guildID = discordGuildIDPlaceholder
+		}
+		roleIDsText, err := promptSecret("許可ロールID（複数はカンマ区切り、未設定ならEnter）: ")
+		if err != nil {
+			return err
+		}
+		secret := mcLinkDiscordSecret{
+			BotToken:       token,
+			GuildID:        guildID,
+			AllowedRoleIDs: parseCommaSeparated(roleIDsText),
+		}
+		return writeMcLinkDiscordSecret(path, secret)
+	}
+
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var secret mcLinkDiscordSecret
+	if err := toml.Unmarshal(b, &secret); err != nil {
+		return fmt.Errorf("parse mc_link_discord.toml: %w", err)
+	}
+
+	changed := false
+	if strings.TrimSpace(secret.BotToken) == "" || secret.BotToken == discordBotTokenPlaceholder {
+		token, err := promptSecret("Discord Bot tokenが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
+		if err != nil {
+			return err
+		}
+		if token != "" {
+			secret.BotToken = token
+			changed = true
+		}
+	}
+	if strings.TrimSpace(secret.GuildID) == "" || secret.GuildID == discordGuildIDPlaceholder {
+		guildID, err := promptSecret("Discord Guild IDが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
+		if err != nil {
+			return err
+		}
+		if guildID != "" {
+			secret.GuildID = guildID
+			changed = true
+		}
+	}
+	if !changed {
+		return nil
+	}
+	return writeMcLinkDiscordSecret(path, secret)
+}
+
+func writeMcLinkDiscordSecret(path string, secret mcLinkDiscordSecret) error {
+	if strings.TrimSpace(secret.BotToken) == "" {
+		secret.BotToken = discordBotTokenPlaceholder
+	}
+	if strings.TrimSpace(secret.GuildID) == "" {
+		secret.GuildID = discordGuildIDPlaceholder
+	}
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("bot_token = %q\n", secret.BotToken))
+	b.WriteString(fmt.Sprintf("guild_id = %q\n", secret.GuildID))
+	b.WriteString("allowed_role_ids = [")
+	for i, roleID := range secret.AllowedRoleIDs {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(fmt.Sprintf("%q", strings.TrimSpace(roleID)))
+	}
+	b.WriteString("]\n")
+	return os.WriteFile(path, []byte(b.String()), 0o600)
+}
+
+func parseCommaSeparated(s string) []string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+func ensureDiscordGuildName(path string) error {
+	if !fileExists(path) {
+		name, err := promptSecret("Discordサーバー名を入力してください（未設定のままにする場合はEnter）: ")
+		if err != nil {
+			return err
+		}
+		if name == "" {
+			name = discordGuildNamePlaceholder
+		}
+		return os.WriteFile(path, []byte(name+"\n"), 0o600)
 	}
 	current, err := readTrimmed(path)
 	if err != nil {
 		return err
 	}
-	if current != placeholder {
+	if current != discordGuildNamePlaceholder {
 		return nil
 	}
-	token, err := promptSecret("Discord Bot tokenが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
+	name, err := promptSecret("Discordサーバー名が未設定です。入力して更新しますか？（空Enterでスキップ）: ")
 	if err != nil {
 		return err
 	}
-	if token == "" {
+	if name == "" {
 		return nil
 	}
-	return os.WriteFile(path, []byte(token+"\n"), 0o600)
+	return os.WriteFile(path, []byte(name+"\n"), 0o600)
+}
+
+func ensureDiscordInviteURL(path string) error {
+	if !fileExists(path) {
+		url, err := promptSecret("Discord招待URLを入力してください（未設定のままにする場合はEnter）: ")
+		if err != nil {
+			return err
+		}
+		if url == "" {
+			url = discordInviteURLPlaceholder
+		}
+		return os.WriteFile(path, []byte(url+"\n"), 0o600)
+	}
+	current, err := readTrimmed(path)
+	if err != nil {
+		return err
+	}
+	if current != discordInviteURLPlaceholder {
+		return nil
+	}
+	url, err := promptSecret("Discord招待URLが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
+	if err != nil {
+		return err
+	}
+	if url == "" {
+		return nil
+	}
+	return os.WriteFile(path, []byte(url+"\n"), 0o600)
 }
 
 func ensureForwardingSecret(path string) error {
@@ -102,64 +245,6 @@ func ensureForwardingSecret(path string) error {
 		}
 	}
 	return os.WriteFile(path, []byte(secret+"\n"), 0o600)
-}
-
-func ensureDiscordGuildName(path string) error {
-	placeholder := "REPLACE_WITH_DISCORD_GUILD_NAME"
-	if !fileExists(path) {
-		name, err := promptSecret("Discordサーバー名を入力してください（未設定のままにする場合はEnter）: ")
-		if err != nil {
-			return err
-		}
-		if name == "" {
-			name = placeholder
-		}
-		return os.WriteFile(path, []byte(name+"\n"), 0o600)
-	}
-	current, err := readTrimmed(path)
-	if err != nil {
-		return err
-	}
-	if current != placeholder {
-		return nil
-	}
-	name, err := promptSecret("Discordサーバー名が未設定です。入力して更新しますか？（空Enterでスキップ）: ")
-	if err != nil {
-		return err
-	}
-	if name == "" {
-		return nil
-	}
-	return os.WriteFile(path, []byte(name+"\n"), 0o600)
-}
-
-func ensureDiscordInviteURL(path string) error {
-	placeholder := "REPLACE_WITH_DISCORD_INVITE_URL"
-	if !fileExists(path) {
-		url, err := promptSecret("Discord招待URLを入力してください（未設定のままにする場合はEnter）: ")
-		if err != nil {
-			return err
-		}
-		if url == "" {
-			url = placeholder
-		}
-		return os.WriteFile(path, []byte(url+"\n"), 0o600)
-	}
-	current, err := readTrimmed(path)
-	if err != nil {
-		return err
-	}
-	if current != placeholder {
-		return nil
-	}
-	url, err := promptSecret("Discord招待URLが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
-	if err != nil {
-		return err
-	}
-	if url == "" {
-		return nil
-	}
-	return os.WriteFile(path, []byte(url+"\n"), 0o600)
 }
 
 func promptSecret(prompt string) (string, error) {
@@ -250,7 +335,7 @@ func (a app) readDiscordGuildName() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if name == "" || name == "REPLACE_WITH_DISCORD_GUILD_NAME" {
+	if name == "" || name == discordGuildNamePlaceholder {
 		return "your Discord server", nil
 	}
 	return name, nil
@@ -262,7 +347,7 @@ func (a app) readDiscordInviteURL() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if url == "" || url == "REPLACE_WITH_DISCORD_INVITE_URL" {
+	if url == "" || url == discordInviteURLPlaceholder {
 		return "", nil
 	}
 	return url, nil

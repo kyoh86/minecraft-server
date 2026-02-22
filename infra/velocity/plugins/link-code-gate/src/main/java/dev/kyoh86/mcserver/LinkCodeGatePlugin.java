@@ -61,12 +61,12 @@ public final class LinkCodeGatePlugin {
   public LinkCodeGatePlugin(ProxyServer proxy, Logger logger) {
     this.proxy = proxy;
     this.logger = logger;
-    String addr = envOr("MCLINK_REDIS_ADDR", "redis:6379");
+    String addr = envOr("MC_LINK_REDIS_ADDR", "redis:6379");
     String[] hp = addr.split(":", 2);
     this.redisHost = hp[0];
     this.redisPort = hp.length == 2 ? parseIntOr(hp[1], 6379) : 6379;
-    this.redisDB = parseIntOr(envOr("MCLINK_REDIS_DB", "0"), 0);
-    this.allowlistPath = envOr("MCLINK_ALLOWLIST_PATH", DEFAULT_ALLOWLIST_PATH);
+    this.redisDB = parseIntOr(envOr("MC_LINK_REDIS_DB", "0"), 0);
+    this.allowlistPath = envOr("MC_LINK_ALLOWLIST_PATH", DEFAULT_ALLOWLIST_PATH);
   }
 
   @Subscribe(order = PostOrder.LAST)
