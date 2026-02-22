@@ -2,6 +2,7 @@ package mclink
 
 import (
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -25,19 +26,21 @@ func AddAllowlistEntry(path string, typ EntryType, value string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	lockPath := path + ".lock"
-	lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o600)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o644)
 	if err != nil {
 		return err
 	}
-	defer lockFile.Close()
-	if err := syscall.Flock(int(lockFile.Fd()), syscall.LOCK_EX); err != nil {
+	defer f.Close()
+	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
 		return err
 	}
-	defer func() { _ = syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN) }()
+	defer func() { _ = syscall.Flock(int(f.Fd()), syscall.LOCK_UN) }()
 
 	cfg := Allowlist{}
-	if b, err := os.ReadFile(path); err == nil {
+	if _, err := f.Seek(0, 0); err != nil {
+		return err
+	}
+	if b, err := io.ReadAll(f); err == nil {
 		if err := yaml.Unmarshal(b, &cfg); err != nil {
 			return err
 		}
@@ -63,27 +66,19 @@ func AddAllowlistEntry(path string, typ EntryType, value string) error {
 	if err != nil {
 		return err
 	}
-	tmpFile, err := os.CreateTemp(filepath.Dir(path), ".allowlist-*.yml")
-	if err != nil {
+	if err := f.Truncate(0); err != nil {
 		return err
 	}
-	tmpPath := tmpFile.Name()
-	if _, err := tmpFile.Write(out); err != nil {
-		_ = tmpFile.Close()
-		_ = os.Remove(tmpPath)
+	if _, err := f.Seek(0, 0); err != nil {
 		return err
 	}
-	if err := tmpFile.Chmod(0o644); err != nil {
-		_ = tmpFile.Close()
-		_ = os.Remove(tmpPath)
+	if _, err := f.Write(out); err != nil {
 		return err
 	}
-	if err := tmpFile.Close(); err != nil {
-		_ = os.Remove(tmpPath)
+	if err := f.Chmod(0o644); err != nil {
 		return err
 	}
-	if err := os.Rename(tmpPath, path); err != nil {
-		_ = os.Remove(tmpPath)
+	if err := f.Sync(); err != nil {
 		return err
 	}
 	return nil
