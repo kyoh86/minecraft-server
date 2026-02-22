@@ -157,8 +157,7 @@ func (a app) renderLimboConfig() error {
 		return fmt.Errorf("render template %s: %w", src, err)
 	}
 
-	dst := filepath.Join(a.baseDir, "runtime", "limbo", "server.toml")
-	dst = filepath.Join(a.baseDir, "secrets", "limbo", "server.toml")
+	dst := filepath.Join(a.baseDir, "secrets", "limbo", "server.toml")
 	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
 		return err
 	}
