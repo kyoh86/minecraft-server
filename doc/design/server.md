@@ -89,7 +89,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `infra/docker-compose.yml`
     - 各種サービス定義
     - `world` コンテナ（`itzg/minecraft-server:java25`、内部向け）
-    - `limbo` コンテナ（`ghcr.io/quozul/picolimbo:latest`、未認証プレイヤー待機用）
+    - `limbo` コンテナ（`ghcr.io/quozul/picolimbo@sha256:e031331bda1a3c4aebb7a5222458367ac097a248d6212beca48da047de24199e`、未認証プレイヤー待機用）
     - `velocity` コンテナ（`itzg/mc-proxy:java25`、公開入口 `25565`）
     - `redis` コンテナ（`/mc link` ワンタイムコード保存）
     - `mc-link` コンテナ（Discord `/mc link` 連携）

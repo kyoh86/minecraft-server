@@ -65,7 +65,7 @@ services:
     networks:
       - mcnet
   limbo:
-    image: ghcr.io/quozul/picolimbo:latest
+    image: ghcr.io/quozul/picolimbo@sha256:e031331bda1a3c4aebb7a5222458367ac097a248d6212beca48da047de24199e
     container_name: mc-limbo
     restart: unless-stopped
     healthcheck:
