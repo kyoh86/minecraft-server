@@ -109,7 +109,13 @@ mc-ctl player op grant kyoh86
 mc-ctl player op revoke kyoh86
 mc-ctl player admin grant kyoh86
 mc-ctl player admin revoke kyoh86
+mc-ctl player delink
+mc-ctl player delink <uuid>
 ```
+
+`mc-ctl player delink` は `runtime/velocity/allowlist.yml` を読み込み、
+対話選択した1件を削除する。
+`mc-ctl player delink <uuid>` を指定した場合は、対話なしで UUID エントリを削除する。
 
 ## 停止
 

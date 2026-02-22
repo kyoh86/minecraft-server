@@ -173,7 +173,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `mc-ctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
     - 座標依存の反映は `mc-ctl world spawn profile/stage/apply` で行い、ポータル定義などを読み込む。
 - `mc-ctl world drop|delete`
-- `mc-ctl player op ...|admin ...`
+- `mc-ctl player op ...|admin ...|delink`
 
 `server/world/player` 系でコンソール送信を伴うコマンドは、コンテナが
 `running + healthy` になり、`/tmp/minecraft-console-in` パイプが生成されるまで

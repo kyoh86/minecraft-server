@@ -57,5 +57,18 @@ func newPlayerCmd(a app) *cobra.Command {
 	})
 	cmd.AddCommand(adminCmd)
 
+	cmd.AddCommand(&cobra.Command{
+		Use:   "delink [uuid]",
+		Short: "remove one entry from velocity allowlist (interactive if uuid omitted)",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			target := ""
+			if len(args) == 1 {
+				target = strings.TrimSpace(args[0])
+			}
+			return a.playerDelink(target)
+		},
+	})
+
 	return cmd
 }
