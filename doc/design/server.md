@@ -92,7 +92,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `/mc link` ワンタイムコードの保存先として利用
 - `secrets/limbo/server.toml`
     - `mc-ctl init` が `infra/limbo/config/server.toml.tmpl` から描画する PicoLimbo 設定
-    - Discord のサーバー名/招待URLを含む案内文を埋め込む
+    - Discord のサーバー名を含む案内文を埋め込む
 - `secrets/mc_link_discord.toml`
     - `mc-link-bot` 用 secret
     - `bot_token` / `guild_id` / `allowed_role_ids` を保持する
@@ -116,7 +116,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `infra/limbo/config/server.toml.tmpl`
     - PicoLimbo 設定テンプレート
     - `mc-ctl init` が `secrets/mc_forwarding_secret.txt` と
-      `secrets/mc_link_discord_guild_name.txt` / `secrets/mc_link_discord_invite_url.txt`
+      `secrets/mc_link_discord_guild_name.txt`
       を埋め込んで `secrets/limbo/server.toml` を生成する
 - `infra/velocity/Dockerfile`
     - Velocity用カスタムイメージ定義

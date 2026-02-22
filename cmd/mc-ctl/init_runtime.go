@@ -19,7 +19,6 @@ const (
 	discordBotTokenPlaceholder  = "REPLACE_WITH_DISCORD_BOT_TOKEN"
 	discordGuildIDPlaceholder   = "REPLACE_WITH_DISCORD_GUILD_ID"
 	discordGuildNamePlaceholder = "REPLACE_WITH_DISCORD_GUILD_NAME"
-	discordInviteURLPlaceholder = "REPLACE_WITH_DISCORD_INVITE_URL"
 )
 
 type mcLinkDiscordSecret struct {
@@ -46,11 +45,6 @@ func (a app) ensureSecrets() error {
 
 	guildNamePath := filepath.Join(secretsDir, "mc_link_discord_guild_name.txt")
 	if err := ensureDiscordGuildName(guildNamePath); err != nil {
-		return err
-	}
-
-	inviteURLPath := filepath.Join(secretsDir, "mc_link_discord_invite_url.txt")
-	if err := ensureDiscordInviteURL(inviteURLPath); err != nil {
 		return err
 	}
 	return nil
@@ -185,34 +179,6 @@ func ensureDiscordGuildName(path string) error {
 	return os.WriteFile(path, []byte(name+"\n"), 0o600)
 }
 
-func ensureDiscordInviteURL(path string) error {
-	if !fileExists(path) {
-		url, err := promptSecret("Discord招待URLを入力してください（未設定のままにする場合はEnter）: ")
-		if err != nil {
-			return err
-		}
-		if url == "" {
-			url = discordInviteURLPlaceholder
-		}
-		return os.WriteFile(path, []byte(url+"\n"), 0o600)
-	}
-	current, err := readTrimmed(path)
-	if err != nil {
-		return err
-	}
-	if current != discordInviteURLPlaceholder {
-		return nil
-	}
-	url, err := promptSecret("Discord招待URLが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
-	if err != nil {
-		return err
-	}
-	if url == "" {
-		return nil
-	}
-	return os.WriteFile(path, []byte(url+"\n"), 0o600)
-}
-
 func ensureForwardingSecret(path string) error {
 	if !fileExists(path) {
 		secret, err := promptSecret("forwarding secretを入力してください（空Enterで自動生成）: ")
@@ -298,10 +264,6 @@ func (a app) renderLimboConfig() error {
 	if err != nil {
 		return err
 	}
-	inviteURL, err := a.readDiscordInviteURL()
-	if err != nil {
-		return err
-	}
 
 	src := filepath.Join(a.baseDir, "infra", "limbo", "config", "server.toml.tmpl")
 	in, err := os.ReadFile(src)
@@ -317,7 +279,6 @@ func (a app) renderLimboConfig() error {
 	if err := tpl.Execute(&out, map[string]string{
 		"ForwardingSecret": secret,
 		"DiscordGuildName": guildName,
-		"DiscordInviteURL": inviteURL,
 	}); err != nil {
 		return fmt.Errorf("render template %s: %w", src, err)
 	}
@@ -339,18 +300,6 @@ func (a app) readDiscordGuildName() (string, error) {
 		return "your Discord server", nil
 	}
 	return name, nil
-}
-
-func (a app) readDiscordInviteURL() (string, error) {
-	path := filepath.Join(a.baseDir, "secrets", "mc_link_discord_invite_url.txt")
-	url, err := readTrimmed(path)
-	if err != nil {
-		return "", err
-	}
-	if url == "" || url == discordInviteURLPlaceholder {
-		return "", nil
-	}
-	return url, nil
 }
 
 func (a app) renderWorldPaperGlobal() error {
