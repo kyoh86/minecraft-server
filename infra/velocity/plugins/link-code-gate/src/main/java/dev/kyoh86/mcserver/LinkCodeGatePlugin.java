@@ -154,10 +154,7 @@ public final class LinkCodeGatePlugin {
 
   private boolean isAllowed(Player player) {
     WhitelistEntries entries = loadWhitelistEntries();
-    if (entries.uuidSet.contains(player.getUniqueId().toString().toLowerCase())) {
-      return true;
-    }
-    return entries.nickSet.contains(player.getUsername().toLowerCase());
+    return entries.uuidSet.contains(player.getUniqueId().toString().toLowerCase());
   }
 
   private String generateCode() {
@@ -192,7 +189,6 @@ public final class LinkCodeGatePlugin {
 
   private WhitelistEntries loadWhitelistEntries() {
     Set<String> uuids = new HashSet<>();
-    Set<String> nicks = new HashSet<>();
     try (BufferedReader reader = Files.newBufferedReader(Paths.get(allowlistPath), StandardCharsets.UTF_8)) {
       String line;
       String section = "";
@@ -205,10 +201,6 @@ public final class LinkCodeGatePlugin {
           section = "uuids";
           continue;
         }
-        if ("nicks:".equalsIgnoreCase(trimmed)) {
-          section = "nicks";
-          continue;
-        }
         if (trimmed.startsWith("-")) {
           String value = parseYamlListValue(trimmed);
           if (value.isBlank()) {
@@ -216,15 +208,13 @@ public final class LinkCodeGatePlugin {
           }
           if ("uuids".equals(section)) {
             uuids.add(value.toLowerCase());
-          } else if ("nicks".equals(section)) {
-            nicks.add(value.toLowerCase());
           }
         }
       }
     } catch (IOException e) {
       logger.warn("failed to read allowlist file: {}", allowlistPath, e);
     }
-    return new WhitelistEntries(uuids, nicks);
+    return new WhitelistEntries(uuids);
   }
 
   private static String stripComments(String line) {
@@ -247,7 +237,7 @@ public final class LinkCodeGatePlugin {
     return raw.trim();
   }
 
-  private record WhitelistEntries(Set<String> uuidSet, Set<String> nickSet) {}
+  private record WhitelistEntries(Set<String> uuidSet) {}
 
   private static void sendAndExpectOK(BufferedOutputStream out, BufferedInputStream in, String... parts) throws IOException {
     sendCommand(out, parts);

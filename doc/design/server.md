@@ -60,6 +60,7 @@
 
 認可の判定はローカルプラグイン `LinkCodeGate` が `allowlist.yml` を直接参照して行う。
 許可エントリは 認可処理Discord bot `mc-link-bot` （後述）が更新する。
+判定キーは UUID のみを使用し、nickname によるフォールバックは行わない。
 
 - `runtime/velocity/allowlist.yml`
     - 実運用時の実体
