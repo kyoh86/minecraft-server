@@ -27,9 +27,15 @@ func (a app) serverDown() error {
 	return a.compose("down")
 }
 
-func (a app) serverRestart(service string) error {
-	if err := a.compose("restart", service); err != nil {
-		return err
+func (a app) serverRestart(service string, build bool) error {
+	if build {
+		if err := a.compose("up", "-d", "--build", "--force-recreate", service); err != nil {
+			return err
+		}
+	} else {
+		if err := a.compose("restart", service); err != nil {
+			return err
+		}
 	}
 	if err := a.waitServiceReady(service, 120*time.Second); err != nil {
 		return err

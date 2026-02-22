@@ -21,7 +21,8 @@ func newServerCmd(a app) *cobra.Command {
 		},
 	})
 
-	cmd.AddCommand(&cobra.Command{
+	var restartBuild bool
+	restartCmd := &cobra.Command{
 		Use:   "restart [service]",
 		Short: "restart container service (default: world)",
 		Args:  cobra.MaximumNArgs(1),
@@ -30,9 +31,11 @@ func newServerCmd(a app) *cobra.Command {
 			if len(args) == 1 {
 				service = args[0]
 			}
-			return a.serverRestart(service)
+			return a.serverRestart(service, restartBuild)
 		},
-	})
+	}
+	restartCmd.Flags().BoolVar(&restartBuild, "build", false, "rebuild image and recreate container before waiting readiness")
+	cmd.AddCommand(restartCmd)
 
 	cmd.AddCommand(&cobra.Command{
 		Use:   "ps",

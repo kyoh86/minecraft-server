@@ -13,8 +13,6 @@ import (
 	"text/template"
 )
 
-const limboSecretPlaceholder = "__MC_FORWARDING_SECRET__"
-
 func (a app) ensureSecrets() error {
 	secretsDir := filepath.Join(a.baseDir, "secrets")
 	if err := os.MkdirAll(secretsDir, 0o700); err != nil {
@@ -144,22 +142,26 @@ func (a app) renderLimboConfig() error {
 		return err
 	}
 
-	src := filepath.Join(a.baseDir, "infra", "limbo", "config", "server.toml")
+	src := filepath.Join(a.baseDir, "infra", "limbo", "config", "server.toml.tmpl")
 	in, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
 
-	content := strings.ReplaceAll(string(in), limboSecretPlaceholder, secret)
-	if strings.Contains(content, limboSecretPlaceholder) {
-		return fmt.Errorf("limbo secret placeholder is not resolved: %s", src)
+	tpl, err := template.New(filepath.Base(src)).Option("missingkey=error").Parse(string(in))
+	if err != nil {
+		return fmt.Errorf("parse template %s: %w", src, err)
+	}
+	var out bytes.Buffer
+	if err := tpl.Execute(&out, map[string]string{"ForwardingSecret": secret}); err != nil {
+		return fmt.Errorf("render template %s: %w", src, err)
 	}
 
 	dst := filepath.Join(a.baseDir, "runtime", "limbo", "server.toml")
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(dst, []byte(content), 0o644)
+	return os.WriteFile(dst, out.Bytes(), 0o644)
 }
 
 func (a app) renderWorldPaperGlobal() error {

@@ -14,7 +14,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.slf4j.Logger;
 
 import java.io.BufferedInputStream;
@@ -130,22 +129,14 @@ public final class LinkCodeGatePlugin {
 
   private void sendLinkMessage(Player player, String code) {
     String cmd = "/mc link code:" + code;
-    player.sendMessage(Component.text("手順: Tキーでチャットを開く -> LINK CODEをコピー -> Discordで /mc link を実行", NamedTextColor.YELLOW));
     player.sendMessage(
-      Component.text("LINK CODE: ", NamedTextColor.GOLD)
+      Component.text("クリックしてコマンドをコピーしてください: ", NamedTextColor.GRAY)
         .append(
-          Component.text(code, NamedTextColor.AQUA, TextDecoration.BOLD)
-            .clickEvent(ClickEvent.copyToClipboard(code))
-            .hoverEvent(HoverEvent.showText(Component.text("クリックでコピー")))
-        )
-    );
-    player.sendMessage(
-      Component.text("実行コマンドをコピー: ", NamedTextColor.GRAY)
-        .append(
-          Component.text(cmd, NamedTextColor.WHITE, TextDecoration.BOLD)
+          Component.text(" [" + cmd + "]", NamedTextColor.WHITE)
             .clickEvent(ClickEvent.copyToClipboard(cmd))
             .hoverEvent(HoverEvent.showText(Component.text("クリックでコマンドをコピー")))
         )
+        .append(Component.text("コピーしたコマンドをDiscordで送信してください", NamedTextColor.GRAY))
     );
   }
 

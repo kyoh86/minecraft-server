@@ -20,7 +20,7 @@
     - 外部非公開
     - `bind=0.0.0.0:25565`
     - MODERN forwarding (`runtime/limbo/server.toml`)
-    - `welcome_message` / `action_bar` で「Tキーでチャットを開く」導線を常時案内
+    - `welcome_message` で「Tキーでチャットを開く」導線を簡潔に案内
     - `velocity` からのみ到達
 - `mc-link`（Discord認証受付サーバー）
     - 外部非公開
@@ -51,8 +51,8 @@
         - `allowed_regions.<world>` に許可リージョンIDを列挙する
 - `LinkCodeGate`
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
-    - チャット案内は先頭1行で3ステップ（開く/コピー/実行）を明示し、続けて
-      `LINK CODE` と `/mc link code:XXXX` のコピー可能メッセージを表示する
+    - チャット案内は1行のみ表示し、`LINK CODE` と `/mc link code:XXXX` の両方を
+      クリックコピー可能にする
     - 本体は `infra/velocity/plugins/link-code-gate/src` を `infra/velocity/Dockerfile` の build 時に生成
 
 `LuckPerms` は `infra/docker-compose.yml` の `SPIGET_RESOURCES` で導入している。
@@ -89,7 +89,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - Redis データ
     - `/mc link` ワンタイムコードの保存先として利用
 - `runtime/limbo/server.toml`
-    - `mc-ctl init` が `infra/limbo/config/server.toml` から描画する PicoLimbo 設定
+    - `mc-ctl init` が `infra/limbo/config/server.toml.tmpl` から描画する PicoLimbo 設定
 - `infra/docker-compose.yml`
     - 各種サービス定義
     - `world` コンテナ（`itzg/minecraft-server:java25`、内部向け）
@@ -106,7 +106,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
         - `velocity`: `pgrep -f velocity`
         - `mc-link`: `pgrep -f mc-link-bot`
         - `limbo`: `pico_limbo --help`
-- `infra/limbo/config/server.toml`
+- `infra/limbo/config/server.toml.tmpl`
     - PicoLimbo 設定テンプレート
     - `mc-ctl init` が `secrets/mc_forwarding_secret.txt` を埋め込んで `runtime/limbo/server.toml` を生成する
 - `infra/velocity/Dockerfile`
@@ -169,6 +169,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `runtime/limbo/server.toml` 描画
 - `mc-ctl server up|down|restart|ps|logs velocity|logs world|reload`
     - サーバーの起動、停止、リスタート、状態やログの確認
+    - `mc-ctl server restart <service> --build` で image 再ビルド + 再作成を実行できる
 - `mc-ctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
     - `mc-ctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
     - 座標依存の反映は `mc-ctl world spawn profile/stage/apply` で行い、ポータル定義などを読み込む。

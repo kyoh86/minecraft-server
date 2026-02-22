@@ -173,7 +173,10 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 		return
 	}
 
-	msg := fmt.Sprintf("リンク完了: `%s:%s` を allowlist に追加しました。", entry.Type, entry.Value)
+	msg := strings.Join([]string{
+		fmt.Sprintf("リンク完了: `%s:%s` を allowlist に追加しました。", entry.Type, entry.Value),
+		"ゲーム画面に戻って一度切断し、再接続してください。",
+	}, "\n")
 	respond(s, i, msg)
 }
 

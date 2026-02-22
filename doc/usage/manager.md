@@ -44,6 +44,9 @@ mc-ctl world spawn apply
 （healthcheckがある場合は）`healthy` になるまで待機し、未到達時はエラーを返す。
 `mc-ctl server restart <service>` は再起動後、対象サービスが `running` かつ
 （healthcheckがある場合は）`healthy` になるまで待機し、未到達時はエラーを返す。
+`mc-ctl server restart <service> --build` は image 再ビルド + コンテナ再作成を行ってから
+同じ readiness 待機を行う。`infra/world/**` や `infra/velocity/**`（ローカルプラグイン含む）
+を変更した場合はこちらを使う。
 `world` は起動時に image 同梱プラグイン資産を `/data` 側へ反映し、
 `/config/paper-global.yml`（`secrets/world/paper-global.yml` を bind）を `/data/config` へ同期する。
 
