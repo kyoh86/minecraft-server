@@ -158,10 +158,11 @@ func (a app) renderLimboConfig() error {
 	}
 
 	dst := filepath.Join(a.baseDir, "runtime", "limbo", "server.toml")
-	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+	dst = filepath.Join(a.baseDir, "secrets", "limbo", "server.toml")
+	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
 		return err
 	}
-	return os.WriteFile(dst, out.Bytes(), 0o644)
+	return os.WriteFile(dst, out.Bytes(), 0o600)
 }
 
 func (a app) renderWorldPaperGlobal() error {

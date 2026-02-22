@@ -19,7 +19,7 @@
 - `limbo`（認証待機 PicoLimbo）
     - 外部非公開
     - `bind=0.0.0.0:25565`
-    - MODERN forwarding (`runtime/limbo/server.toml`)
+    - MODERN forwarding (`secrets/limbo/server.toml`)
     - `welcome_message` で「Tキーでチャットを開く」導線を簡潔に案内
     - `velocity` からのみ到達
 - `mc-link`（Discord認証受付サーバー）
@@ -88,7 +88,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `runtime/redis`
     - Redis データ
     - `/mc link` ワンタイムコードの保存先として利用
-- `runtime/limbo/server.toml`
+- `secrets/limbo/server.toml`
     - `mc-ctl init` が `infra/limbo/config/server.toml.tmpl` から描画する PicoLimbo 設定
 - `infra/docker-compose.yml`
     - 各種サービス定義
@@ -108,7 +108,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
         - `limbo`: `pico_limbo --help`
 - `infra/limbo/config/server.toml.tmpl`
     - PicoLimbo 設定テンプレート
-    - `mc-ctl init` が `secrets/mc_forwarding_secret.txt` を埋め込んで `runtime/limbo/server.toml` を生成する
+    - `mc-ctl init` が `secrets/mc_forwarding_secret.txt` を埋め込んで `secrets/limbo/server.toml` を生成する
 - `infra/velocity/Dockerfile`
     - Velocity用カスタムイメージ定義
     - `infra/velocity/plugins/link-code-gate/src` を Maven でビルドし、生成JARを `/plugins/LinkCodeGate.jar` へ同梱する
@@ -166,7 +166,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `mc-ctl init`
     - runtime ディレクトリ初期化
     - secrets 設定（対話入力。未入力時は既定値で補完）
-    - `runtime/limbo/server.toml` 描画
+    - `secrets/limbo/server.toml` 描画
 - `mc-ctl server up|down|restart|ps|logs velocity|logs world|reload`
     - サーバーの起動、停止、リスタート、状態やログの確認
     - `mc-ctl server restart <service> --build` で image 再ビルド + 再作成を実行できる

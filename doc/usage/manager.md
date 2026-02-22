@@ -36,7 +36,7 @@ mc-ctl world spawn apply
 `mc-ctl init` は対話入力で secret 設定を促す。
 未入力のまま進めた場合は `secrets/mc_link_discord_bot_token.txt` にプレースホルダ、
 `secrets/mc_forwarding_secret.txt` に自動生成値を設定し、
-`runtime/limbo/server.toml` と `secrets/world/paper-global.yml` を描画する。
+`secrets/limbo/server.toml` と `secrets/world/paper-global.yml` を描画する。
 また、`runtime` 配下の所有者が実行ユーザーと一致しない場合はエラーで停止する。
 
 設定反映は `server up`/`server restart` 時に実行される。

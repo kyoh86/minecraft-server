@@ -76,7 +76,7 @@ services:
       start_period: 3s
     volumes:
       - type: bind
-        source: ../runtime/limbo/server.toml
+        source: ../secrets/limbo/server.toml
         target: /usr/src/app/server.toml
         read_only: true
         bind:
