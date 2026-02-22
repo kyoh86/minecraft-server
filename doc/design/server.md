@@ -8,6 +8,7 @@
     - 公開ポート: `25565`
     - Mojang/Microsoft 認証: `online-mode=true`
     - `player-info-forwarding-mode=modern`
+    - `prevent-client-proxy-connections=true`
 - `world`（バックエンドPaperサーバー）
     - 外部非公開
     - `online-mode=false`

@@ -8,7 +8,7 @@ show-max-players = 100
 # Public users are authenticated by Mojang/Microsoft at proxy.
 online-mode = true
 force-key-authentication = true
-prevent-client-proxy-connections = false
+prevent-client-proxy-connections = true
 
 # Keep backend simple: Paper is offline and only reachable on internal network.
 player-info-forwarding-mode = "modern"
