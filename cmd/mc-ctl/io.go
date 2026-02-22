@@ -139,6 +139,49 @@ func (a app) waitServicesReady(timeout time.Duration) error {
 	}
 }
 
+func (a app) waitServiceReady(service string, timeout time.Duration) error {
+	composeFile := a.composeFilePath()
+	started := time.Now()
+	deadline := time.Now().Add(timeout)
+	lastReport := time.Time{}
+
+	service = strings.TrimSpace(service)
+	if service == "" {
+		return fmt.Errorf("service name is required")
+	}
+
+	for {
+		status := service + "=missing"
+		containerID, err := runCommandOutput("docker", "compose", "-f", composeFile, "ps", "-q", service)
+		containerID = strings.TrimSpace(containerID)
+		if err == nil && containerID != "" {
+			state, err := runCommandOutput(
+				"docker", "inspect",
+				"--format", "{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
+				containerID,
+			)
+			if err == nil {
+				parts := strings.Fields(strings.TrimSpace(state))
+				if len(parts) >= 2 {
+					status = fmt.Sprintf("%s=%s/%s", service, parts[0], parts[1])
+					if parts[0] == "running" && (parts[1] == "healthy" || parts[1] == "none") {
+						return nil
+					}
+				}
+			}
+		}
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("service %q is not ready within %s", service, timeout)
+		}
+		if lastReport.IsZero() || time.Since(lastReport) >= 3*time.Second {
+			fmt.Printf("Waiting for service readiness (%s elapsed): %s\n", time.Since(started).Truncate(time.Second), status)
+			lastReport = time.Now()
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
 func (a app) worldConsolePipeReady(composeFile string) bool {
 	_, err := runCommandOutput(
 		"docker", "compose", "-f", composeFile,

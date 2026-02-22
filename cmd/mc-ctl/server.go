@@ -28,7 +28,19 @@ func (a app) serverDown() error {
 }
 
 func (a app) serverRestart(service string) error {
-	return a.compose("restart", service)
+	if err := a.compose("restart", service); err != nil {
+		return err
+	}
+	if err := a.waitServiceReady(service, 120*time.Second); err != nil {
+		return err
+	}
+	if service == "world" {
+		if err := a.waitWorldReady(120 * time.Second); err != nil {
+			return err
+		}
+	}
+	fmt.Printf("Service %s is running/healthy.\n", service)
+	return nil
 }
 
 func (a app) serverPS() error {
