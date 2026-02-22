@@ -130,7 +130,7 @@ public final class LinkCodeGatePlugin {
 
   private void sendLinkMessage(Player player, String code) {
     String cmd = "/mc link code:" + code;
-    player.sendMessage(Component.text("Discord で /mc link を実行して認証してください。", NamedTextColor.YELLOW));
+    player.sendMessage(Component.text("手順: Tキーでチャットを開く -> LINK CODEをコピー -> Discordで /mc link を実行", NamedTextColor.YELLOW));
     player.sendMessage(
       Component.text("LINK CODE: ", NamedTextColor.GOLD)
         .append(
@@ -140,12 +140,13 @@ public final class LinkCodeGatePlugin {
         )
     );
     player.sendMessage(
-      Component.text("[CLICK TO COPY /mc link CODE]", NamedTextColor.GREEN, TextDecoration.BOLD)
-        .clickEvent(ClickEvent.copyToClipboard(code))
-        .hoverEvent(HoverEvent.showText(Component.text("copy_to_clipboard: " + code)))
+      Component.text("実行コマンドをコピー: ", NamedTextColor.GRAY)
+        .append(
+          Component.text(cmd, NamedTextColor.WHITE, TextDecoration.BOLD)
+            .clickEvent(ClickEvent.copyToClipboard(cmd))
+            .hoverEvent(HoverEvent.showText(Component.text("クリックでコマンドをコピー")))
+        )
     );
-    player.sendMessage(Component.text("実行コマンド: ", NamedTextColor.GRAY)
-      .append(Component.text(cmd, NamedTextColor.WHITE, TextDecoration.BOLD)));
   }
 
   private Optional<RegisteredServer> serverByName(String name) {

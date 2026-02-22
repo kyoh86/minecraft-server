@@ -20,6 +20,7 @@
     - 外部非公開
     - `bind=0.0.0.0:25565`
     - MODERN forwarding (`runtime/limbo/server.toml`)
+    - `welcome_message` / `action_bar` で「Tキーでチャットを開く」導線を常時案内
     - `velocity` からのみ到達
 - `mc-link`（Discord認証受付サーバー）
     - 外部非公開
@@ -50,6 +51,8 @@
         - `allowed_regions.<world>` に許可リージョンIDを列挙する
 - `LinkCodeGate`
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
+    - チャット案内は先頭1行で3ステップ（開く/コピー/実行）を明示し、続けて
+      `LINK CODE` と `/mc link code:XXXX` のコピー可能メッセージを表示する
     - 本体は `infra/velocity/plugins/link-code-gate/src` を `infra/velocity/Dockerfile` の build 時に生成
 
 `LuckPerms` は `infra/docker-compose.yml` の `SPIGET_RESOURCES` で導入している。
