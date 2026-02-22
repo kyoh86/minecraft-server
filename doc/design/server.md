@@ -90,6 +90,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `/mc link` ワンタイムコードの保存先として利用
 - `secrets/limbo/server.toml`
     - `mc-ctl init` が `infra/limbo/config/server.toml.tmpl` から描画する PicoLimbo 設定
+    - Discord のサーバー名/招待URLを含む案内文を埋め込む
 - `infra/docker-compose.yml`
     - 各種サービス定義
     - `world` コンテナ（`itzg/minecraft-server:java25`、内部向け）
@@ -108,7 +109,9 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
         - `limbo`: `pico_limbo --help`
 - `infra/limbo/config/server.toml.tmpl`
     - PicoLimbo 設定テンプレート
-    - `mc-ctl init` が `secrets/mc_forwarding_secret.txt` を埋め込んで `secrets/limbo/server.toml` を生成する
+    - `mc-ctl init` が `secrets/mc_forwarding_secret.txt` と
+      `secrets/mc_link_discord_guild_name.txt` / `secrets/mc_link_discord_invite_url.txt`
+      を埋め込んで `secrets/limbo/server.toml` を生成する
 - `infra/velocity/Dockerfile`
     - Velocity用カスタムイメージ定義
     - `infra/velocity/plugins/link-code-gate/src` を Maven でビルドし、生成JARを `/plugins/LinkCodeGate.jar` へ同梱する
