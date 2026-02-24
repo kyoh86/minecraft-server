@@ -9,4 +9,5 @@
 - 参加者の使い方: `doc/usage/participant.md`
 - サーバー設計: `doc/design/server.md`
 - ワールド設計: `doc/design/world.md`
+- リリース配布設計: `doc/design/release.md`
 - Docker bind 検証: `doc/design/docker-bind-create-host-path.md`

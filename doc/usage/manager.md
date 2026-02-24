@@ -14,6 +14,14 @@
 ほとんどの管理作業を自動化するCLIとして `mc-ctl` というコマンドを用意している
 実行はGo buildまたはGo runで `go run ./cmd/mc-ctl` のように使用する。
 
+GitHub Releases から配布バイナリを取得して使うこともできる。
+
+```console
+curl -L -o mc-ctl.tar.gz https://github.com/kyoh86/minecraft-server/releases/download/vX.Y.Z/mc-ctl_vX.Y.Z_linux_amd64.tar.gz
+tar -xzf mc-ctl.tar.gz mc-ctl
+./mc-ctl version
+```
+
 ## 初回セットアップ
 
 最初のサーバー開設時は以下の手順を実行すれば良い。
