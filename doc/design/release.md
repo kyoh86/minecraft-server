@@ -27,6 +27,9 @@
 - `/.github/workflows/release-on-tag.yml`
   - `v*` タグ push で実行する
   - `go test ./cmd/mc-ctl/...` 成功後に GoReleaser を実行する
+- `/.github/workflows/secret-scan.yml`
+  - `pull_request` と `main` push で `gitleaks` を実行する
+  - `fetch-depth: 0` で履歴を含めて検査する
 
 ## 運用手順
 
@@ -42,4 +45,3 @@
 ```console
 mc-ctl version
 ```
-
