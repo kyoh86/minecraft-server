@@ -499,7 +499,6 @@ func (a app) worldSpawnApply() error {
 
 func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
 	dimension := worldDimensionID(worldName)
-	composeFile := a.composeFilePath()
 	tag := fmt.Sprintf("mcserver_yprobe_%d", time.Now().UnixNano())
 	re := regexp.MustCompile(`Marker has the following entity data:\s*(-?\d+(?:\.\d+)?)d?`)
 
@@ -522,7 +521,7 @@ func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
 		return 0, false, err
 	}
 	time.Sleep(300 * time.Millisecond)
-	out, err := runCommandOutput("docker", "compose", "-f", composeFile, "logs", "--since=5s", "world")
+	out, err := a.composeOutput("logs", "--since=5s", "world")
 	if err != nil {
 		return 0, false, err
 	}

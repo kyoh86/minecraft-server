@@ -68,6 +68,7 @@ services:
     image: ghcr.io/quozul/picolimbo@sha256:e031331bda1a3c4aebb7a5222458367ac097a248d6212beca48da047de24199e
     container_name: mc-limbo
     restart: unless-stopped
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     healthcheck:
       test: ["CMD", "pico_limbo", "--help"]
       interval: 10s
@@ -159,6 +160,30 @@ services:
           create_host_path: false
     networks:
       - mcnet
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.17
+    container_name: mc-playit
+    restart: unless-stopped
+    depends_on:
+      - velocity
+    entrypoint: ["/bin/sh", "-lc"]
+    command:
+      - |
+        SECRET_KEY="$$(tr -d '\r\n' < /run/secrets/playit_secret_key)";
+        if [ -z "$$SECRET_KEY" ] || [ "$$SECRET_KEY" = "REPLACE_WITH_PLAYIT_SECRET_KEY" ]; then
+          echo "playit secret is missing. set secrets/playit_secret_key.txt and restart playit.";
+          sleep infinity;
+        fi;
+        exec playit -s --secret "$$SECRET_KEY" --platform_docker start;
+    secrets:
+      - playit_secret_key
+    volumes:
+      - type: bind
+        source: ../runtime/playit
+        target: /playit-state
+        bind:
+          create_host_path: false
+    network_mode: "service:velocity"
 
 networks:
   mcnet:
@@ -167,3 +192,5 @@ networks:
 secrets:
   mc_link_discord:
     file: ../secrets/mc_link_discord.toml
+  playit_secret_key:
+    file: ../secrets/playit_secret_key.txt

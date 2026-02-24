@@ -9,6 +9,9 @@ func (a app) init() error {
 	if err := a.checkRuntimeOwnership(); err != nil {
 		return err
 	}
+	if err := a.ensureComposeEnv(); err != nil {
+		return err
+	}
 	if err := a.ensureSecrets(); err != nil {
 		return err
 	}

@@ -10,34 +10,25 @@ func (a app) sendConsole(command string) error {
 	if err := a.waitWorldReady(90 * time.Second); err != nil {
 		return err
 	}
-	composeFile := a.composeFilePath()
-	return runCommand(
-		"docker", "compose", "-f", composeFile,
-		"exec", "-T", "--user", "1000", "world", "mc-send-to-console", command,
-	)
+	return a.compose("exec", "-T", "--user", a.localUID(), "world", "mc-send-to-console", command)
 }
 
 func (a app) waitWorldReady(timeout time.Duration) error {
-	composeFile := a.composeFilePath()
 	started := time.Now()
 	deadline := time.Now().Add(timeout)
 	lastReport := time.Time{}
 
 	for {
 		status := "world=missing"
-		containerID, err := runCommandOutput("docker", "compose", "-f", composeFile, "ps", "-q", "world")
+		containerID, err := a.composeOutput("ps", "-q", "world")
 		if err == nil {
 			containerID = strings.TrimSpace(containerID)
 			if containerID != "" {
-				state, err := runCommandOutput(
-					"docker", "inspect",
-					"--format", "{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
-					containerID,
-				)
+				state, err := dockerInspect(containerID)
 				if err == nil {
 					parts := strings.Fields(strings.TrimSpace(state))
 					if len(parts) >= 2 {
-						pipeReady := a.worldConsolePipeReady(composeFile)
+						pipeReady := a.worldConsolePipeReady()
 						status = fmt.Sprintf("world=%s/%s pipe=%t", parts[0], parts[1], pipeReady)
 						if parts[0] == "running" && (parts[1] == "healthy" || parts[1] == "none") && pipeReady {
 							return nil
@@ -59,12 +50,11 @@ func (a app) waitWorldReady(timeout time.Duration) error {
 }
 
 func (a app) waitServicesReady(timeout time.Duration) error {
-	composeFile := a.composeFilePath()
 	started := time.Now()
 	deadline := time.Now().Add(timeout)
 	lastReport := time.Time{}
 
-	servicesOut, err := runCommandOutput("docker", "compose", "-f", composeFile, "config", "--services")
+	servicesOut, err := a.composeOutput("config", "--services")
 	if err != nil {
 		return err
 	}
@@ -76,14 +66,14 @@ func (a app) waitServicesReady(timeout time.Duration) error {
 		}
 	}
 	if len(services) == 0 {
-		return fmt.Errorf("no services found in compose file: %s", composeFile)
+		return fmt.Errorf("no services found in compose file: %s", a.composeFilePath())
 	}
 
 	for {
 		allReady := true
 		statuses := make([]string, 0, len(services))
 		for _, service := range services {
-			containerID, err := runCommandOutput("docker", "compose", "-f", composeFile, "ps", "-q", service)
+			containerID, err := a.composeOutput("ps", "-q", service)
 			containerID = strings.TrimSpace(containerID)
 			if err != nil || containerID == "" {
 				allReady = false
@@ -91,11 +81,7 @@ func (a app) waitServicesReady(timeout time.Duration) error {
 				continue
 			}
 
-			state, err := runCommandOutput(
-				"docker", "inspect",
-				"--format", "{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
-				containerID,
-			)
+			state, err := dockerInspect(containerID)
 			if err != nil {
 				allReady = false
 				statuses = append(statuses, fmt.Sprintf("%s=inspect_error", service))
@@ -133,7 +119,6 @@ func (a app) waitServicesReady(timeout time.Duration) error {
 }
 
 func (a app) waitServiceReady(service string, timeout time.Duration) error {
-	composeFile := a.composeFilePath()
 	started := time.Now()
 	deadline := time.Now().Add(timeout)
 	lastReport := time.Time{}
@@ -145,14 +130,10 @@ func (a app) waitServiceReady(service string, timeout time.Duration) error {
 
 	for {
 		status := service + "=missing"
-		containerID, err := runCommandOutput("docker", "compose", "-f", composeFile, "ps", "-q", service)
+		containerID, err := a.composeOutput("ps", "-q", service)
 		containerID = strings.TrimSpace(containerID)
 		if err == nil && containerID != "" {
-			state, err := runCommandOutput(
-				"docker", "inspect",
-				"--format", "{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
-				containerID,
-			)
+			state, err := dockerInspect(containerID)
 			if err == nil {
 				parts := strings.Fields(strings.TrimSpace(state))
 				if len(parts) >= 2 {
@@ -175,11 +156,7 @@ func (a app) waitServiceReady(service string, timeout time.Duration) error {
 	}
 }
 
-func (a app) worldConsolePipeReady(composeFile string) bool {
-	_, err := runCommandOutput(
-		"docker", "compose", "-f", composeFile,
-		"exec", "-T", "world", "sh", "-lc",
-		"test -p /tmp/minecraft-console-in",
-	)
+func (a app) worldConsolePipeReady() bool {
+	_, err := a.composeOutput("exec", "-T", "world", "sh", "-lc", "test -p /tmp/minecraft-console-in")
 	return err == nil
 }

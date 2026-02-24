@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"errors"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 type worldConfig struct {
@@ -31,8 +34,33 @@ func newApp() (app, error) {
 	return app{repoRoot: repoRoot, baseDir: repoRoot}, nil
 }
 
-func (a app) composeFilePath() string {
-	return filepath.Join(a.baseDir, "infra", "docker-compose.yml")
+func (a app) localUID() string {
+	const fallback = "1000"
+	path := a.composeEnvFilePath()
+	f, err := os.Open(path)
+	if err != nil {
+		return fallback
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		k, v, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+		if strings.TrimSpace(k) == "LOCAL_UID" {
+			v = strings.TrimSpace(v)
+			if v != "" {
+				return v
+			}
+		}
+	}
+	return fallback
 }
 
 func findRepoRoot() (string, error) {

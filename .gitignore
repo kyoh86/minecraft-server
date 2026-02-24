@@ -47,5 +47,8 @@ secrets/*
 !secrets/.gitkeep
 !secrets/*.example
 
+# Compose local environment values
+infra/.env
+
 # Maven build outputs
 **/target/

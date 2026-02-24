@@ -35,12 +35,16 @@ mc-ctl world spawn apply
 未入力のまま進めた場合は `secrets/mc_link_discord.toml`（`bot_token` / `guild_id` / `allowed_role_ids`）に
 プレースホルダを設定し、`secrets/mc_forwarding_secret.txt` に自動生成値を設定し、
 `secrets/mc_link_discord_guild_name.txt` を含む設定ファイルを生成し、
+`secrets/playit_secret_key.txt` を生成し、
 `secrets/limbo/server.toml` と `secrets/world/paper-global.yml` を描画する。
+あわせて `infra/.env` を補完し、`LOCAL_UID` / `LOCAL_GID` を保存する。
 また、`runtime` 配下の所有者が実行ユーザーと一致しない場合はエラーで停止する。
 Redis/allowlist の環境変数名は `MC_LINK_*` に統一されており、旧 `MCLINK_*` は使用しない。
 `mc-link` の secret ファイルパスは `MC_LINK_DISCORD_SECRET_FILE` で上書きできる（既定: `/run/secrets/mc_link_discord`）。
 
 設定反映は `server up`/`server restart` 時に実行される。
+`docker compose` は標準の `.env` 自動読込により `infra/.env` の
+`LOCAL_UID` / `LOCAL_GID` をコンテナ実行ユーザーへ反映する。
 `mc-ctl server up` は `docker compose up` 後、全サービスが `running` かつ
 （healthcheckがある場合は）`healthy` になるまで待機し、未到達時はエラーを返す。
 `mc-ctl server restart <service>` は再起動後、対象サービスが `running` かつ
@@ -128,3 +132,19 @@ mc-ctl player delink <uuid>
 ```console
 mc-ctl server down
 ```
+
+## playit.gg トンネルの初期設定
+
+`mc-ctl server up` 後、`playit` コンテナのログに claim 用URLが表示される。
+
+```console
+mc-ctl server logs playit
+```
+
+claim 完了後、playit.gg 側で Minecraft(Java) 用トンネルを作成し、
+ローカル宛先を `127.0.0.1:25565` に設定する。
+
+`playit` の設定は `runtime/playit/playit.toml` に保存されるため、
+再起動後も再claimは不要。
+`secrets/playit_secret_key.txt` が未設定（プレースホルダ）の場合、`playit` は待機状態となり
+ログに設定不足メッセージを出力する。

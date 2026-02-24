@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -15,6 +16,7 @@ func (a app) ensureRuntimeLayout() error {
 		filepath.Join(a.baseDir, "runtime", "mc-link"),
 		filepath.Join(a.baseDir, "runtime", "limbo"),
 		filepath.Join(a.baseDir, "runtime", "redis"),
+		filepath.Join(a.baseDir, "runtime", "playit"),
 		filepath.Join(a.baseDir, "runtime", "world"),
 		filepath.Join(a.baseDir, "runtime", "world", "config"),
 		filepath.Join(a.baseDir, "runtime", "world", "plugins"),
@@ -69,6 +71,58 @@ func (a app) checkRuntimeOwnership() error {
 		}
 		return nil
 	})
+}
+
+func (a app) ensureComposeEnv() error {
+	path := a.composeEnvFilePath()
+	lines := []string{}
+	if fileExists(path) {
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		lines = strings.Split(strings.ReplaceAll(string(b), "\r\n", "\n"), "\n")
+	}
+
+	hasUID := false
+	hasGID := false
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		k, _, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+		switch strings.TrimSpace(k) {
+		case "LOCAL_UID":
+			hasUID = true
+		case "LOCAL_GID":
+			hasGID = true
+		}
+	}
+
+	if hasUID && hasGID {
+		return nil
+	}
+
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if !hasUID {
+		if _, err := fmt.Fprintf(f, "LOCAL_UID=%d\n", os.Getuid()); err != nil {
+			return err
+		}
+	}
+	if !hasGID {
+		if _, err := fmt.Fprintf(f, "LOCAL_GID=%d\n", os.Getgid()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func copyDir(src, dst string) error {

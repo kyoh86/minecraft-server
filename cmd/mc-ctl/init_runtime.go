@@ -19,6 +19,7 @@ const (
 	discordBotTokenPlaceholder  = "REPLACE_WITH_DISCORD_BOT_TOKEN"
 	discordGuildIDPlaceholder   = "REPLACE_WITH_DISCORD_GUILD_ID"
 	discordGuildNamePlaceholder = "REPLACE_WITH_DISCORD_GUILD_NAME"
+	playitSecretPlaceholder     = "REPLACE_WITH_PLAYIT_SECRET_KEY"
 )
 
 type mcLinkDiscordSecret struct {
@@ -45,6 +46,11 @@ func (a app) ensureSecrets() error {
 
 	guildNamePath := filepath.Join(secretsDir, "mc_link_discord_guild_name.txt")
 	if err := ensureDiscordGuildName(guildNamePath); err != nil {
+		return err
+	}
+
+	playitSecretPath := filepath.Join(secretsDir, "playit_secret_key.txt")
+	if err := ensurePlayitSecret(playitSecretPath); err != nil {
 		return err
 	}
 	return nil
@@ -209,6 +215,34 @@ func ensureForwardingSecret(path string) error {
 		if err != nil {
 			return err
 		}
+	}
+	return os.WriteFile(path, []byte(secret+"\n"), 0o600)
+}
+
+func ensurePlayitSecret(path string) error {
+	if !fileExists(path) {
+		secret, err := promptSecret("playit.gg Secret Keyを入力してください（未設定のままにする場合はEnter）: ")
+		if err != nil {
+			return err
+		}
+		if secret == "" {
+			secret = playitSecretPlaceholder
+		}
+		return os.WriteFile(path, []byte(secret+"\n"), 0o600)
+	}
+	current, err := readTrimmed(path)
+	if err != nil {
+		return err
+	}
+	if current != "" && current != playitSecretPlaceholder {
+		return nil
+	}
+	secret, err := promptSecret("playit.gg Secret Keyが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
+	if err != nil {
+		return err
+	}
+	if secret == "" {
+		return nil
 	}
 	return os.WriteFile(path, []byte(secret+"\n"), 0o600)
 }

@@ -5,13 +5,6 @@ import (
 	"time"
 )
 
-func (a app) compose(args ...string) error {
-	composeFile := a.composeFilePath()
-	base := []string{"compose", "-f", composeFile}
-	base = append(base, args...)
-	return runCommand("docker", base...)
-}
-
 func (a app) serverUp() error {
 	if err := a.compose("up", "-d", "--remove-orphans"); err != nil {
 		return err

@@ -2,7 +2,7 @@
 
 ## 概要
 
-このプロジェクトにおける各サーバーは以下の5コンテナで動作する。
+このプロジェクトにおける各サーバーは以下の6コンテナで動作する。
 
 - `velocity`（公開入口）
     - 公開ポート: `25565`
@@ -18,6 +18,7 @@
     - `velocity` からのみ到達
 - `limbo`（認証待機 PicoLimbo）
     - 外部非公開
+    - `${LOCAL_UID}:${LOCAL_GID}` で実行し、`secrets/limbo/server.toml` を読み込む
     - `bind=0.0.0.0:25565`
     - MODERN forwarding (`secrets/limbo/server.toml`)
     - `welcome_message` で「Tキーでチャットを開く」導線を簡潔に案内
@@ -28,6 +29,10 @@
 - `redis`（link-code 一時コード保存）
     - 外部非公開
     - `velocity` / `mc-link` から内部ネットワーク接続のみ許可
+- `playit`（playit.gg トンネルエージェント）
+    - 外部非公開
+    - `velocity` と同じネットワーク名前空間で動作
+    - playit.gg への外向き接続のみを使って `velocity` を公開
 
 ## 導入プラグイン
 
@@ -90,12 +95,19 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `runtime/redis`
     - Redis データ
     - `/mc link` ワンタイムコードの保存先として利用
+- `runtime/playit`
+    - playit エージェント設定（`playit.toml`）の保存先
+- `infra/.env`
+    - `mc-ctl init` が補完する compose 変数ファイル
+    - `LOCAL_UID` / `LOCAL_GID` を保持し、compose の標準 `.env` 読込で使用する
 - `secrets/limbo/server.toml`
     - `mc-ctl init` が `infra/limbo/config/server.toml.tmpl` から描画する PicoLimbo 設定
     - Discord のサーバー名を含む案内文を埋め込む
 - `secrets/mc_link_discord.toml`
     - `mc-link-bot` 用 secret
     - `bot_token` / `guild_id` / `allowed_role_ids` を保持する
+- `secrets/playit_secret_key.txt`
+    - playit.gg トンネル接続用 secret key
 - `infra/docker-compose.yml`
     - 各種サービス定義
     - `world` コンテナ（`itzg/minecraft-server:java25`、内部向け）
@@ -105,6 +117,10 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
     - `mc-link` コンテナ（Discord `/mc link` 連携）
         - `mc_link_discord.toml` を Docker secrets 経由で `/run/secrets/mc_link_discord` に注入する
         - `../runtime/velocity/allowlist.yml` のみを `/allowlist.yml` として書き込みマウントする
+    - `playit` コンテナ（playit.gg トンネル）
+        - `runtime/playit` を `/playit-state` へ bind し、`playit.toml` を永続化する
+        - `playit_secret_key` を Docker secrets 経由で `/run/secrets/playit_secret_key` に注入する
+        - `network_mode: service:velocity` により、トンネル先を `127.0.0.1:25565` として固定できる
     - 各種ローカル / リモートプラグイン の導入
         - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard`
     - healthcheck
