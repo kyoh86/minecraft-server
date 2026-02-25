@@ -76,10 +76,10 @@ mc-ctl world spawn apply
 ## プラグイン更新の反映
 
 `infra/docker-compose.yml` の `MODRINTH_PROJECTS` や `SPIGET_RESOURCES` を更新した場合は、
-`world` コンテナを再起動すれば反映される。
+`world` コンテナの再作成が必要。
 
 ```console
-mc-ctl server restart world
+mc-ctl server restart world --build
 ```
 
 特定ワールドだけセットアップを適用したい場合:
@@ -93,7 +93,7 @@ mc-ctl world setup --world mainhall
 `deletable: true` のワールドだけ再生成できるてんに注意
 
 ```console
-mc-ctl world regenerate resource
+mc-ctl world regenerate --world resource
 mc-ctl world setup --world resource
 mc-ctl world spawn profile --world resource
 mc-ctl world spawn stage --world resource

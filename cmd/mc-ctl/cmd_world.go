@@ -13,14 +13,16 @@ func newWorldCmd(a app) *cobra.Command {
 		},
 	})
 
-	cmd.AddCommand(&cobra.Command{
-		Use:   "regenerate <name>",
+	var regenerateWorld string
+	regenerateCmd := &cobra.Command{
+		Use:   "regenerate",
 		Short: "delete and recreate one world when deletable=true",
-		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return a.worldRegenerate(args[0])
+			return a.worldRegenerate(regenerateWorld)
 		},
-	})
+	}
+	regenerateCmd.Flags().StringVar(&regenerateWorld, "world", "", "target world name")
+	cmd.AddCommand(regenerateCmd)
 
 	cmd.AddCommand(&cobra.Command{
 		Use:   "drop <name>",

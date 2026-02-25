@@ -41,7 +41,7 @@
 
 - `MultiVerse-core`
 - `MultiVerse-portals`
-- `WorldEdit`
+- `FastAsyncWorldEdit`
 - `WorldGuard`
 - `ClickMobs`
     - `infra/world/plugins/clickmobs/config/config.yml`
@@ -60,6 +60,10 @@
     - チャット案内は1行のみ表示し、`LINK CODE` と `/mc link code:XXXX` の両方を
       クリックコピー可能にする
     - 本体は `infra/velocity/plugins/link-code-gate/src` を `infra/velocity/Dockerfile` の build 時に生成
+- `HubTerraform`
+    - ワールドHub周辺の整地を自動化するプラグイン
+    - `world spawn apply` が `hubterraform apply <world> <surfaceY>` を実行して適用する
+    - 本体は `infra/world/plugins/hub-terraform` を `infra/world/Dockerfile` の build 時に生成
 
 `LuckPerms` は `infra/docker-compose.yml` の `SPIGET_RESOURCES` で導入している。
 
@@ -123,7 +127,7 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
         - `playit_secret_key` を Docker secrets 経由で `/run/secrets/playit_secret_key` に注入する
         - `network_mode: service:velocity` により、トンネル先を `127.0.0.1:25565` として固定できる
     - 各種ローカル / リモートプラグイン の導入
-        - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `WorldEdit` / `WorldGuard`
+        - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `FastAsyncWorldEdit` / `WorldGuard` / `HubTerraform`
     - healthcheck
         - `redis`: `redis-cli ping`
         - `world`: `mc-health`

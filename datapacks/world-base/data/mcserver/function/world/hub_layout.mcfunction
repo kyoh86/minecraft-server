@@ -1,6 +1,3 @@
-# Margin
-fill ~-16 ~-1 ~-16 ~16 ~10 ~16 air
-
 # Room
 fill ~-9 ~-2 ~-9 ~9 ~-2 ~9 polished_deepslate
 fill ~-8 ~-1 ~-8 ~8 ~5 ~8 smooth_quartz outline

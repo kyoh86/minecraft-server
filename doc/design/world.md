@@ -95,9 +95,10 @@
 - `mc-ctl world spawn apply [--world <name>]`
     - `mainhall` では `mcserver:mainhall/hub_layout` を適用する
     - `residence/resource/factory` では profile の `surface_y` を使い、
+      `hubterraform apply <world> <surface_y>` でHub周辺整地を先に実行し、
       `execute in <dimension> run execute positioned ...` で
       `mcserver:world/hub_layout` を適用する
-- `mc-ctl world regenerate <name>`
+- `mc-ctl world regenerate [--world <name>]`
     - world を削除して再生成する（`deletable: true` のみ）
 
 ## 補足
@@ -127,6 +128,13 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 `mcserver:mainhall/hub_layout` を実行して構築する。
 `residence` / `resource` / `factory` の小ハブは
 `mc-ctl world spawn apply` が profile 座標を基準に構築する。
+小ハブは施工前に `HubTerraform` で次を実行する。
+
+- `x,z=-32..32` を profile の `surfaceY` 高さへ平準化する
+- 外周 `x,z=-64..64` を `smoothstep` 補間で元地形へ接続する
+- 補間先の高さは元地形を近傍平均した値を使い、局所的な凹凸を抑える
+- 表層1層とその下層は元地形のブロック種を可能な限り継承する
+- 基礎は `surfaceY-16` と `OCEAN_FLOOR` の低い方まで石で充填する
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
 同時に `worldguard.regions.yml` の反映結果により
 スポーン周辺での建設・破壊・爆破を禁止する。

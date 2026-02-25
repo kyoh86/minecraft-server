@@ -1,0 +1,16 @@
+name: HubTerraform
+version: '0.1.0'
+main: dev.kyoh86.mcserver.HubTerraformPlugin
+api-version: '1.21'
+authors: [kyoh86]
+description: Automated hub terrain leveling and blending via WorldEdit/FAWE.
+softdepend: [FastAsyncWorldEdit, WorldEdit]
+commands:
+  hubterraform:
+    description: Apply hub terrain leveling and blending.
+    usage: /hubterraform apply <world> <surfaceY>
+    permission: hubterraform.apply
+permissions:
+  hubterraform.apply:
+    description: Allow running hub terrain terraform command.
+    default: op

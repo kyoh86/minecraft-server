@@ -490,13 +490,16 @@ func (a app) worldSpawnApply(target string) error {
 		p := profile.Worlds[worldName]
 		dimension := worldDimensionID(worldName)
 		fmt.Printf("world spawn apply: applying %s hub layout at y=%d...\n", worldName, p.SurfaceY)
-		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add 0 0", dimension)); err != nil {
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add -64 -64 64 64", dimension)); err != nil {
+			return err
+		}
+		if err := a.sendConsole(fmt.Sprintf("hubterraform apply %s %d", worldName, p.SurfaceY)); err != nil {
 			return err
 		}
 		if err := a.sendConsole(fmt.Sprintf("execute in %s run execute positioned 0 %d 0 run function mcserver:world/hub_layout", dimension, p.SurfaceY)); err != nil {
 			return err
 		}
-		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload remove 0 0", dimension)); err != nil {
+		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload remove -64 -64 64 64", dimension)); err != nil {
 			return err
 		}
 	}
