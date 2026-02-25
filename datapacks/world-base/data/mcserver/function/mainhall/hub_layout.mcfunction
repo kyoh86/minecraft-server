@@ -36,8 +36,6 @@ execute in minecraft:overworld run setblock 0 -55 -9 waxed_copper_bulb
 execute in minecraft:overworld run setblock 0 -60 -9 redstone_block
 execute in minecraft:overworld run setblock 0 -54 -9 redstone_block
 
-execute in minecraft:overworld run setblock -3 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:end_rod 0 -56 -9 1.0 1.0 0.05 0.01 4 normal"}
-execute in minecraft:overworld run setblock -2 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:enchant 0 -56 -9 1.0 1.0 0.05 0.05 24 normal"}
 
 # Gate for Resources
 execute in minecraft:overworld run fill 8 -58 -1 8 -55 1 air
@@ -52,8 +50,6 @@ execute in minecraft:overworld run setblock 9 -55 0 waxed_copper_bulb
 execute in minecraft:overworld run setblock 9 -60 0 redstone_block
 execute in minecraft:overworld run setblock 9 -54 0 redstone_block
 
-execute in minecraft:overworld run setblock -1 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:end_rod 9 -56 0 0.05 1.0 1.0 0.01 4 normal"}
-execute in minecraft:overworld run setblock 0 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:enchant 9 -56 0 0.05 1.0 1.0 0.05 24 normal"}
 
 # Gate for Factory
 execute in minecraft:overworld run fill -8 -58 -1 -8 -55 1 air
@@ -67,6 +63,3 @@ execute in minecraft:overworld run setblock -9 -59 0 waxed_copper_bulb
 execute in minecraft:overworld run setblock -9 -55 0 waxed_copper_bulb
 execute in minecraft:overworld run setblock -9 -60 0 redstone_block
 execute in minecraft:overworld run setblock -9 -54 0 redstone_block
-
-execute in minecraft:overworld run setblock 1 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:end_rod -9 -56 0 0.05 1.0 1.0 0.01 4 normal"}
-execute in minecraft:overworld run setblock 2 -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:enchant -9 -56 0 0.05 1.0 1.0 0.05 24 normal"}

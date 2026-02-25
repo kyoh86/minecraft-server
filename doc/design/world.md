@@ -116,8 +116,6 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 
 この function は、御殿風の簡易ハブと `residence` / `resource` / `factory` 行きの
 案内看板を設置する。
-また、床下にゲート演出用の反復コマンドブロックを配置し、
-`end_rod` と `enchant` のパーティクルを各ゲート面へ常時投影する。
 各ゲートは背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
 西向き（`factory` 側）ゲートのガラス表示は、判定面への進入を妨げないよう
 `x=-9.4` に配置する。
@@ -183,40 +181,9 @@ allowed_regions:
 
 ## 保護/許可エリアの可視化
 
-プレイ中に次の範囲を現地で把握しやすくするため、
+プレイ中に次の範囲を把握しやすくするため、
 
 - 破壊不可能エリア（`spawn_protected`）
 - Mob 捕獲/放逐許可エリア（`clickmobs_allowed`）
 
-Datapack 関数でパーティクル境界を表示する。
-
-- `spawn_protected`: `minecraft:cherry_leaves` で境界表示
-- `clickmobs_allowed`: `minecraft:end_rod` で境界表示
-
-表示はワールドごとの固定座標・固定Y基準で描画する
-
-### 実装
-
-以下の関数を利用する。
-
-- `mcserver:region/show_spawn_protected`
-- `mcserver:region/show_clickmobs_allowed`
-- `mcserver:region/show_all`
-- `mcserver:region/init`
-- `mcserver:region/show_all_loop`
-
-`show_spawn_protected` / `show_clickmobs_allowed` は
-基準Yから `-50 .. +50` を 10 刻み（計11層）で境界線を描画する。
-`show_all_loop` は `schedule` で 1秒ごとに `show_all` を再実行する。
-`show_all_loop` の基準Yはワールドごとに固定値を使う。
-
-- `mainhall`: `-58`
-- `residence`: `68`
-- `resource`: `106`
-- `factory`: `63`
-
-### 常設表示
-
-`world/hub_layout.mcfunction` では、Hub 内のリピートコマンドブロックを
-`function mcserver:region/init` 実行にしている。
-`init` が `show_all_loop` を開始し、以降は 1秒ごとに表示する。
+WorldGuard の `greeting` / `farewell` を使って入退域時にメッセージ表示する。

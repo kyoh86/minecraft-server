@@ -16,6 +16,8 @@ regions:
       block-place: deny
       interact: allow
       use: allow
+      greeting: '[保護エリア] 建築・破壊はできません'
+      farewell: '[保護エリア] 外に出ました'
       tnt: deny
       creeper-explosion: deny
       other-explosion: deny
@@ -36,6 +38,8 @@ regions:
     owners: {}
     flags:
       passthrough: allow
+      greeting: '[ClickMobs許可] 捕獲・放逐できます'
+      farewell: '[ClickMobs許可] 外に出ました'
     type: cuboid
     priority: 5
 global:
