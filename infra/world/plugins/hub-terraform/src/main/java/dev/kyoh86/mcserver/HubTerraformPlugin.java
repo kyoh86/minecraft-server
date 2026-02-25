@@ -71,8 +71,9 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
       for (int z = -OUTER; z <= OUTER; z++) {
         int topY = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
         originalTop[x + OUTER][z + OUTER] = topY;
-        originalTopMaterial[x + OUTER][z + OUTER] = sanitizeTopMaterial(world.getBlockAt(x, topY, z).getType());
-        originalFillMaterial[x + OUTER][z + OUTER] = sanitizeFillMaterial(world.getBlockAt(x, topY - 1, z).getType());
+        TerrainColumn terrainColumn = resolveTerrainColumn(world, x, z, topY);
+        originalTopMaterial[x + OUTER][z + OUTER] = terrainColumn.top;
+        originalFillMaterial[x + OUTER][z + OUTER] = terrainColumn.fill;
       }
     }
     smoothHeights(originalTop, smoothedTop);
@@ -82,7 +83,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
 
     int baseY = surfaceY - 1;
     int floorMinY = surfaceY - 16;
-    int clearMaxY = surfaceY + 24;
+    int clearMaxY = Math.min(world.getMaxHeight() - 1, maxHeight(originalTop) + 8);
 
     int columns = 0;
     try (EditSession edit = WorldEdit.getInstance()
@@ -123,6 +124,18 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
     }
 
     return columns;
+  }
+
+  private int maxHeight(int[][] heights) {
+    int max = Integer.MIN_VALUE;
+    for (int[] row : heights) {
+      for (int h : row) {
+        if (h > max) {
+          max = h;
+        }
+      }
+    }
+    return max;
   }
 
   private void smoothHeights(int[][] src, int[][] dst) {
@@ -189,16 +202,118 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   }
 
   private Material sanitizeTopMaterial(Material material) {
-    if (material == null || material.isAir() || material == Material.WATER || material == Material.LAVA) {
+    if (!isTerrainTopCandidate(material)) {
       return Material.GRASS_BLOCK;
     }
     return material;
   }
 
   private Material sanitizeFillMaterial(Material material) {
-    if (material == null || material.isAir() || material == Material.WATER || material == Material.LAVA) {
+    if (!isTerrainFillCandidate(material)) {
       return Material.DIRT;
     }
     return material;
+  }
+
+  private TerrainColumn resolveTerrainColumn(World world, int x, int z, int startY) {
+    int minY = world.getMinHeight();
+    Material top = Material.GRASS_BLOCK;
+    Material fill = Material.DIRT;
+
+    for (int y = startY; y >= minY; y--) {
+      Material mat = world.getBlockAt(x, y, z).getType();
+      if (!isTerrainTopCandidate(mat)) {
+        continue;
+      }
+      top = sanitizeTopMaterial(mat);
+      fill = findFillMaterial(world, x, z, y - 1, minY);
+      return new TerrainColumn(top, fill);
+    }
+    return new TerrainColumn(top, fill);
+  }
+
+  private Material findFillMaterial(World world, int x, int z, int startY, int minY) {
+    for (int y = startY; y >= minY; y--) {
+      Material mat = world.getBlockAt(x, y, z).getType();
+      if (isTerrainFillCandidate(mat)) {
+        return sanitizeFillMaterial(mat);
+      }
+    }
+    return Material.DIRT;
+  }
+
+  private boolean isTerrainTopCandidate(Material material) {
+    if (material == null || !material.isBlock() || material.isAir()) {
+      return false;
+    }
+    if (!material.isSolid() || !material.isOccluding()) {
+      return false;
+    }
+    if (isNonTerrainMaterial(material)) {
+      return false;
+    }
+    return true;
+  }
+
+  private boolean isTerrainFillCandidate(Material material) {
+    if (material == null || !material.isBlock() || material.isAir()) {
+      return false;
+    }
+    if (!material.isSolid()) {
+      return false;
+    }
+    if (isNonTerrainMaterial(material)) {
+      return false;
+    }
+    return true;
+  }
+
+  private boolean isNonTerrainMaterial(Material material) {
+    if (material == Material.WATER || material == Material.LAVA) {
+      return true;
+    }
+    String name = material.name();
+    if (name.endsWith("_CARPET")
+      || name.endsWith("_RAIL")
+      || name.endsWith("_TORCH")
+      || name.endsWith("_WALL_TORCH")
+      || name.endsWith("_BUTTON")
+      || name.endsWith("_PRESSURE_PLATE")
+      || name.endsWith("_SIGN")
+      || name.endsWith("_WALL_SIGN")
+      || name.endsWith("_BANNER")
+      || name.endsWith("_WALL_BANNER")) {
+      return true;
+    }
+    if (name.contains("FENCE")
+      || name.contains("DOOR")
+      || name.contains("TRAPDOOR")
+      || name.contains("LEAVES")
+      || name.contains("LOG")
+      || name.contains("_WOOD")
+      || name.contains("CORAL")
+      || name.contains("KELP")
+      || name.contains("SEAGRASS")
+      || name.contains("SEA_PICKLE")
+      || name.contains("STEM")
+      || name.contains("VINE")
+      || name.contains("CHAIN")
+      || name.contains("LANTERN")
+      || name.contains("SAPLING")
+      || name.contains("FLOWER")
+      || name.contains("MUSHROOM")) {
+      return true;
+    }
+    return false;
+  }
+
+  private static final class TerrainColumn {
+    private final Material top;
+    private final Material fill;
+
+    private TerrainColumn(Material top, Material fill) {
+      this.top = top;
+      this.fill = fill;
+    }
   }
 }
