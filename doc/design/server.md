@@ -26,6 +26,7 @@
 - `mc-link`（Discord認証受付サーバー）
     - 外部非公開
     - Discord API への外向き接続のみで動作
+    - `${LOCAL_UID}:${LOCAL_GID}` で実行し、`/run/secrets/mc_link_discord` を読取可能にする
 - `redis`（link-code 一時コード保存）
     - 外部非公開
     - `velocity` / `mc-link` から内部ネットワーク接続のみ許可

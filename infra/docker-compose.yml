@@ -137,6 +137,7 @@ services:
       dockerfile: infra/mc-link/Dockerfile
     container_name: mc-link-bot
     restart: unless-stopped
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     depends_on:
       - redis
       - velocity
