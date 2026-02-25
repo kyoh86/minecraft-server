@@ -81,18 +81,18 @@
     - `setup.commands` を対象次元で実行する
     - `world.policy.yml` に定義された MV 管理項目を適用する
     - `world-base` datapack を runtime へそのままコピーする
-- `mc-ctl world spawn profile`
+- `mc-ctl world spawn profile [--world <name>]`
     - `residence/resource/factory` の地表Y（`motion_blocking_no_leaves`）を検出する
     - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
     - 各ワールドに `mcserver_spawn_anchor_<world>` marker を配置する
     - `setworldspawn` と `mvsetspawn` を同期する
-- `mc-ctl world spawn stage`
+- `mc-ctl world spawn stage [--world <name>]`
     - profile を必須入力として、`portals.yml.tmpl` を runtime に描画する
-    - `worldguard.regions.yml` を runtime にコピーし、`portals.yml.tmpl` を反映する
+    - `worldguard.regions.yml` を対象ワールド分だけ runtime にコピーし、`portals.yml.tmpl` を反映する
     - `reload` / `wg reload` / `mvp config enforce-portal-access false` / `mv reload` を実行する
     - `spawn_protected` / `clickmobs_allowed` の Y 範囲は `-64 .. 319` とする
     - `*_to_mainhall` ポータルの Y 範囲は `surface_y .. surface_y+3` とする
-- `mc-ctl world spawn apply`
+- `mc-ctl world spawn apply [--world <name>]`
     - `mainhall` では `mcserver:mainhall/hub_layout` を適用する
     - `residence/resource/factory` では profile の `surface_y` を使い、
       `execute in <dimension> run execute positioned ...` で

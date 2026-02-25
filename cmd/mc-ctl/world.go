@@ -357,12 +357,15 @@ func (a app) pruneMainhallExtraDimensions() error {
 	return nil
 }
 
-func (a app) worldSpawnProfile() error {
-	worldNames, err := a.listManagedWorldNames()
+func (a app) worldSpawnProfile(target string) error {
+	worldNames, err := a.listManagedWorldNames(target)
 	if err != nil {
 		return err
 	}
 	profile := spawnProfile{Worlds: map[string]spawnProfileWorld{}}
+	if p, err := a.loadSpawnProfile(); err == nil {
+		profile = p
+	}
 	for _, worldName := range worldNames {
 		fmt.Printf("world spawn profile: probing surface Y for %s...\n", worldName)
 		y, ok, err := a.resolveWorldSurfaceY(worldName)
@@ -406,8 +409,12 @@ func (a app) worldSpawnProfile() error {
 	return nil
 }
 
-func (a app) worldSpawnStage() error {
-	worldNames, err := a.listManagedWorldNames()
+func (a app) worldSpawnStage(target string) error {
+	targetWorlds, err := a.listManagedWorldNames(target)
+	if err != nil {
+		return err
+	}
+	worldNames, err := a.listManagedWorldNames("")
 	if err != nil {
 		return err
 	}
@@ -422,7 +429,7 @@ func (a app) worldSpawnStage() error {
 	if err := a.ensureRuntimeDatapackScaffold(); err != nil {
 		return err
 	}
-	for _, worldName := range worldNames {
+	for _, worldName := range targetWorlds {
 		fmt.Printf("world spawn stage: copying WorldGuard regions for %s...\n", worldName)
 		src := filepath.Join(a.baseDir, "worlds", worldName, "worldguard.regions.yml")
 		dst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
@@ -449,12 +456,12 @@ func (a app) worldSpawnStage() error {
 	if err := a.sendConsole("mv reload"); err != nil {
 		return err
 	}
-	fmt.Printf("staged world spawn runtime configs for %d worlds\n", len(worldNames))
+	fmt.Printf("staged world spawn runtime configs for %d worlds\n", len(targetWorlds))
 	return nil
 }
 
-func (a app) worldSpawnApply() error {
-	worldNames, err := a.listManagedWorldNames()
+func (a app) worldSpawnApply(target string) error {
+	worldNames, err := a.listManagedWorldNames(target)
 	if err != nil {
 		return err
 	}
@@ -556,12 +563,17 @@ func (a app) ensureRuntimeDatapackScaffold() error {
 	return nil
 }
 
-func (a app) listManagedWorldNames() ([]string, error) {
+func (a app) listManagedWorldNames(target string) ([]string, error) {
+	target = strings.TrimSpace(target)
+	if target == primaryWorldName {
+		return nil, fmt.Errorf("world '%s' is not managed by world spawn commands", primaryWorldName)
+	}
 	cfgs, err := a.listWorldConfigs()
 	if err != nil {
 		return nil, err
 	}
 	names := make([]string, 0, len(cfgs))
+	found := false
 	for _, cfgPath := range cfgs {
 		cfg, err := loadWorldConfig(cfgPath)
 		if err != nil {
@@ -570,7 +582,14 @@ func (a app) listManagedWorldNames() ([]string, error) {
 		if cfg.Name == primaryWorldName {
 			continue
 		}
+		if target != "" && cfg.Name != target {
+			continue
+		}
 		names = append(names, cfg.Name)
+		found = true
+	}
+	if target != "" && !found {
+		return nil, fmt.Errorf("managed world '%s' is not defined", target)
 	}
 	sort.Strings(names)
 	return names, nil

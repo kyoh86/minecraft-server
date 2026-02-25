@@ -95,10 +95,13 @@ mc-ctl world setup --world mainhall
 ```console
 mc-ctl world regenerate resource
 mc-ctl world setup --world resource
-mc-ctl world spawn profile
-mc-ctl world spawn stage
-mc-ctl world spawn apply
+mc-ctl world spawn profile --world resource
+mc-ctl world spawn stage --world resource
+mc-ctl world spawn apply --world resource
 ```
+
+特定ワールドだけスポーン関連処理を実行したい場合は `--world <name>` を指定できる。
+`world spawn stage` は対象ワールドの `WorldGuard` 設定だけを更新し、`portals.yml` は全ワールド定義で再描画する。
 
 ## ワールド drop / delete
 
