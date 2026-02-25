@@ -21,6 +21,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   private static final int CORE = 32;
   private static final int OUTER = 64;
   private static final int BLUR_RADIUS = 2;
+  private static final int CLEAR_MARGIN = 48;
 
   @Override
   public void onEnable() {
@@ -64,16 +65,20 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
     int size = OUTER * 2 + 1;
     int[][] originalTop = new int[size][size];
     int[][] smoothedTop = new int[size][size];
+    int[][] originalFluidSurfaceY = new int[size][size];
     Material[][] originalTopMaterial = new Material[size][size];
     Material[][] originalFillMaterial = new Material[size][size];
+    Material[][] originalFluidMaterial = new Material[size][size];
 
     for (int x = -OUTER; x <= OUTER; x++) {
       for (int z = -OUTER; z <= OUTER; z++) {
         int topY = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
-        originalTop[x + OUTER][z + OUTER] = topY;
         TerrainColumn terrainColumn = resolveTerrainColumn(world, x, z, topY);
+        originalTop[x + OUTER][z + OUTER] = terrainColumn.terrainY;
         originalTopMaterial[x + OUTER][z + OUTER] = terrainColumn.top;
         originalFillMaterial[x + OUTER][z + OUTER] = terrainColumn.fill;
+        originalFluidSurfaceY[x + OUTER][z + OUTER] = terrainColumn.fluidSurfaceY;
+        originalFluidMaterial[x + OUTER][z + OUTER] = terrainColumn.fluid;
       }
     }
     smoothHeights(originalTop, smoothedTop);
@@ -83,7 +88,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
 
     int baseY = surfaceY - 1;
     int floorMinY = surfaceY - 16;
-    int clearMaxY = Math.min(world.getMaxHeight() - 1, maxHeight(originalTop) + 8);
+    int clearMaxY = Math.min(world.getMaxHeight() - 1, maxHeight(originalTop) + CLEAR_MARGIN);
 
     int columns = 0;
     try (EditSession edit = WorldEdit.getInstance()
@@ -116,6 +121,14 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
           fill(edit, x, foundationTop + 1, z, x, targetTopY - 1, z, fillMat);
           fill(edit, x, targetTopY, z, x, targetTopY, z, topMat);
           fill(edit, x, targetTopY + 1, z, x, clearMaxY, z, air);
+          Material fluidMat = originalFluidMaterial[x + OUTER][z + OUTER];
+          int fluidSurfaceY = originalFluidSurfaceY[x + OUTER][z + OUTER];
+          if (fluidMat != null && fluidSurfaceY > targetTopY) {
+            BlockState fluid = toBlockStateOrDefault(fluidMat, null);
+            if (fluid != null) {
+              fill(edit, x, targetTopY + 1, z, x, Math.min(clearMaxY, fluidSurfaceY), z, fluid);
+            }
+          }
           columns++;
         }
       }
@@ -219,6 +232,16 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
     int minY = world.getMinHeight();
     Material top = Material.GRASS_BLOCK;
     Material fill = Material.DIRT;
+    int terrainY = startY;
+    int fluidSurfaceY = Integer.MIN_VALUE;
+    Material fluid = null;
+
+    int worldSurfaceY = world.getHighestBlockYAt(x, z, HeightMap.WORLD_SURFACE);
+    Material worldSurface = world.getBlockAt(x, worldSurfaceY, z).getType();
+    if (worldSurface == Material.WATER || worldSurface == Material.LAVA) {
+      fluidSurfaceY = worldSurfaceY;
+      fluid = worldSurface;
+    }
 
     for (int y = startY; y >= minY; y--) {
       Material mat = world.getBlockAt(x, y, z).getType();
@@ -227,9 +250,10 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
       }
       top = sanitizeTopMaterial(mat);
       fill = findFillMaterial(world, x, z, y - 1, minY);
-      return new TerrainColumn(top, fill);
+      terrainY = y;
+      return new TerrainColumn(terrainY, top, fill, fluidSurfaceY, fluid);
     }
-    return new TerrainColumn(top, fill);
+    return new TerrainColumn(terrainY, top, fill, fluidSurfaceY, fluid);
   }
 
   private Material findFillMaterial(World world, int x, int z, int startY, int minY) {
@@ -308,12 +332,18 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   }
 
   private static final class TerrainColumn {
+    private final int terrainY;
     private final Material top;
     private final Material fill;
+    private final int fluidSurfaceY;
+    private final Material fluid;
 
-    private TerrainColumn(Material top, Material fill) {
+    private TerrainColumn(int terrainY, Material top, Material fill, int fluidSurfaceY, Material fluid) {
+      this.terrainY = terrainY;
       this.top = top;
       this.fill = fill;
+      this.fluidSurfaceY = fluidSurfaceY;
+      this.fluid = fluid;
     }
   }
 }
