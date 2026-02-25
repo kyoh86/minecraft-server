@@ -52,3 +52,6 @@ infra/.env
 
 # Maven build outputs
 **/target/
+
+# Local built CLI binary
+mc-ctl
