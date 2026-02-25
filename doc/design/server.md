@@ -55,6 +55,7 @@
     - 本体は `infra/world/plugins/clickmobs-region-guard/src` を `infra/world/Dockerfile` の build 時に生成
     - 設定: `infra/world/plugins/clickmobs-region-guard/config/config.yml`
         - `allowed_regions.<world>` に許可リージョンIDを列挙する
+        - `status_bossbar` で領域状態の bossbar 表示を設定する
 - `LinkCodeGate`
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
     - チャット案内は1行のみ表示し、`LINK CODE` と `/mc link code:XXXX` の両方を

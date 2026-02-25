@@ -187,3 +187,8 @@ allowed_regions:
 - Mob 捕獲/放逐許可エリア（`clickmobs_allowed`）
 
 WorldGuard の `greeting` / `farewell` を使って入退域時にメッセージ表示する。
+加えて `ClickMobsRegionGuard` がプレイヤー移動イベントで領域判定し、
+`bossbar` で現在位置の状態を表示する。
+
+- `保護エリア（建築・破壊不可）`
+- `ClickMobs許可エリア`
