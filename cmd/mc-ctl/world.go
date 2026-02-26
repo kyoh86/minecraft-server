@@ -524,6 +524,7 @@ func (a app) worldSpawnStage(target string) error {
 }
 
 func (a app) worldSpawnApply(target string) error {
+	target = strings.TrimSpace(target)
 	worldNames, err := a.listManagedWorldNames(target)
 	if err != nil {
 		return err
@@ -539,15 +540,19 @@ func (a app) worldSpawnApply(target string) error {
 	if err := a.sendConsole("reload"); err != nil {
 		return err
 	}
-	fmt.Println("world spawn apply: applying mainhall hub layout...")
-	if err := a.sendConsole("execute in minecraft:overworld run forceload add -1 -1 0 0"); err != nil {
-		return err
-	}
-	if err := a.sendConsole("execute in minecraft:overworld run function mcserver:mainhall/hub_layout"); err != nil {
-		return err
-	}
-	if err := a.sendConsole("execute in minecraft:overworld run forceload remove -1 -1 0 0"); err != nil {
-		return err
+	appliedMainhall := false
+	if target == "" {
+		fmt.Println("world spawn apply: applying mainhall hub layout...")
+		if err := a.sendConsole("execute in minecraft:overworld run forceload add -1 -1 0 0"); err != nil {
+			return err
+		}
+		if err := a.sendConsole("execute in minecraft:overworld run function mcserver:mainhall/hub_layout"); err != nil {
+			return err
+		}
+		if err := a.sendConsole("execute in minecraft:overworld run forceload remove -1 -1 0 0"); err != nil {
+			return err
+		}
+		appliedMainhall = true
 	}
 	for _, worldName := range worldNames {
 		p := profile.Worlds[worldName]
@@ -566,7 +571,11 @@ func (a app) worldSpawnApply(target string) error {
 			return err
 		}
 	}
-	fmt.Printf("applied spawn layout for %d worlds\n", len(worldNames)+1)
+	applied := len(worldNames)
+	if appliedMainhall {
+		applied++
+	}
+	fmt.Printf("applied spawn layout for %d worlds\n", applied)
 	return nil
 }
 

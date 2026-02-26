@@ -101,7 +101,8 @@
     - `spawn_protected` / `clickmobs_allowed` の Y 範囲は `-64 .. 319` とする
     - `*_to_mainhall` ポータルの Y 範囲は `surface_y .. surface_y+3` とする
 - `mc-ctl world spawn apply [--world <name>]`
-    - `mainhall` では `mcserver:mainhall/hub_layout` を適用する
+    - `--world` なし実行時のみ、`mainhall` で `mcserver:mainhall/hub_layout` を適用する
+    - `--world` 指定時は対象ワールドのみ適用する
     - `residence/resource/factory` では profile の `surface_y` を使い、
       `hubterraform apply <world> <surface_y>` でHub周辺整地を先に実行し、
       `execute in <dimension> run execute positioned ...` で
