@@ -102,7 +102,7 @@ mc-ctl world spawn apply --world resource
 
 特定ワールドだけスポーン関連処理を実行したい場合は `--world <name>` を指定できる。
 `world spawn stage --world <name>` は対象ワールドの `WorldGuard` 設定だけを更新する。
-`portals.yml` は `--world` なしで全体再描画し、`--world` 指定時は対象ワールド定義だけ更新する。
+`portals.yml` と `mainhall/hub_layout.mcfunction` は `--world` なしで全体再描画し、`--world` 指定時は `portals.yml` の対象ワールド定義だけ更新する。
 
 ## ワールド drop / delete
 

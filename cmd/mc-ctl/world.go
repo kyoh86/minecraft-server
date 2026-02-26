@@ -34,6 +34,20 @@ type spawnProfileWorld struct {
 type spawnTemplateData struct {
 	Worlds     map[string]spawnTemplateWorld
 	WorldItems []spawnTemplateWorldItem
+	Mainhall   mainhallLayout
+}
+
+type mainhallLayout struct {
+	OuterMinX      int
+	OuterMaxX      int
+	InnerFloorMinX int
+	InnerFloorMaxX int
+	RoomMinX       int
+	RoomMaxX       int
+	RoomAirMinX    int
+	RoomAirMaxX    int
+	WallMinX       int
+	WallMaxX       int
 }
 
 type spawnTemplateWorld struct {
@@ -46,16 +60,24 @@ type spawnTemplateWorld struct {
 }
 
 type spawnTemplateWorldItem struct {
-	Name                 string
-	MainhallGateMinX     int
-	MainhallGateMaxX     int
-	MainhallGateMinY     int
-	MainhallGateMaxY     int
-	MainhallGateZ        int
-	MainhallGateSafeDest bool
-	ReturnGateMinY       int
-	ReturnGateMaxY       int
-	ReturnGateZ          int
+	Name                string
+	DisplayName         string
+	MainhallGateMinX    int
+	MainhallGateMaxX    int
+	MainhallGateCenterX int
+	MainhallFrameMinX   int
+	MainhallFrameMaxX   int
+	MainhallParticleX1  int
+	MainhallParticleX2  int
+	MainhallSignX       int
+	MainhallGateMinY    int
+	MainhallGateMaxY    int
+	MainhallGateZ       int
+	MainhallGateBackZ   int
+	MainhallSignZ       int
+	ReturnGateMinY      int
+	ReturnGateMaxY      int
+	ReturnGateZ         int
 }
 
 type portalConfig struct {
@@ -472,6 +494,12 @@ func (a app) worldSpawnStage(target string) error {
 		if err := renderTemplateFile(portalsSrc, portalsDst, data); err != nil {
 			return err
 		}
+		fmt.Println("world spawn stage: rendering mainhall hub layout...")
+		hubLayoutSrc := filepath.Join(a.baseDir, "worlds", primaryWorldName, "hub_layout.mcfunction.tmpl")
+		hubLayoutDst := filepath.Join(a.baseDir, "runtime", "world", primaryWorldName, "datapacks", "world-base", "data", "mcserver", "function", "mainhall", "hub_layout.mcfunction")
+		if err := renderTemplateFile(hubLayoutSrc, hubLayoutDst, data); err != nil {
+			return err
+		}
 	} else {
 		fmt.Println("world spawn stage: patching portals.yml for target world...")
 		if err := a.patchPortalsForWorlds(targetWorlds); err != nil {
@@ -668,6 +696,18 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 	data := spawnTemplateData{
 		Worlds:     map[string]spawnTemplateWorld{},
 		WorldItems: make([]spawnTemplateWorldItem, 0, len(worldNames)),
+		Mainhall: mainhallLayout{
+			OuterMinX:      -12,
+			OuterMaxX:      12,
+			InnerFloorMinX: -11,
+			InnerFloorMaxX: 11,
+			RoomMinX:       -8,
+			RoomMaxX:       8,
+			RoomAirMinX:    -7,
+			RoomAirMaxX:    7,
+			WallMinX:       -9,
+			WallMaxX:       9,
+		},
 	}
 	for i, worldName := range worldNames {
 		p, ok := profile.Worlds[worldName]
@@ -682,27 +722,81 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 			RegionMinY:     p.SurfaceY - 11,
 			RegionMaxY:     p.SurfaceY + 17,
 		}
-		gateMinX, gateMaxX := mainhallGateXForIndex(i)
+		gateMinX, gateMaxX := mainhallGateXForIndex(i, len(worldNames))
+		centerX := (gateMinX + gateMaxX) / 2
 		data.WorldItems = append(data.WorldItems, spawnTemplateWorldItem{
-			Name:                 worldName,
-			MainhallGateMinX:     gateMinX,
-			MainhallGateMaxX:     gateMaxX,
-			MainhallGateMinY:     -58,
-			MainhallGateMaxY:     -56,
-			MainhallGateZ:        -9,
-			MainhallGateSafeDest: worldName != "factory",
-			ReturnGateMinY:       p.SurfaceY,
-			ReturnGateMaxY:       p.SurfaceY + 3,
-			ReturnGateZ:          -8,
+			Name:                worldName,
+			DisplayName:         worldName,
+			MainhallGateMinX:    gateMinX,
+			MainhallGateMaxX:    gateMaxX,
+			MainhallGateCenterX: centerX,
+			MainhallFrameMinX:   centerX - 2,
+			MainhallFrameMaxX:   centerX + 2,
+			MainhallParticleX1:  centerX - 2,
+			MainhallParticleX2:  centerX - 1,
+			MainhallSignX:       centerX,
+			MainhallGateMinY:    -58,
+			MainhallGateMaxY:    -56,
+			MainhallGateZ:       -9,
+			MainhallGateBackZ:   -10,
+			MainhallSignZ:       -7,
+			ReturnGateMinY:      p.SurfaceY,
+			ReturnGateMaxY:      p.SurfaceY + 3,
+			ReturnGateZ:         -8,
 		})
+	}
+	if len(data.WorldItems) > 0 {
+		gateMin := data.WorldItems[0].MainhallFrameMinX
+		gateMax := data.WorldItems[0].MainhallFrameMaxX
+		for _, w := range data.WorldItems[1:] {
+			if w.MainhallFrameMinX < gateMin {
+				gateMin = w.MainhallFrameMinX
+			}
+			if w.MainhallFrameMaxX > gateMax {
+				gateMax = w.MainhallFrameMaxX
+			}
+		}
+		wallMin := minInt(-9, gateMin-1)
+		wallMax := maxInt(9, gateMax+1)
+		data.Mainhall = mainhallLayout{
+			OuterMinX:      wallMin - 3,
+			OuterMaxX:      wallMax + 3,
+			InnerFloorMinX: wallMin - 2,
+			InnerFloorMaxX: wallMax + 2,
+			RoomMinX:       wallMin + 1,
+			RoomMaxX:       wallMax - 1,
+			RoomAirMinX:    wallMin + 2,
+			RoomAirMaxX:    wallMax - 2,
+			WallMinX:       wallMin,
+			WallMaxX:       wallMax,
+		}
 	}
 	return data, nil
 }
 
-func mainhallGateXForIndex(i int) (minX, maxX int) {
-	minX = -1 + i*4
-	maxX = minX + 2
+func mainhallGateXForIndex(i, total int) (minX, maxX int) {
+	if total <= 0 {
+		return -1, 1
+	}
+	firstCenterX := -2 * (total - 1)
+	centerX := firstCenterX + i*4
+	minX = centerX - 1
+	maxX = centerX + 1
 	return minX, maxX
+}
+
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func (a app) patchPortalsForWorlds(targetWorlds []string) error {
@@ -742,7 +836,7 @@ func (a app) patchPortalsForWorlds(targetWorlds []string) error {
 		if !ok {
 			return fmt.Errorf("spawn profile for world %q is missing: run `mc-ctl world spawn profile --world %s` first", worldName, worldName)
 		}
-		minX, maxX := mainhallGateXForIndex(idx)
+		minX, maxX := mainhallGateXForIndex(idx, len(allWorlds))
 		cfg.Portals["gate_"+worldName] = portalEntry{
 			Owner:                  "console",
 			Location:               fmt.Sprintf("mainhall:%d,-58,-9:%d,-56,-9", minX, maxX),
@@ -750,7 +844,7 @@ func (a app) patchPortalsForWorlds(targetWorlds []string) error {
 			Action:                 "w:" + worldName,
 			SafeTeleport:           true,
 			TeleportNonPlayers:     false,
-			CheckDestinationSafety: worldName != "factory",
+			CheckDestinationSafety: true,
 		}
 		cfg.Portals["gate_"+worldName+"_to_mainhall"] = portalEntry{
 			Owner:                  "console",

@@ -1,0 +1,42 @@
+# Hall
+execute in minecraft:overworld run fill {{.Mainhall.OuterMinX}} -60 -12 {{.Mainhall.OuterMaxX}} -43 12 air
+execute in minecraft:overworld run fill {{.Mainhall.OuterMinX}} -60 -12 {{.Mainhall.OuterMaxX}} -60 12 polished_andesite
+execute in minecraft:overworld run fill {{.Mainhall.InnerFloorMinX}} -59 -11 {{.Mainhall.InnerFloorMaxX}} -59 11 smooth_quartz
+
+execute in minecraft:overworld run fill {{.Mainhall.RoomMinX}} -59 -8 {{.Mainhall.RoomMaxX}} -51 8 smooth_quartz
+execute in minecraft:overworld run fill {{.Mainhall.RoomAirMinX}} -58 -7 {{.Mainhall.RoomAirMaxX}} -51 7 air
+
+execute in minecraft:overworld run fill {{.Mainhall.WallMinX}} -59 -9 {{.Mainhall.WallMaxX}} -59 -9 polished_deepslate
+execute in minecraft:overworld run fill {{.Mainhall.WallMaxX}} -59 -9 {{.Mainhall.WallMaxX}} -59 9 polished_deepslate
+execute in minecraft:overworld run fill {{.Mainhall.WallMinX}} -59 -9 {{.Mainhall.WallMinX}} -59 9 polished_deepslate
+execute in minecraft:overworld run fill {{.Mainhall.WallMinX}} -59 9 {{.Mainhall.WallMaxX}} -59 9 polished_deepslate
+
+# Light
+execute in minecraft:overworld run setblock 5 -59 5 waxed_copper_bulb
+execute in minecraft:overworld run setblock 5 -59 -5 waxed_copper_bulb
+execute in minecraft:overworld run setblock -5 -59 5 waxed_copper_bulb
+execute in minecraft:overworld run setblock -5 -59 -5 waxed_copper_bulb
+execute in minecraft:overworld run setblock 0 -59 0 waxed_copper_bulb
+execute in minecraft:overworld run setblock 5 -60 5 redstone_block
+execute in minecraft:overworld run setblock 5 -60 -5 redstone_block
+execute in minecraft:overworld run setblock -5 -60 5 redstone_block
+execute in minecraft:overworld run setblock -5 -60 -5 redstone_block
+execute in minecraft:overworld run setblock 0 -60 0 redstone_block
+
+{{- range $i, $w := .WorldItems }}
+# Gate {{$i}} {{$w.Name}}
+execute in minecraft:overworld run fill {{$w.MainhallGateMinX}} -58 -8 {{$w.MainhallGateMaxX}} -55 -8 air
+execute in minecraft:overworld run fill {{$w.MainhallGateMinX}} -58 {{$w.MainhallGateBackZ}} {{$w.MainhallGateMaxX}} -56 {{$w.MainhallGateBackZ}} smooth_quartz
+execute in minecraft:overworld run fill {{$w.MainhallFrameMinX}} -58 {{$w.MainhallGateZ}} {{$w.MainhallFrameMaxX}} -55 {{$w.MainhallGateZ}} obsidian
+execute in minecraft:overworld run fill {{$w.MainhallGateMinX}} -58 {{$w.MainhallGateZ}} {{$w.MainhallGateMaxX}} -56 {{$w.MainhallGateZ}} air
+execute in minecraft:overworld run setblock {{$w.MainhallSignX}} -58 {{$w.MainhallSignZ}} oak_sign[rotation=0]
+execute in minecraft:overworld run data merge block {{$w.MainhallSignX}} -58 {{$w.MainhallSignZ}} {front_text:{messages:[{text:"{{$w.DisplayName}}",color:"gold",bold:1b},"","",""]}}
+
+execute in minecraft:overworld run setblock {{$w.MainhallGateCenterX}} -59 {{$w.MainhallGateZ}} waxed_copper_bulb
+execute in minecraft:overworld run setblock {{$w.MainhallGateCenterX}} -55 {{$w.MainhallGateZ}} waxed_copper_bulb
+execute in minecraft:overworld run setblock {{$w.MainhallGateCenterX}} -60 {{$w.MainhallGateZ}} redstone_block
+execute in minecraft:overworld run setblock {{$w.MainhallGateCenterX}} -54 {{$w.MainhallGateZ}} redstone_block
+execute in minecraft:overworld run setblock {{$w.MainhallParticleX1}} -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:end_rod {{$w.MainhallGateCenterX}} -56 {{$w.MainhallGateZ}} 1.0 1.0 0.05 0.01 4 normal"}
+execute in minecraft:overworld run setblock {{$w.MainhallParticleX2}} -61 11 repeating_command_block[facing=up]{auto:1b,TrackOutput:0b,Command:"execute in minecraft:overworld run particle minecraft:enchant {{$w.MainhallGateCenterX}} -56 {{$w.MainhallGateZ}} 1.0 1.0 0.05 0.05 24 normal"}
+
+{{- end }}

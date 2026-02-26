@@ -7,7 +7,7 @@ portals:
     action: w:{{.Name}}
     safe-teleport: true
     teleport-non-players: false
-    check-destination-safety: {{.MainhallGateSafeDest}}
+    check-destination-safety: true
 {{- end }}
 {{- range .WorldItems }}
   gate_{{.Name}}_to_mainhall:

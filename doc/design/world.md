@@ -60,6 +60,10 @@
     - `Multiverse-Portals` 用のポータル定義テンプレート
     - `gate_<world>` / `gate_<world>_to_mainhall` を `.WorldItems` ループで生成する
     - `mc-ctl world spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
+- `worlds/mainhall/hub_layout.mcfunction.tmpl`
+    - `mainhall` ハブのレイアウトテンプレート
+    - `WorldItems` をループしてゲートと看板を生成する
+    - `mc-ctl world spawn stage` が runtime の datapack に描画する
 - `worlds/env.schema.json`
     - `world.env.yml` 用 JSON Schema
 - `worlds/policy.schema.json`
@@ -90,6 +94,7 @@
 - `mc-ctl world spawn stage [--world <name>]`
     - `worldguard.regions.yml` を対象ワールド分だけ runtime にコピーする
     - `--world` なし実行時は、profile を入力に `portals.yml.tmpl` を runtime に描画する
+    - `--world` なし実行時は、`mainhall/hub_layout.mcfunction.tmpl` も runtime に描画する
     - `--world` 指定時は、既存 `portals.yml` の対象ワールド定義だけを更新する
     - `reload` / `wg reload` / `mv reload` を実行する
     - `mvp config enforce-portal-access false` を実行する
@@ -117,15 +122,14 @@
 mc-ctl world function run mcserver:mainhall/hub_layout
 ```
 
-この function は、御殿風の簡易ハブと `residence` / `resource` / `factory` 行きの
+この function は、御殿風の簡易ハブと管理対象ワールド行きの
 案内看板を設置する。
-各ゲートは背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
-西向き（`factory` 側）ゲートのガラス表示は、判定面への進入を妨げないよう
-`x=-9.4` に配置する。
+各ゲートは北側の1辺に並べ、背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
 初回ログイン時の安全スポーン補正で屋根上に出ないよう、
 中心座標（`0 -51 0`）の天井を開口している。
 
-`mainhall` のハブは `mc-ctl world spawn apply` が
+`mainhall` のハブは `mc-ctl world spawn stage` が world 定義から生成した function を
+`mc-ctl world spawn apply` が
 `mcserver:mainhall/hub_layout` を実行して構築する。
 `residence` / `resource` / `factory` の小ハブは
 `mc-ctl world spawn apply` が profile 座標を基準に構築する。
@@ -153,10 +157,8 @@ mc-ctl world spawn stage
 mc-ctl world spawn apply
 ```
 
-`mainhall` の入口ポータルはゲート面に合わせて定義する
-（`residence` は `z=-9` 面、`factory` は `x=-9` 面）。
-`factory` 入口のみ `check-destination-safety: false` とし、
-着地点安全判定による遷移拒否を防ぐ。
+`mainhall` の入口ポータルは北側の1辺（`z=-9` 面）に並べて定義する。
+`check-destination-safety` は全ワールドで `true` を使用する。
 
 ## ClickMobs のリージョン制御
 
