@@ -1,49 +1,21 @@
 portals:
-  gate_residence:
+{{- range .WorldItems }}
+  gate_{{.Name}}:
     owner: console
-    location: mainhall:-1,-58,-9:1,-56,-9
+    location: mainhall:{{.MainhallGateMinX}},{{.MainhallGateMinY}},{{.MainhallGateZ}}:{{.MainhallGateMaxX}},{{.MainhallGateMaxY}},{{.MainhallGateZ}}
     action-type: multiverse-destination
-    action: w:residence
+    action: w:{{.Name}}
     safe-teleport: true
     teleport-non-players: false
-    check-destination-safety: true
-  gate_resource:
+    check-destination-safety: {{.MainhallGateSafeDest}}
+{{- end }}
+{{- range .WorldItems }}
+  gate_{{.Name}}_to_mainhall:
     owner: console
-    location: mainhall:9,-58,-1:9,-56,1
-    action-type: multiverse-destination
-    action: w:resource
-    safe-teleport: true
-    teleport-non-players: false
-    check-destination-safety: true
-  gate_factory:
-    owner: console
-    location: mainhall:-9,-58,-1:-9,-56,1
-    action-type: multiverse-destination
-    action: w:factory
-    safe-teleport: true
-    teleport-non-players: false
-    check-destination-safety: false
-  gate_residence_to_mainhall:
-    owner: console
-    location: residence:-1,{{(index .Worlds "residence").ReturnGateMinY}},-8:1,{{(index .Worlds "residence").ReturnGateMaxY}},-8
+    location: {{.Name}}:-1,{{.ReturnGateMinY}},{{.ReturnGateZ}}:1,{{.ReturnGateMaxY}},{{.ReturnGateZ}}
     action-type: multiverse-destination
     action: w:mainhall
     safe-teleport: true
     teleport-non-players: false
     check-destination-safety: true
-  gate_resource_to_mainhall:
-    owner: console
-    location: resource:-1,{{(index .Worlds "resource").ReturnGateMinY}},-8:1,{{(index .Worlds "resource").ReturnGateMaxY}},-8
-    action-type: multiverse-destination
-    action: w:mainhall
-    safe-teleport: true
-    teleport-non-players: false
-    check-destination-safety: true
-  gate_factory_to_mainhall:
-    owner: console
-    location: factory:-1,{{(index .Worlds "factory").ReturnGateMinY}},-8:1,{{(index .Worlds "factory").ReturnGateMaxY}},-8
-    action-type: multiverse-destination
-    action: w:mainhall
-    safe-teleport: true
-    teleport-non-players: false
-    check-destination-safety: true
+{{- end }}

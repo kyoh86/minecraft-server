@@ -32,7 +32,8 @@ type spawnProfileWorld struct {
 }
 
 type spawnTemplateData struct {
-	Worlds map[string]spawnTemplateWorld
+	Worlds     map[string]spawnTemplateWorld
+	WorldItems []spawnTemplateWorldItem
 }
 
 type spawnTemplateWorld struct {
@@ -42,6 +43,33 @@ type spawnTemplateWorld struct {
 	ReturnGateMaxY int
 	RegionMinY     int
 	RegionMaxY     int
+}
+
+type spawnTemplateWorldItem struct {
+	Name                 string
+	MainhallGateMinX     int
+	MainhallGateMaxX     int
+	MainhallGateMinY     int
+	MainhallGateMaxY     int
+	MainhallGateZ        int
+	MainhallGateSafeDest bool
+	ReturnGateMinY       int
+	ReturnGateMaxY       int
+	ReturnGateZ          int
+}
+
+type portalConfig struct {
+	Portals map[string]portalEntry `yaml:"portals"`
+}
+
+type portalEntry struct {
+	Owner                  string `yaml:"owner"`
+	Location               string `yaml:"location"`
+	ActionType             string `yaml:"action-type"`
+	Action                 string `yaml:"action"`
+	SafeTeleport           bool   `yaml:"safe-teleport"`
+	TeleportNonPlayers     bool   `yaml:"teleport-non-players"`
+	CheckDestinationSafety bool   `yaml:"check-destination-safety"`
 }
 
 func (a app) worldEnsure() error {
@@ -414,18 +442,6 @@ func (a app) worldSpawnStage(target string) error {
 	if err != nil {
 		return err
 	}
-	worldNames, err := a.listManagedWorldNames("")
-	if err != nil {
-		return err
-	}
-	profile, err := a.loadSpawnProfile()
-	if err != nil {
-		return err
-	}
-	data, err := buildSpawnTemplateData(worldNames, profile)
-	if err != nil {
-		return err
-	}
 	if err := a.ensureRuntimeDatapackScaffold(); err != nil {
 		return err
 	}
@@ -437,11 +453,30 @@ func (a app) worldSpawnStage(target string) error {
 			return err
 		}
 	}
-	fmt.Println("world spawn stage: rendering portals.yml...")
-	portalsSrc := filepath.Join(a.baseDir, "worlds", primaryWorldName, "portals.yml.tmpl")
-	portalsDst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
-	if err := renderTemplateFile(portalsSrc, portalsDst, data); err != nil {
-		return err
+	if target == "" {
+		worldNames, err := a.listManagedWorldNames("")
+		if err != nil {
+			return err
+		}
+		profile, err := a.loadSpawnProfile()
+		if err != nil {
+			return err
+		}
+		data, err := buildSpawnTemplateData(worldNames, profile)
+		if err != nil {
+			return err
+		}
+		fmt.Println("world spawn stage: rendering portals.yml...")
+		portalsSrc := filepath.Join(a.baseDir, "worlds", primaryWorldName, "portals.yml.tmpl")
+		portalsDst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
+		if err := renderTemplateFile(portalsSrc, portalsDst, data); err != nil {
+			return err
+		}
+	} else {
+		fmt.Println("world spawn stage: patching portals.yml for target world...")
+		if err := a.patchPortalsForWorlds(targetWorlds); err != nil {
+			return err
+		}
 	}
 	fmt.Println("world spawn stage: reloading server/plugins...")
 	if err := a.sendConsole("reload"); err != nil {
@@ -630,8 +665,11 @@ func (a app) saveSpawnProfile(p spawnProfile) error {
 }
 
 func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTemplateData, error) {
-	data := spawnTemplateData{Worlds: map[string]spawnTemplateWorld{}}
-	for _, worldName := range worldNames {
+	data := spawnTemplateData{
+		Worlds:     map[string]spawnTemplateWorld{},
+		WorldItems: make([]spawnTemplateWorldItem, 0, len(worldNames)),
+	}
+	for i, worldName := range worldNames {
 		p, ok := profile.Worlds[worldName]
 		if !ok {
 			return spawnTemplateData{}, fmt.Errorf("spawn profile for world %q is missing: run `mc-ctl world spawn profile` first", worldName)
@@ -644,8 +682,91 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 			RegionMinY:     p.SurfaceY - 11,
 			RegionMaxY:     p.SurfaceY + 17,
 		}
+		gateMinX, gateMaxX := mainhallGateXForIndex(i)
+		data.WorldItems = append(data.WorldItems, spawnTemplateWorldItem{
+			Name:                 worldName,
+			MainhallGateMinX:     gateMinX,
+			MainhallGateMaxX:     gateMaxX,
+			MainhallGateMinY:     -58,
+			MainhallGateMaxY:     -56,
+			MainhallGateZ:        -9,
+			MainhallGateSafeDest: worldName != "factory",
+			ReturnGateMinY:       p.SurfaceY,
+			ReturnGateMaxY:       p.SurfaceY + 3,
+			ReturnGateZ:          -8,
+		})
 	}
 	return data, nil
+}
+
+func mainhallGateXForIndex(i int) (minX, maxX int) {
+	minX = -1 + i*4
+	maxX = minX + 2
+	return minX, maxX
+}
+
+func (a app) patchPortalsForWorlds(targetWorlds []string) error {
+	allWorlds, err := a.listManagedWorldNames("")
+	if err != nil {
+		return err
+	}
+	indexByName := map[string]int{}
+	for i, name := range allWorlds {
+		indexByName[name] = i
+	}
+	profile, err := a.loadSpawnProfile()
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(a.baseDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
+	if !fileExists(path) {
+		return fmt.Errorf("missing portals runtime file: %s (run `mc-ctl world spawn stage` without --world first)", path)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var cfg portalConfig
+	if err := yaml.Unmarshal(b, &cfg); err != nil {
+		return fmt.Errorf("parse portals yml %s: %w", path, err)
+	}
+	if cfg.Portals == nil {
+		cfg.Portals = map[string]portalEntry{}
+	}
+	for _, worldName := range targetWorlds {
+		idx, ok := indexByName[worldName]
+		if !ok {
+			return fmt.Errorf("managed world %q not found", worldName)
+		}
+		p, ok := profile.Worlds[worldName]
+		if !ok {
+			return fmt.Errorf("spawn profile for world %q is missing: run `mc-ctl world spawn profile --world %s` first", worldName, worldName)
+		}
+		minX, maxX := mainhallGateXForIndex(idx)
+		cfg.Portals["gate_"+worldName] = portalEntry{
+			Owner:                  "console",
+			Location:               fmt.Sprintf("mainhall:%d,-58,-9:%d,-56,-9", minX, maxX),
+			ActionType:             "multiverse-destination",
+			Action:                 "w:" + worldName,
+			SafeTeleport:           true,
+			TeleportNonPlayers:     false,
+			CheckDestinationSafety: worldName != "factory",
+		}
+		cfg.Portals["gate_"+worldName+"_to_mainhall"] = portalEntry{
+			Owner:                  "console",
+			Location:               fmt.Sprintf("%s:-1,%d,-8:1,%d,-8", worldName, p.SurfaceY, p.SurfaceY+3),
+			ActionType:             "multiverse-destination",
+			Action:                 "w:mainhall",
+			SafeTeleport:           true,
+			TeleportNonPlayers:     false,
+			CheckDestinationSafety: true,
+		}
+	}
+	out, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, out, 0o644)
 }
 
 func renderTemplateFile(src, dst string, data any) error {
