@@ -18,9 +18,12 @@ import (
 )
 
 const (
-	primaryWorldName = "mainhall"
-	spawnProfilePath = "runtime/world/.mc-ctl/spawn-profile.yml"
-	hubSchematicName = "hub.schem"
+	primaryWorldName      = "mainhall"
+	spawnProfilePath      = "runtime/world/.mc-ctl/spawn-profile.yml"
+	hubSchematicName      = "hub.schem"
+	frozenCoverIgnoreMinY = 64
+	surfaceProbeRadius    = 24
+	surfaceProbeStep      = 8
 )
 
 type spawnProfile struct {
@@ -677,15 +680,38 @@ func (a app) worldSpawnApply(target string) error {
 
 func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
 	dimension := worldDimensionID(worldName)
-	tag := fmt.Sprintf("mcserver_yprobe_%d", time.Now().UnixNano())
 	re := regexp.MustCompile(`Marker has the following entity data:\s*(-?\d+(?:\.\d+)?)d?`)
+	teleRe := regexp.MustCompile(`Teleported Marker to [^,]+,\s*(-?\d+(?:\.\d+)?),`)
+	samples := make([]int, 0, ((surfaceProbeRadius*2)/surfaceProbeStep+1)*((surfaceProbeRadius*2)/surfaceProbeStep+1))
 
-	if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add 0 0", dimension)); err != nil {
+	// Sample a square around spawn and use median to reduce outlier influence.
+	if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add -2 -2 2 2", dimension)); err != nil {
 		return 0, false, err
 	}
-	defer func() { _ = a.sendConsole(fmt.Sprintf("execute in %s run forceload remove 0 0", dimension)) }()
+	defer func() { _ = a.sendConsole(fmt.Sprintf("execute in %s run forceload remove -2 -2 2 2", dimension)) }()
 
-	if err := a.sendConsole(fmt.Sprintf("execute in %s run summon minecraft:marker 0 0 0 {Tags:[\"%s\"]}", dimension, tag)); err != nil {
+	for x := -surfaceProbeRadius; x <= surfaceProbeRadius; x += surfaceProbeStep {
+		for z := -surfaceProbeRadius; z <= surfaceProbeRadius; z += surfaceProbeStep {
+			y, ok, err := a.probeSurfaceYAt(dimension, x, z, re, teleRe)
+			if err != nil {
+				return 0, false, err
+			}
+			if !ok {
+				continue
+			}
+			samples = append(samples, y)
+		}
+	}
+	if len(samples) == 0 {
+		return 0, false, nil
+	}
+	sort.Ints(samples)
+	return samples[len(samples)/2], true, nil
+}
+
+func (a app) probeSurfaceYAt(dimension string, x, z int, re, teleRe *regexp.Regexp) (int, bool, error) {
+	tag := fmt.Sprintf("mcserver_yprobe_%d_%d_%d", x, z, time.Now().UnixNano())
+	if err := a.sendConsole(fmt.Sprintf("execute in %s run summon minecraft:marker %d 0 %d {Tags:[\"%s\"]}", dimension, x, z, tag)); err != nil {
 		return 0, false, err
 	}
 	defer func() {
@@ -699,6 +725,43 @@ func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
 		return 0, false, err
 	}
 	time.Sleep(300 * time.Millisecond)
+	yf, ok, err := a.readLastMarkerY(re)
+	if err != nil {
+		return 0, false, err
+	}
+	if !ok {
+		return 0, false, nil
+	}
+
+	// Ignore high-altitude frozen cover blocks (ice/snow variants) for spawn profiling.
+	for i := 0; i < 256; i++ {
+		if int(yf) < frozenCoverIgnoreMinY {
+			break
+		}
+		moved := false
+		for _, block := range []string{"ice", "packed_ice", "blue_ice", "snow", "snow_block"} {
+			if err := a.sendConsole(fmt.Sprintf("execute in %s as @e[type=minecraft:marker,tag=%s,limit=1] at @s if block ~ ~-1 ~ minecraft:%s run tp @s ~ ~-1 ~", dimension, tag, block)); err != nil {
+				return 0, false, err
+			}
+			time.Sleep(250 * time.Millisecond)
+			nextY, ok, err := a.readLastTeleportY(teleRe)
+			if err != nil {
+				return 0, false, err
+			}
+			if ok && nextY < yf {
+				yf = nextY
+				moved = true
+				break
+			}
+		}
+		if !moved {
+			break
+		}
+	}
+	return int(yf), true, nil
+}
+
+func (a app) readLastMarkerY(re *regexp.Regexp) (float64, bool, error) {
 	out, err := a.composeOutput("logs", "--since=5s", "world")
 	if err != nil {
 		return 0, false, err
@@ -712,7 +775,24 @@ func (a app) resolveWorldSurfaceY(worldName string) (int, bool, error) {
 	if err != nil {
 		return 0, false, err
 	}
-	return int(yf), true, nil
+	return yf, true, nil
+}
+
+func (a app) readLastTeleportY(re *regexp.Regexp) (float64, bool, error) {
+	out, err := a.composeOutput("logs", "--since=3s", "world")
+	if err != nil {
+		return 0, false, err
+	}
+	matches := re.FindAllStringSubmatch(out, -1)
+	if len(matches) == 0 {
+		return 0, false, nil
+	}
+	last := matches[len(matches)-1]
+	yf, err := strconv.ParseFloat(last[1], 64)
+	if err != nil {
+		return 0, false, err
+	}
+	return yf, true, nil
 }
 
 func (a app) ensureRuntimeDatapackScaffold() error {

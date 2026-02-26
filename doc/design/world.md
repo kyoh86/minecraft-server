@@ -94,7 +94,8 @@
     - `world.policy.yml` に定義された MV 管理項目を適用する
     - `world-base` datapack を runtime へそのままコピーする
 - `mc-ctl world spawn profile [--world <name>]`
-    - 管理対象ワールドの地表Y（`motion_blocking_no_leaves`）を検出する
+    - 管理対象ワールドの地表Y（`motion_blocking_no_leaves`）を中心周辺の複数点で検出する
+    - サンプル点は `x,z=-24..24` を `8` 刻みで走査し、最終値は中央値を採用する
     - `y=64` 以上では `ice` / `packed_ice` / `blue_ice` / `snow` / `snow_block` を地表候補から除外する
     - 地表判定ロジックは `mc-ctl` 実装側に持つ
     - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
