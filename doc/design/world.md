@@ -53,9 +53,11 @@
     - `mc-ctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
     - `mv` 系コマンドはここに書かず、`world.policy.yml` に記述する
     - 座標依存の function 実行はここに書かない
-- `worlds/<name>/worldguard.regions.yml`
-    - `WorldGuard` のリージョン定義
-    - `mc-ctl world spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へコピーする
+- `worlds/mainhall/worldguard.regions.yml.tmpl`
+    - `mainhall` 用 `WorldGuard` リージョン定義テンプレート
+- `worlds/_defaults/worldguard.regions.yml.tmpl`
+    - `mainhall` 以外のワールド向け既定 `WorldGuard` リージョン定義テンプレート
+    - `mc-ctl world spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ描画する
 - `worlds/mainhall/portals.yml.tmpl`
     - `Multiverse-Portals` 用のポータル定義テンプレート
     - `gate_<world>` / `gate_<world>_to_mainhall` を `.WorldItems` ループで生成する
@@ -92,7 +94,7 @@
     - 各ワールドに `mcserver_spawn_anchor_<world>` marker を配置する
     - `setworldspawn` と `mvsetspawn` を同期する
 - `mc-ctl world spawn stage [--world <name>]`
-    - `worldguard.regions.yml` を対象ワールド分だけ runtime にコピーする
+    - `worldguard.regions.yml.tmpl` を対象ワールド分だけ runtime に描画する
     - `--world` なし実行時は、profile を入力に `portals.yml.tmpl` を runtime に描画する
     - `--world` なし実行時は、`mainhall/hub_layout.mcfunction.tmpl` も runtime に描画する
     - `--world` 指定時は、既存 `portals.yml` の対象ワールド定義だけを更新する
@@ -144,7 +146,7 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 - 上空クリア高さは対象範囲の実地形最大Y + 48 を基準に決定し、浮島残りを防ぐ
 - 基礎は `surfaceY-16` と `OCEAN_FLOOR` の低い方まで石で充填する
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
-同時に `worldguard.regions.yml` の反映結果により
+同時に `worldguard.regions.yml.tmpl` の反映結果により
 スポーン周辺での建設・破壊・爆破を禁止する。
 ただし回路操作のため、`spawn_protected` では `interact` / `use` を許可する。
 `ClickMobs` の利用可否は `ClickMobsRegionGuard` の設定で制御する。

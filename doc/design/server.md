@@ -184,7 +184,8 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
         - ワールド運用ポリシー（`mv modify` で適用）
     - `worlds/*/setup.commands`
         - ワールド初期化コマンド（1行1コマンド）
-    - `worlds/*/worldguard.regions.yml`
+    - `worlds/mainhall/worldguard.regions.yml.tmpl`
+    - `worlds/_defaults/worldguard.regions.yml.tmpl`
         - スポーン周辺保護リージョン定義（WorldGuard）
     - `worlds/mainhall/portals.yml.tmpl`
         - 帰還ポータル定義テンプレート（Multiverse-Portals）

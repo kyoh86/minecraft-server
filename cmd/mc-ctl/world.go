@@ -467,11 +467,14 @@ func (a app) worldSpawnStage(target string) error {
 	if err := a.ensureRuntimeDatapackScaffold(); err != nil {
 		return err
 	}
-	for _, worldName := range targetWorlds {
-		fmt.Printf("world spawn stage: copying WorldGuard regions for %s...\n", worldName)
-		src := filepath.Join(a.baseDir, "worlds", worldName, "worldguard.regions.yml")
-		dst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
-		if err := copyFile(src, dst); err != nil {
+	worldGuardTargets := make([]string, 0, len(targetWorlds)+1)
+	if target == "" {
+		worldGuardTargets = append(worldGuardTargets, primaryWorldName)
+	}
+	worldGuardTargets = append(worldGuardTargets, targetWorlds...)
+	for _, worldName := range worldGuardTargets {
+		fmt.Printf("world spawn stage: rendering WorldGuard regions for %s...\n", worldName)
+		if err := a.renderWorldGuardRegions(worldName); err != nil {
 			return err
 		}
 	}
@@ -519,8 +522,35 @@ func (a app) worldSpawnStage(target string) error {
 	if err := a.sendConsole("mv reload"); err != nil {
 		return err
 	}
-	fmt.Printf("staged world spawn runtime configs for %d worlds\n", len(targetWorlds))
+	fmt.Printf("staged world spawn runtime configs for %d worlds (worldguard targets=%d)\n", len(targetWorlds), len(worldGuardTargets))
 	return nil
+}
+
+func (a app) renderWorldGuardRegions(worldName string) error {
+	src, err := a.resolveWorldGuardRegionsTemplate(worldName)
+	if err != nil {
+		return err
+	}
+	dst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
+	data := map[string]any{
+		"WorldName": worldName,
+	}
+	return renderTemplateFile(src, dst, data)
+}
+
+func (a app) resolveWorldGuardRegionsTemplate(worldName string) (string, error) {
+	byWorld := filepath.Join(a.baseDir, "worlds", worldName, "worldguard.regions.yml.tmpl")
+	if fileExists(byWorld) {
+		return byWorld, nil
+	}
+	if worldName == primaryWorldName {
+		return "", fmt.Errorf("missing worldguard template for %q: %s", worldName, byWorld)
+	}
+	def := filepath.Join(a.baseDir, "worlds", "_defaults", "worldguard.regions.yml.tmpl")
+	if fileExists(def) {
+		return def, nil
+	}
+	return "", fmt.Errorf("missing worldguard template for %q: %s (and default %s)", worldName, byWorld, def)
 }
 
 func (a app) worldSpawnApply(target string) error {
@@ -892,20 +922,6 @@ func renderTemplateFile(src, dst string, data any) error {
 		return err
 	}
 	return os.WriteFile(dst, out.Bytes(), 0o644)
-}
-
-func copyFile(src, dst string) error {
-	if !fileExists(src) {
-		return fmt.Errorf("missing file: %s", src)
-	}
-	b, err := os.ReadFile(src)
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(dst, b, 0o644)
 }
 
 func (a app) listWorldConfigs() ([]string, error) {
