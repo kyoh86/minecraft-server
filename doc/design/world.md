@@ -154,6 +154,7 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 - 基礎は `surfaceY-16` と `OCEAN_FLOOR` の低い方まで石で充填する
 - 液体の再充填は `water` のみ行い、`lava` は再充填しない
 - 水面の再充填は元の水面セルを起点に、整地後の地形高を見ながら隣接方向へ伝播して欠けを埋める
+- 伝播シードに使う水面は `y=63` 以下に限定し、高高度の水源で低地が過充填されるのを防ぐ
 - 再充填する水の上端は伝播した水面Yより2段下げ、過剰な水位上振れを抑制する
 
 地表判定ロジックは `mc-ctl world spawn profile` と `HubTerraform` の2箇所に存在する。

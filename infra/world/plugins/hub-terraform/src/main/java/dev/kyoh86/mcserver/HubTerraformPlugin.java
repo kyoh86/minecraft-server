@@ -25,6 +25,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   private static final int CLEAR_MARGIN = 96;
   private static final int SURFACE_FROZEN_COVER_IGNORE_MIN_Y = 64;
   private static final int WATER_FILL_TOP_OFFSET = 2;
+  private static final int WATER_SEED_MAX_Y = 63;
 
   @Override
   public void onEnable() {
@@ -183,6 +184,8 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   ) {
     int size = targetTop.length;
     ArrayDeque<int[]> queue = new ArrayDeque<>();
+    int ignoredHighSeedCount = 0;
+    int ignoredHighSeedMaxY = Integer.MIN_VALUE;
 
     for (int ix = 0; ix < size; ix++) {
       for (int iz = 0; iz < size; iz++) {
@@ -190,6 +193,13 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
           continue;
         }
         int level = Math.min(clearMaxY, originalFluidSurfaceY[ix][iz]);
+        if (level > WATER_SEED_MAX_Y) {
+          ignoredHighSeedCount++;
+          if (level > ignoredHighSeedMaxY) {
+            ignoredHighSeedMaxY = level;
+          }
+          continue;
+        }
         if (level <= targetTop[ix][iz]) {
           continue;
         }
@@ -199,6 +209,12 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
         propagatedWaterSurfaceY[ix][iz] = level;
         queue.addLast(new int[] {ix, iz});
       }
+    }
+    if (ignoredHighSeedCount > 0) {
+      getLogger().info(
+        "hubterraform water seed guard: ignored " + ignoredHighSeedCount
+          + " high-altitude water seeds above y=" + WATER_SEED_MAX_Y
+          + " (max=" + ignoredHighSeedMaxY + ")");
     }
 
     int[][] dirs = new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
