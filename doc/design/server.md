@@ -85,10 +85,15 @@
 未登録プレイヤーがログインしようとすると、Velocity の `LinkCodeGate` 一時コードを自動発行する。
 当該ユーザーを `limbo`（認証待機用 PicoLimbo）へ接続させたうえで、`limbo` 内チャットに一時コードとDiscordでの操作案内を表示する。
 NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される。
+`LinkCodeGate` の Redis 書き込みは接続イベント本体から分離して非同期実行し、
+接続/読取タイムアウトを設定する。
 
 `mc-link` コンテナが Discord の `/mc link <code>` を受け取り、`runtime/velocity/allowlist.yml` にエントリを追加します。
 `mc-link` が書き込む bind mount は `allowlist.yml` 単体のみとし、
 `runtime/velocity` 全体にはアクセスさせない。
+コード消費は Redis 上で原子的に確定し、同一コードの多重利用を防ぐ。
+allowlist 更新に失敗した場合は、同一ユーザーによる当該 claim を巻き戻して再試行可能にする。
+`LinkCodeGate` の通常ログにはワンタイムコード値を出力しない。
 
 ## ファイル構成
 
