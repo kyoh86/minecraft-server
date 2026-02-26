@@ -14,20 +14,32 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
 
       - name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
         with:
           go-version-file: go.mod
 
-      - name: Run tests
-        run: go test ./cmd/mc-ctl/...
+      - name: Run Go tests
+        run: go test ./...
+
+      - name: Setup Java
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Build local plugins
+        run: |
+          mvn -f infra/velocity/plugins/link-code-gate/pom.xml -DskipTests package
+          mvn -f infra/world/plugins/clickmobs-region-guard/pom.xml -DskipTests package
+          mvn -f infra/world/plugins/hub-terraform/pom.xml -DskipTests package
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
         with:
           version: "~> v2"
           args: release --clean

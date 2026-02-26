@@ -125,6 +125,9 @@ func (a app) worldRegenerate(target string) error {
 	if target == "" {
 		return errors.New("world name is required")
 	}
+	if err := validateWorldName(target); err != nil {
+		return err
+	}
 
 	cfgPath := filepath.Join(a.baseDir, "worlds", target, "world.env.yml")
 	cfg, err := loadWorldConfig(cfgPath)
@@ -165,6 +168,9 @@ func (a app) worldDrop(target string) error {
 	if target == "" {
 		return errors.New("world name is required")
 	}
+	if err := validateWorldName(target); err != nil {
+		return err
+	}
 	if target == primaryWorldName {
 		return fmt.Errorf("world '%s' cannot be dropped", primaryWorldName)
 	}
@@ -190,6 +196,9 @@ func (a app) worldDelete(target string, yes bool) error {
 	target = strings.TrimSpace(target)
 	if target == "" {
 		return errors.New("world name is required")
+	}
+	if err := validateWorldName(target); err != nil {
+		return err
 	}
 	if target == primaryWorldName {
 		return fmt.Errorf("world '%s' cannot be deleted", primaryWorldName)
@@ -226,6 +235,11 @@ func (a app) worldDelete(target string, yes bool) error {
 
 func (a app) worldSetup(target string) error {
 	target = strings.TrimSpace(target)
+	if target != "" {
+		if err := validateWorldName(target); err != nil {
+			return err
+		}
+	}
 	fmt.Println("world setup: syncing runtime datapack scaffold...")
 	if err := a.ensureRuntimeDatapackScaffold(); err != nil {
 		return err
@@ -292,12 +306,18 @@ func (a app) worldFunctionRun(functionID string) error {
 	if functionID == "" {
 		return errors.New("function id is required")
 	}
+	if err := validateFunctionID(functionID); err != nil {
+		return err
+	}
 	return a.sendConsole("function " + functionID)
 }
 
 func (a app) ensureWorld(cfg worldConfig, forceCreate bool) error {
 	if cfg.Name == "" || cfg.Environment == "" {
 		return fmt.Errorf("invalid world config: name/environment required")
+	}
+	if err := validateWorldName(cfg.Name); err != nil {
+		return err
 	}
 
 	registered, err := a.worldRegisteredInMultiverse(cfg.Name)
@@ -383,6 +403,9 @@ func (a app) applyWorldSetupCommands(worldName string) error {
 	}
 	dimension := worldDimensionID(worldName)
 	for _, c := range commands {
+		if err := validateConsoleCommand(c); err != nil {
+			return fmt.Errorf("invalid setup command in %s: %w", worldName, err)
+		}
 		if err := a.sendConsole(fmt.Sprintf("execute in %s run %s", dimension, c)); err != nil {
 			return err
 		}
@@ -409,6 +432,9 @@ func (a app) applyWorldPolicy(worldName string) error {
 		if val == "" {
 			continue
 		}
+		if strings.ContainsAny(key, " \t\r\n\x00") || strings.ContainsAny(val, "\r\n\x00") {
+			return fmt.Errorf("invalid world policy key/value: %q=%q", key, val)
+		}
 		if err := a.sendConsole(fmt.Sprintf("mv modify %s set %s %s", worldName, key, val)); err != nil {
 			return err
 		}
@@ -426,6 +452,11 @@ func (a app) pruneMainhallExtraDimensions() error {
 }
 
 func (a app) worldSpawnProfile(target string) error {
+	if target != "" {
+		if err := validateWorldName(target); err != nil {
+			return err
+		}
+	}
 	worldNames, err := a.listManagedWorldNames(target)
 	if err != nil {
 		return err
@@ -478,6 +509,11 @@ func (a app) worldSpawnProfile(target string) error {
 }
 
 func (a app) worldSpawnStage(target string) error {
+	if target != "" {
+		if err := validateWorldName(target); err != nil {
+			return err
+		}
+	}
 	targetWorlds, err := a.listManagedWorldNames(target)
 	if err != nil {
 		return err
@@ -577,6 +613,11 @@ func (a app) resolveWorldGuardRegionsTemplate(worldName string) (string, error) 
 
 func (a app) worldSpawnApply(target string) error {
 	target = strings.TrimSpace(target)
+	if target != "" {
+		if err := validateWorldName(target); err != nil {
+			return err
+		}
+	}
 	worldNames, err := a.listManagedWorldNames(target)
 	if err != nil {
 		return err
@@ -834,7 +875,7 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 			MainhallSignZ:       -7,
 			ReturnGateMinY:      p.SurfaceY,
 			ReturnGateMaxY:      p.SurfaceY + 3,
-			ReturnGateMinX:      returnGateCenterX - 1,
+			ReturnGateMinX:      returnGateCenterX,
 			ReturnGateMaxX:      returnGateCenterX + 1,
 			ReturnGateMinZ:      2,
 			ReturnGateMaxZ:      3,

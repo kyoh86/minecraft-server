@@ -34,6 +34,21 @@ type discordSecret struct {
 	AllowedRoleIDs []string `toml:"allowed_role_ids"`
 }
 
+type claimCodeStatus int
+
+const (
+	claimCodeSuccess claimCodeStatus = iota
+	claimCodeNotFound
+	claimCodeAlreadyClaimed
+	claimCodeExpired
+)
+
+var (
+	errCodeNotFound       = errors.New("code not found")
+	errCodeAlreadyClaimed = errors.New("code already claimed")
+	errCodeExpired        = errors.New("code expired")
+)
+
 func main() {
 	cfg, err := loadConfig()
 	if err != nil {
@@ -184,34 +199,26 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 	})
 	defer rdb.Close()
 
-	entry, ok, err := mclink.LoadCode(ctx, rdb, code)
+	entry, status, err := claimCodeAtomically(ctx, rdb, code, interactionUserID(i), time.Now().UTC())
 	if err != nil {
 		respond(s, i, "内部エラー: code storage を読めませんでした。")
 		return
 	}
-	if !ok {
+	switch status {
+	case claimCodeNotFound:
 		respond(s, i, "無効なコードです。")
 		return
-	}
-	if entry.Claimed {
+	case claimCodeAlreadyClaimed:
 		respond(s, i, "このコードは既に使用済みです。")
 		return
-	}
-	if time.Now().UTC().After(entry.ExpiresAt) {
+	case claimCodeExpired:
 		respond(s, i, "コードの有効期限が切れています。")
 		return
 	}
 
 	if err := mclink.AddAllowlistEntry(cfg.AllowlistPath, entry.Type, entry.Value); err != nil {
+		_ = rollbackClaimIfOwned(ctx, rdb, entry)
 		respond(s, i, "内部エラー: allowlist 更新に失敗しました。")
-		return
-	}
-
-	entry.Claimed = true
-	entry.ClaimedBy = interactionUserID(i)
-	entry.ClaimedAt = time.Now().UTC()
-	if err := saveClaimed(ctx, rdb, entry); err != nil {
-		respond(s, i, "内部エラー: code の確定保存に失敗しました。")
 		return
 	}
 
@@ -268,23 +275,121 @@ func env(key, fallback string) string {
 	return v
 }
 
-func saveClaimed(ctx context.Context, rdb *redis.Client, entry mclink.CodeEntry) error {
-	ttl := time.Until(entry.ExpiresAt)
-	if ttl <= 0 {
-		ttl = time.Minute
+func claimCodeAtomically(ctx context.Context, rdb *redis.Client, code, claimer string, claimedAt time.Time) (mclink.CodeEntry, claimCodeStatus, error) {
+	key := "mc-link:code:" + strings.ToUpper(strings.TrimSpace(code))
+	claimer = strings.TrimSpace(claimer)
+	const maxRetries = 5
+
+	for range maxRetries {
+		var entry mclink.CodeEntry
+		err := rdb.Watch(ctx, func(tx *redis.Tx) error {
+			raw, err := tx.HGetAll(ctx, key).Result()
+			if err != nil {
+				return err
+			}
+			if len(raw) == 0 {
+				return errCodeNotFound
+			}
+
+			entry, err = parseCodeEntryHash(raw)
+			if err != nil {
+				return err
+			}
+			if entry.Claimed {
+				return errCodeAlreadyClaimed
+			}
+			if claimedAt.After(entry.ExpiresAt) {
+				return errCodeExpired
+			}
+
+			entry.Claimed = true
+			entry.ClaimedBy = claimer
+			entry.ClaimedAt = claimedAt
+
+			_, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+				pipe.HSet(ctx, key,
+					"claimed", "true",
+					"claimed_by", entry.ClaimedBy,
+					"claimed_at_unix", entry.ClaimedAt.Unix(),
+				)
+				pipe.ExpireAt(ctx, key, entry.ExpiresAt)
+				return nil
+			})
+			return err
+		}, key)
+
+		switch {
+		case err == nil:
+			return entry, claimCodeSuccess, nil
+		case errors.Is(err, redis.TxFailedErr):
+			continue
+		case errors.Is(err, errCodeNotFound):
+			return mclink.CodeEntry{}, claimCodeNotFound, nil
+		case errors.Is(err, errCodeAlreadyClaimed):
+			return mclink.CodeEntry{}, claimCodeAlreadyClaimed, nil
+		case errors.Is(err, errCodeExpired):
+			return mclink.CodeEntry{}, claimCodeExpired, nil
+		default:
+			return mclink.CodeEntry{}, claimCodeNotFound, err
+		}
 	}
-	pipe := rdb.TxPipeline()
-	key := "mc-link:code:" + entry.Code
-	pipe.HSet(ctx, key,
-		"code", entry.Code,
-		"type", string(entry.Type),
-		"value", entry.Value,
-		"expires_unix", entry.ExpiresAt.Unix(),
-		"claimed", "true",
-		"claimed_by", entry.ClaimedBy,
-		"claimed_at_unix", entry.ClaimedAt.Unix(),
-	)
-	pipe.Expire(ctx, key, ttl)
-	_, err := pipe.Exec(ctx)
-	return err
+	return mclink.CodeEntry{}, claimCodeNotFound, fmt.Errorf("claim retry exceeded")
+}
+
+func rollbackClaimIfOwned(ctx context.Context, rdb *redis.Client, entry mclink.CodeEntry) error {
+	key := "mc-link:code:" + strings.ToUpper(strings.TrimSpace(entry.Code))
+	return rdb.Watch(ctx, func(tx *redis.Tx) error {
+		raw, err := tx.HGetAll(ctx, key).Result()
+		if err != nil {
+			return err
+		}
+		if len(raw) == 0 {
+			return nil
+		}
+		current, err := parseCodeEntryHash(raw)
+		if err != nil {
+			return err
+		}
+		if !current.Claimed || current.ClaimedBy != entry.ClaimedBy || current.ClaimedAt.Unix() != entry.ClaimedAt.Unix() {
+			return nil
+		}
+		_, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+			pipe.HSet(ctx, key,
+				"claimed", "false",
+				"claimed_by", "",
+				"claimed_at_unix", "0",
+			)
+			pipe.ExpireAt(ctx, key, entry.ExpiresAt)
+			return nil
+		})
+		return err
+	}, key)
+}
+
+func parseCodeEntryHash(raw map[string]string) (mclink.CodeEntry, error) {
+	code := strings.ToUpper(strings.TrimSpace(raw["code"]))
+	if code == "" {
+		return mclink.CodeEntry{}, errors.New("invalid code entry: code is empty")
+	}
+	expiresUnix, err := strconv.ParseInt(strings.TrimSpace(raw["expires_unix"]), 10, 64)
+	if err != nil {
+		return mclink.CodeEntry{}, fmt.Errorf("invalid code entry expires_unix: %w", err)
+	}
+	claimed, err := strconv.ParseBool(strings.TrimSpace(raw["claimed"]))
+	if err != nil {
+		return mclink.CodeEntry{}, fmt.Errorf("invalid code entry claimed: %w", err)
+	}
+	claimedAtUnix, err := strconv.ParseInt(strings.TrimSpace(raw["claimed_at_unix"]), 10, 64)
+	if err != nil {
+		claimedAtUnix = 0
+	}
+	return mclink.CodeEntry{
+		Code:      code,
+		Type:      mclink.EntryType(strings.TrimSpace(raw["type"])),
+		Value:     strings.TrimSpace(raw["value"]),
+		ExpiresAt: time.Unix(expiresUnix, 0).UTC(),
+		Claimed:   claimed,
+		ClaimedBy: strings.TrimSpace(raw["claimed_by"]),
+		ClaimedAt: time.Unix(claimedAtUnix, 0).UTC(),
+	}, nil
 }

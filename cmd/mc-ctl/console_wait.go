@@ -7,6 +7,9 @@ import (
 )
 
 func (a app) sendConsole(command string) error {
+	if err := validateConsoleCommand(command); err != nil {
+		return err
+	}
 	if err := a.waitWorldReady(90 * time.Second); err != nil {
 		return err
 	}

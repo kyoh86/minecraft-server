@@ -15,7 +15,11 @@ func newPlayerCmd(a app) *cobra.Command {
 		Short: "grant operator to a player",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return a.sendConsole("op " + strings.TrimSpace(args[0]))
+			player := strings.TrimSpace(args[0])
+			if err := validatePlayerName(player); err != nil {
+				return err
+			}
+			return a.sendConsole("op " + player)
 		},
 	})
 	opCmd.AddCommand(&cobra.Command{
@@ -23,7 +27,11 @@ func newPlayerCmd(a app) *cobra.Command {
 		Short: "revoke operator from a player",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return a.sendConsole("deop " + strings.TrimSpace(args[0]))
+			player := strings.TrimSpace(args[0])
+			if err := validatePlayerName(player); err != nil {
+				return err
+			}
+			return a.sendConsole("deop " + player)
 		},
 	})
 	cmd.AddCommand(opCmd)
@@ -35,6 +43,9 @@ func newPlayerCmd(a app) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			player := strings.TrimSpace(args[0])
+			if err := validatePlayerName(player); err != nil {
+				return err
+			}
 			for _, c := range []string{
 				"lp creategroup admin",
 				"lp group admin permission set * true",
@@ -52,7 +63,11 @@ func newPlayerCmd(a app) *cobra.Command {
 		Short: "revoke admin group using LuckPerms",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return a.sendConsole("lp user " + strings.TrimSpace(args[0]) + " parent remove admin")
+			player := strings.TrimSpace(args[0])
+			if err := validatePlayerName(player); err != nil {
+				return err
+			}
+			return a.sendConsole("lp user " + player + " parent remove admin")
 		},
 	})
 	cmd.AddCommand(adminCmd)

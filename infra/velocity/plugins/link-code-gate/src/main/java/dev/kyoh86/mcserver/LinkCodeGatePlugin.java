@@ -20,6 +20,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -47,6 +48,8 @@ public final class LinkCodeGatePlugin {
   private static final String LIMBO_SERVER = "limbo";
   private static final String DEFAULT_ALLOWLIST_PATH = "/server/allowlist.yml";
   private static final long NOTICE_INTERVAL_MILLIS = 3_000;
+  private static final int REDIS_CONNECT_TIMEOUT_MILLIS = 1_500;
+  private static final int REDIS_READ_TIMEOUT_MILLIS = 1_500;
 
   private final ProxyServer proxy;
   private final Logger logger;
@@ -111,20 +114,26 @@ public final class LinkCodeGatePlugin {
     }
     lastNoticeAt.put(player.getUniqueId(), now);
 
+    UUID playerUUID = player.getUniqueId();
+    String playerName = player.getUsername();
     String code = generateCode();
     long expires = Instant.now().getEpochSecond() + TTL_SECONDS;
     String type = "uuid";
-    String value = player.getUniqueId().toString();
-    try {
-      appendEntry(code, type, value, expires);
-    } catch (IOException e) {
-      logger.error("failed to write link code for {}", player.getUsername(), e);
-      player.sendMessage(Component.text("リンクコード発行に失敗しました。しばらくして再接続してください。", NamedTextColor.RED));
-      return;
-    }
+    String value = playerUUID.toString();
 
-    sendLinkMessage(player, code);
-    logger.info("issued link code {} for {} {} {}", code, player.getUsername(), type, value);
+    proxy.getScheduler().buildTask(this, () -> {
+      try {
+        appendEntry(code, type, value, expires);
+      } catch (IOException e) {
+        logger.error("failed to write link code for {}", playerName, e);
+        proxy.getPlayer(playerUUID).ifPresent(p ->
+          p.sendMessage(Component.text("リンクコード発行に失敗しました。しばらくして再接続してください。", NamedTextColor.RED))
+        );
+        return;
+      }
+      proxy.getPlayer(playerUUID).ifPresent(p -> sendLinkMessage(p, code));
+      logger.info("issued link code for {} {} {}", playerName, type, value);
+    }).schedule();
   }
 
   private void sendLinkMessage(Player player, String code) {
@@ -160,9 +169,11 @@ public final class LinkCodeGatePlugin {
 
   private void appendEntry(String code, String type, String value, long expiresAt) throws IOException {
     String key = "mc-link:code:" + code;
-    try (Socket socket = new Socket(redisHost, redisPort);
-         BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
-         BufferedInputStream in = new BufferedInputStream(socket.getInputStream())) {
+    try (Socket socket = new Socket()) {
+      socket.connect(new InetSocketAddress(redisHost, redisPort), REDIS_CONNECT_TIMEOUT_MILLIS);
+      socket.setSoTimeout(REDIS_READ_TIMEOUT_MILLIS);
+      try (BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
+           BufferedInputStream in = new BufferedInputStream(socket.getInputStream())) {
       if (redisDB != 0) {
         sendAndExpectOK(out, in, "SELECT", Integer.toString(redisDB));
       }
@@ -176,6 +187,7 @@ public final class LinkCodeGatePlugin {
         "claimed_by", "",
         "claimed_at_unix", "0");
       sendAndExpectInt(out, in, "EXPIREAT", key, Long.toString(expiresAt));
+      }
     }
   }
 
@@ -189,7 +201,17 @@ public final class LinkCodeGatePlugin {
         if (trimmed.isEmpty()) {
           continue;
         }
-        if ("uuids:".equalsIgnoreCase(trimmed)) {
+        if (trimmed.toLowerCase().startsWith("uuids:")) {
+          String rest = trimmed.substring("uuids:".length()).trim();
+          if (!rest.isEmpty()) {
+            for (String item : parseInlineYamlList(rest)) {
+              if (!item.isBlank()) {
+                uuids.add(item.toLowerCase());
+              }
+            }
+            section = "";
+            continue;
+          }
           section = "uuids";
           continue;
         }
@@ -223,6 +245,30 @@ public final class LinkCodeGatePlugin {
       return "";
     }
     String raw = line.substring(idx + 1).trim();
+    return unquoteYamlScalar(raw.trim());
+  }
+
+  private static List<String> parseInlineYamlList(String value) {
+    String trimmed = value.trim();
+    if (!(trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+      return Collections.emptyList();
+    }
+    String body = trimmed.substring(1, trimmed.length() - 1).trim();
+    if (body.isEmpty()) {
+      return Collections.emptyList();
+    }
+    String[] parts = body.split(",");
+    List<String> out = new java.util.ArrayList<>(parts.length);
+    for (String part : parts) {
+      String item = unquoteYamlScalar(stripComments(part).trim());
+      if (!item.isEmpty()) {
+        out.add(item);
+      }
+    }
+    return out;
+  }
+
+  private static String unquoteYamlScalar(String raw) {
     if (raw.length() >= 2 && ((raw.startsWith("\"") && raw.endsWith("\"")) || (raw.startsWith("'") && raw.endsWith("'")))) {
       return raw.substring(1, raw.length() - 1).trim();
     }
