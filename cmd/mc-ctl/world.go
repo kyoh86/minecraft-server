@@ -20,6 +20,7 @@ import (
 const (
 	primaryWorldName = "mainhall"
 	spawnProfilePath = "runtime/world/.mc-ctl/spawn-profile.yml"
+	hubSchematicName = "hub.schem"
 )
 
 type spawnProfile struct {
@@ -77,7 +78,10 @@ type spawnTemplateWorldItem struct {
 	MainhallSignZ       int
 	ReturnGateMinY      int
 	ReturnGateMaxY      int
-	ReturnGateZ         int
+	ReturnGateMinX      int
+	ReturnGateMaxX      int
+	ReturnGateMinZ      int
+	ReturnGateMaxZ      int
 }
 
 type portalConfig struct {
@@ -479,6 +483,9 @@ func (a app) worldSpawnStage(target string) error {
 	if err := a.ensureRuntimeDatapackScaffold(); err != nil {
 		return err
 	}
+	if err := a.ensureRuntimeHubSchematic(); err != nil {
+		return err
+	}
 	worldGuardTargets := make([]string, 0, len(targetWorlds)+1)
 	if target == "" {
 		worldGuardTargets = append(worldGuardTargets, primaryWorldName)
@@ -567,6 +574,9 @@ func (a app) worldSpawnApply(target string) error {
 	if _, err := buildSpawnTemplateData(worldNames, profile); err != nil {
 		return err
 	}
+	if err := a.ensureRuntimeHubSchematic(); err != nil {
+		return err
+	}
 	fmt.Println("world spawn apply: reloading datapacks...")
 	if err := a.sendConsole("reload"); err != nil {
 		return err
@@ -588,14 +598,14 @@ func (a app) worldSpawnApply(target string) error {
 	for _, worldName := range worldNames {
 		p := profile.Worlds[worldName]
 		dimension := worldDimensionID(worldName)
-		fmt.Printf("world spawn apply: applying %s hub layout at y=%d...\n", worldName, p.SurfaceY)
+		fmt.Printf("world spawn apply: applying %s hub schematic at y=%d...\n", worldName, p.SurfaceY)
 		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add -64 -64 64 64", dimension)); err != nil {
 			return err
 		}
 		if err := a.sendConsole(fmt.Sprintf("hubterraform apply %s %d", worldName, p.SurfaceY)); err != nil {
 			return err
 		}
-		if err := a.sendConsole(fmt.Sprintf("execute in %s run execute positioned 0 %d 0 run function mcserver:world/hub_layout", dimension, p.SurfaceY)); err != nil {
+		if err := a.applyWorldHubSchematic(worldName, p.SurfaceY); err != nil {
 			return err
 		}
 		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload remove -64 -64 64 64", dimension)); err != nil {
@@ -667,6 +677,33 @@ func (a app) ensureRuntimeDatapackScaffold() error {
 		return err
 	}
 	return nil
+}
+
+func (a app) ensureRuntimeHubSchematic() error {
+	src := filepath.Join(a.baseDir, "infra", "world", "schematics", hubSchematicName)
+	if !fileExists(src) {
+		return fmt.Errorf("missing hub schematic source: %s", src)
+	}
+	dst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "FastAsyncWorldEdit", "schematics", hubSchematicName)
+	return copyFile(src, dst)
+}
+
+func (a app) applyWorldHubSchematic(worldName string, surfaceY int) (err error) {
+	if err = a.sendConsole("//world " + worldName); err != nil {
+		return err
+	}
+	defer func() {
+		if cleanupErr := a.sendConsole("//world"); cleanupErr != nil && err == nil {
+			err = cleanupErr
+		}
+	}()
+	if err = a.sendConsole("//schem load " + strings.TrimSuffix(hubSchematicName, filepath.Ext(hubSchematicName))); err != nil {
+		return err
+	}
+	if err = a.sendConsole(fmt.Sprintf("//pos1 0,%d,0", surfaceY)); err != nil {
+		return err
+	}
+	return a.sendConsole("//paste")
 }
 
 func (a app) listManagedWorldNames(target string) ([]string, error) {
@@ -762,6 +799,7 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 			RegionMinY:     p.SurfaceY - 8,
 			RegionMaxY:     p.SurfaceY + 12,
 		}
+		returnGateCenterX := -1
 		gateMinX, gateMaxX := mainhallGateXForIndex(i, len(worldNames))
 		centerX := (gateMinX + gateMaxX) / 2
 		data.WorldItems = append(data.WorldItems, spawnTemplateWorldItem{
@@ -782,7 +820,10 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 			MainhallSignZ:       -7,
 			ReturnGateMinY:      p.SurfaceY,
 			ReturnGateMaxY:      p.SurfaceY + 3,
-			ReturnGateZ:         -8,
+			ReturnGateMinX:      returnGateCenterX - 1,
+			ReturnGateMaxX:      returnGateCenterX + 1,
+			ReturnGateMinZ:      2,
+			ReturnGateMaxZ:      3,
 		})
 	}
 	if len(data.WorldItems) > 0 {
@@ -888,7 +929,7 @@ func (a app) patchPortalsForWorlds(targetWorlds []string) error {
 		}
 		cfg.Portals["gate_"+worldName+"_to_mainhall"] = portalEntry{
 			Owner:                  "console",
-			Location:               fmt.Sprintf("%s:-1,%d,-8:1,%d,-8", worldName, p.SurfaceY, p.SurfaceY+3),
+			Location:               fmt.Sprintf("%s:-2,%d,2:0,%d,3", worldName, p.SurfaceY, p.SurfaceY+3),
 			ActionType:             "multiverse-destination",
 			Action:                 "w:mainhall",
 			SafeTeleport:           true,

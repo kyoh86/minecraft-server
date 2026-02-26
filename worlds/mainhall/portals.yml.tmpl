@@ -12,7 +12,7 @@ portals:
 {{- range .WorldItems }}
   gate_{{.Name}}_to_mainhall:
     owner: console
-    location: {{.Name}}:-1,{{.ReturnGateMinY}},{{.ReturnGateZ}}:1,{{.ReturnGateMaxY}},{{.ReturnGateZ}}
+    location: {{.Name}}:{{.ReturnGateMinX}},{{.ReturnGateMinY}},{{.ReturnGateMinZ}}:{{.ReturnGateMaxX}},{{.ReturnGateMaxY}},{{.ReturnGateMaxZ}}
     action-type: multiverse-destination
     action: w:mainhall
     safe-teleport: true

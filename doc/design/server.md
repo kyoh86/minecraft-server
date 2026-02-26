@@ -174,6 +174,9 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 - `infra/world/plugins/clickmobs`
     - `ClickMobs` 設定ファイルの管理ディレクトリ
     - `config/config.yml` を world イメージへ同梱する
+- `infra/world/schematics/hub.schem`
+    - `mainhall` 以外のワールドへ貼り付ける Hub 建築スキーマ
+    - `mc-ctl world spawn stage` / `mc-ctl world spawn apply` が runtime へ同期する
 - `datapacks/world-base`
     - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `worlds`

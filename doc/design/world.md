@@ -106,6 +106,7 @@
     - `mvp config enforce-portal-access false` を実行する
     - `spawn_protected` / `clickmobs_allowed` の Y 範囲は `surface_y-8 .. surface_y+12` とする（`mainhall` は `-64 .. -35`）
     - `*_to_mainhall` ポータルの Y 範囲は `surface_y .. surface_y+3` とする
+    - `*_to_mainhall` ポータル面は `x=-2..0, z=2..3`（中心 `x=-1, z=2.5`）とする
 - `mc-ctl world spawn apply [--world <name>]`
     - `--world` なし実行時のみ、`mainhall` で `mcserver:mainhall/hub_layout` を適用する
     - `--world` 指定時は対象ワールドのみ適用する
