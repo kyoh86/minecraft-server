@@ -464,6 +464,18 @@ func (a app) worldSpawnStage(target string) error {
 	if err != nil {
 		return err
 	}
+	worldNames, err := a.listManagedWorldNames("")
+	if err != nil {
+		return err
+	}
+	profile, err := a.loadSpawnProfile()
+	if err != nil {
+		return err
+	}
+	data, err := buildSpawnTemplateData(worldNames, profile)
+	if err != nil {
+		return err
+	}
 	if err := a.ensureRuntimeDatapackScaffold(); err != nil {
 		return err
 	}
@@ -474,23 +486,11 @@ func (a app) worldSpawnStage(target string) error {
 	worldGuardTargets = append(worldGuardTargets, targetWorlds...)
 	for _, worldName := range worldGuardTargets {
 		fmt.Printf("world spawn stage: rendering WorldGuard regions for %s...\n", worldName)
-		if err := a.renderWorldGuardRegions(worldName); err != nil {
+		if err := a.renderWorldGuardRegions(worldName, data); err != nil {
 			return err
 		}
 	}
 	if target == "" {
-		worldNames, err := a.listManagedWorldNames("")
-		if err != nil {
-			return err
-		}
-		profile, err := a.loadSpawnProfile()
-		if err != nil {
-			return err
-		}
-		data, err := buildSpawnTemplateData(worldNames, profile)
-		if err != nil {
-			return err
-		}
 		fmt.Println("world spawn stage: rendering portals.yml...")
 		portalsSrc := filepath.Join(a.baseDir, "worlds", primaryWorldName, "portals.yml.tmpl")
 		portalsDst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
@@ -526,16 +526,17 @@ func (a app) worldSpawnStage(target string) error {
 	return nil
 }
 
-func (a app) renderWorldGuardRegions(worldName string) error {
+func (a app) renderWorldGuardRegions(worldName string, data spawnTemplateData) error {
 	src, err := a.resolveWorldGuardRegionsTemplate(worldName)
 	if err != nil {
 		return err
 	}
 	dst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "WorldGuard", "worlds", worldName, "regions.yml")
-	data := map[string]any{
+	tplData := map[string]any{
 		"WorldName": worldName,
+		"Worlds":    data.Worlds,
 	}
-	return renderTemplateFile(src, dst, data)
+	return renderTemplateFile(src, dst, tplData)
 }
 
 func (a app) resolveWorldGuardRegionsTemplate(worldName string) (string, error) {
@@ -758,8 +759,8 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 			AnchorY:        p.AnchorY,
 			ReturnGateMinY: p.SurfaceY,
 			ReturnGateMaxY: p.SurfaceY + 3,
-			RegionMinY:     p.SurfaceY - 11,
-			RegionMaxY:     p.SurfaceY + 17,
+			RegionMinY:     p.SurfaceY - 8,
+			RegionMaxY:     p.SurfaceY + 12,
 		}
 		gateMinX, gateMaxX := mainhallGateXForIndex(i, len(worldNames))
 		centerX := (gateMinX + gateMaxX) / 2

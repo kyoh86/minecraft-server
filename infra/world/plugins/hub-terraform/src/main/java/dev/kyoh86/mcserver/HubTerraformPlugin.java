@@ -21,7 +21,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   private static final int CORE = 32;
   private static final int OUTER = 64;
   private static final int BLUR_RADIUS = 2;
-  private static final int CLEAR_MARGIN = 48;
+  private static final int CLEAR_MARGIN = 96;
 
   @Override
   public void onEnable() {

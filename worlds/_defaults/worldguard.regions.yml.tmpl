@@ -2,11 +2,11 @@ regions:
   spawn_protected:
     min:
       x: -32
-      y: -64
+      y: {{(index .Worlds .WorldName).RegionMinY}}
       z: -32
     max:
       x: 32
-      y: 319
+      y: {{(index .Worlds .WorldName).RegionMaxY}}
       z: 32
     members: {}
     owners: {}
@@ -28,11 +28,11 @@ regions:
   clickmobs_allowed:
     min:
       x: -64
-      y: -64
+      y: {{(index .Worlds .WorldName).RegionMinY}}
       z: -64
     max:
       x: 64
-      y: 319
+      y: {{(index .Worlds .WorldName).RegionMaxY}}
       z: 64
     members: {}
     owners: {}
