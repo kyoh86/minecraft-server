@@ -9,6 +9,7 @@ import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
+import java.util.ArrayDeque;
 import org.bukkit.HeightMap;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -22,6 +23,8 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   private static final int OUTER = 64;
   private static final int BLUR_RADIUS = 2;
   private static final int CLEAR_MARGIN = 96;
+  private static final int SURFACE_FROZEN_COVER_IGNORE_MIN_Y = 64;
+  private static final int WATER_FILL_TOP_OFFSET = 4;
 
   @Override
   public void onEnable() {
@@ -65,7 +68,9 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
     int size = OUTER * 2 + 1;
     int[][] originalTop = new int[size][size];
     int[][] smoothedTop = new int[size][size];
+    int[][] targetTop = new int[size][size];
     int[][] originalFluidSurfaceY = new int[size][size];
+    int[][] propagatedWaterSurfaceY = new int[size][size];
     Material[][] originalTopMaterial = new Material[size][size];
     Material[][] originalFillMaterial = new Material[size][size];
     Material[][] originalFluidMaterial = new Material[size][size];
@@ -82,9 +87,11 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
       }
     }
     smoothHeights(originalTop, smoothedTop);
+    initIntMatrix(propagatedWaterSurfaceY, Integer.MIN_VALUE);
 
     BlockState stone = BlockTypes.STONE.getDefaultState();
     BlockState air = BlockTypes.AIR.getDefaultState();
+    BlockState water = BlockTypes.WATER.getDefaultState();
 
     int baseY = surfaceY - 1;
     int floorMinY = surfaceY - 16;
@@ -112,6 +119,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
           }
 
           int foundationTop = targetTopY - 2;
+          targetTop[x + OUTER][z + OUTER] = targetTopY;
           int seabedY = world.getHighestBlockYAt(x, z, HeightMap.OCEAN_FLOOR);
           int foundationBottom = Math.min(floorMinY, seabedY);
           fill(edit, x, foundationBottom, z, x, foundationTop, z, stone);
@@ -121,15 +129,22 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
           fill(edit, x, foundationTop + 1, z, x, targetTopY - 1, z, fillMat);
           fill(edit, x, targetTopY, z, x, targetTopY, z, topMat);
           fill(edit, x, targetTopY + 1, z, x, clearMaxY, z, air);
-          Material fluidMat = originalFluidMaterial[x + OUTER][z + OUTER];
-          int fluidSurfaceY = originalFluidSurfaceY[x + OUTER][z + OUTER];
-          if (fluidMat == Material.WATER && fluidSurfaceY > targetTopY) {
-            BlockState fluid = toBlockStateOrDefault(fluidMat, null);
-            if (fluid != null) {
-              fill(edit, x, targetTopY + 1, z, x, Math.min(clearMaxY, fluidSurfaceY), z, fluid);
-            }
-          }
           columns++;
+        }
+      }
+
+      propagateWaterSurfaceY(targetTop, originalFluidSurfaceY, originalFluidMaterial, clearMaxY, propagatedWaterSurfaceY);
+      for (int x = -OUTER; x <= OUTER; x++) {
+        for (int z = -OUTER; z <= OUTER; z++) {
+          int ix = x + OUTER;
+          int iz = z + OUTER;
+          int waterTop = propagatedWaterSurfaceY[ix][iz];
+          int targetY = targetTop[ix][iz];
+          int waterFillTop = waterTop - WATER_FILL_TOP_OFFSET;
+          if (waterFillTop <= targetY) {
+            continue;
+          }
+          fill(edit, x, targetY + 1, z, x, Math.min(clearMaxY, waterFillTop), z, water);
         }
       }
 
@@ -149,6 +164,66 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
       }
     }
     return max;
+  }
+
+  private void initIntMatrix(int[][] matrix, int value) {
+    for (int i = 0; i < matrix.length; i++) {
+      for (int j = 0; j < matrix[i].length; j++) {
+        matrix[i][j] = value;
+      }
+    }
+  }
+
+  private void propagateWaterSurfaceY(
+    int[][] targetTop,
+    int[][] originalFluidSurfaceY,
+    Material[][] originalFluidMaterial,
+    int clearMaxY,
+    int[][] propagatedWaterSurfaceY
+  ) {
+    int size = targetTop.length;
+    ArrayDeque<int[]> queue = new ArrayDeque<>();
+
+    for (int ix = 0; ix < size; ix++) {
+      for (int iz = 0; iz < size; iz++) {
+        if (originalFluidMaterial[ix][iz] != Material.WATER) {
+          continue;
+        }
+        int level = Math.min(clearMaxY, originalFluidSurfaceY[ix][iz]);
+        if (level <= targetTop[ix][iz]) {
+          continue;
+        }
+        if (level <= propagatedWaterSurfaceY[ix][iz]) {
+          continue;
+        }
+        propagatedWaterSurfaceY[ix][iz] = level;
+        queue.addLast(new int[] {ix, iz});
+      }
+    }
+
+    int[][] dirs = new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+    while (!queue.isEmpty()) {
+      int[] p = queue.removeFirst();
+      int ix = p[0];
+      int iz = p[1];
+      int level = propagatedWaterSurfaceY[ix][iz];
+
+      for (int[] d : dirs) {
+        int nx = ix + d[0];
+        int nz = iz + d[1];
+        if (nx < 0 || nx >= size || nz < 0 || nz >= size) {
+          continue;
+        }
+        if (targetTop[nx][nz] >= level) {
+          continue;
+        }
+        if (level <= propagatedWaterSurfaceY[nx][nz]) {
+          continue;
+        }
+        propagatedWaterSurfaceY[nx][nz] = level;
+        queue.addLast(new int[] {nx, nz});
+      }
+    }
   }
 
   private void smoothHeights(int[][] src, int[][] dst) {
@@ -214,8 +289,8 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
     return blockType.getDefaultState();
   }
 
-  private Material sanitizeTopMaterial(Material material) {
-    if (!isTerrainTopCandidate(material)) {
+  private Material sanitizeTopMaterial(Material material, int y) {
+    if (!isTerrainTopCandidate(material, y)) {
       return Material.GRASS_BLOCK;
     }
     return material;
@@ -245,10 +320,10 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
 
     for (int y = startY; y >= minY; y--) {
       Material mat = world.getBlockAt(x, y, z).getType();
-      if (!isTerrainTopCandidate(mat)) {
+      if (!isTerrainTopCandidate(mat, y)) {
         continue;
       }
-      top = sanitizeTopMaterial(mat);
+      top = sanitizeTopMaterial(mat, y);
       fill = findFillMaterial(world, x, z, y - 1, minY);
       terrainY = y;
       return new TerrainColumn(terrainY, top, fill, fluidSurfaceY, fluid);
@@ -266,17 +341,31 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
     return Material.DIRT;
   }
 
-  private boolean isTerrainTopCandidate(Material material) {
+  private boolean isTerrainTopCandidate(Material material, int y) {
     if (material == null || !material.isBlock() || material.isAir()) {
       return false;
     }
     if (!material.isSolid() || !material.isOccluding()) {
       return false;
     }
+    if (isHighAltitudeFrozenCover(material, y)) {
+      return false;
+    }
     if (isNonTerrainMaterial(material)) {
       return false;
     }
     return true;
+  }
+
+  private boolean isHighAltitudeFrozenCover(Material material, int y) {
+    if (y < SURFACE_FROZEN_COVER_IGNORE_MIN_Y) {
+      return false;
+    }
+    return material == Material.ICE
+      || material == Material.PACKED_ICE
+      || material == Material.BLUE_ICE
+      || material == Material.SNOW
+      || material == Material.SNOW_BLOCK;
   }
 
   private boolean isTerrainFillCandidate(Material material) {
@@ -296,7 +385,17 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
     if (material == Material.WATER || material == Material.LAVA) {
       return true;
     }
+    if (material == Material.MOSS_BLOCK
+      || material == Material.MUDDY_MANGROVE_ROOTS
+      || material == Material.MANGROVE_ROOTS
+      || material == Material.GRAVEL
+      || material == Material.CLAY) {
+      return true;
+    }
     String name = material.name();
+    if (name.endsWith("_ORE")) {
+      return true;
+    }
     if (name.endsWith("_CARPET")
       || name.endsWith("_RAIL")
       || name.endsWith("_TORCH")

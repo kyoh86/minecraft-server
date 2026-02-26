@@ -95,6 +95,8 @@
     - `world-base` datapack を runtime へそのままコピーする
 - `mc-ctl world spawn profile [--world <name>]`
     - 管理対象ワールドの地表Y（`motion_blocking_no_leaves`）を検出する
+    - `y=64` 以上では `ice` / `packed_ice` / `blue_ice` / `snow` / `snow_block` を地表候補から除外する
+    - 地表判定ロジックは `mc-ctl` 実装側に持つ
     - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
     - 各ワールドに `mcserver_spawn_anchor_<world>` marker を配置する
     - `setworldspawn` と `mvsetspawn` を同期する
@@ -147,9 +149,15 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 - 補間先の高さは元地形を近傍平均した値を使い、局所的な凹凸を抑える
 - 表層1層とその下層は元地形のブロック種を可能な限り継承する
 - 継承時は非地形ブロック（柵・原木・葉・絨毯など）を除外する
+- `y=64` 以上では `ice` / `packed_ice` / `blue_ice` / `snow` / `snow_block` を地表判定に使わない
 - 上空クリア高さは対象範囲の実地形最大Y + 96 を基準に決定し、浮島残りを防ぐ
 - 基礎は `surfaceY-16` と `OCEAN_FLOOR` の低い方まで石で充填する
 - 液体の再充填は `water` のみ行い、`lava` は再充填しない
+- 水面の再充填は元の水面セルを起点に、整地後の地形高を見ながら隣接方向へ伝播して欠けを埋める
+- 再充填する水の上端は伝播した水面Yより4段下げ、過剰な水位上振れを抑制する
+
+地表判定ロジックは `mc-ctl world spawn profile` と `HubTerraform` の2箇所に存在する。
+除外対象ブロックや高度条件を変更する場合は、両実装を同時に更新して挙動を一致させる。
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
 同時に `worldguard.regions.yml.tmpl` の反映結果により
 スポーン周辺での建設・破壊・爆破を禁止する。
