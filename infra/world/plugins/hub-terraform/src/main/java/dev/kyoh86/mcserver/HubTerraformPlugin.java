@@ -24,7 +24,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   private static final int BLUR_RADIUS = 2;
   private static final int CLEAR_MARGIN = 96;
   private static final int SURFACE_FROZEN_COVER_IGNORE_MIN_Y = 64;
-  private static final int WATER_FILL_TOP_OFFSET = 4;
+  private static final int WATER_FILL_TOP_OFFSET = 2;
 
   @Override
   public void onEnable() {
