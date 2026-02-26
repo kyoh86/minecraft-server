@@ -54,4 +54,7 @@ infra/.env
 **/target/
 
 # Local built CLI binary
-mc-ctl
+/mc-ctl
+mc-ctl.exe
+/mc-link-bot
+mc-link-bot.exe
