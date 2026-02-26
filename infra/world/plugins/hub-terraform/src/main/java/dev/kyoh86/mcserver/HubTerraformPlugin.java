@@ -140,6 +140,9 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
           int ix = x + OUTER;
           int iz = z + OUTER;
           int waterTop = propagatedWaterSurfaceY[ix][iz];
+          if (waterTop == Integer.MIN_VALUE) {
+            continue;
+          }
           int targetY = targetTop[ix][iz];
           int waterFillTop = waterTop - WATER_FILL_TOP_OFFSET;
           if (waterFillTop <= targetY) {
