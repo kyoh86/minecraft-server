@@ -3,7 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
+)
+
+var (
+	reWorldName  = regexp.MustCompile(`^[a-z0-9_-]+$`)
+	rePlayerName = regexp.MustCompile(`^[A-Za-z0-9_]{3,16}$`)
+	reFunctionID = regexp.MustCompile(`^[0-9a-z_./:-]+$`)
 )
 
 func formatSeed(v any) string {
@@ -28,4 +35,39 @@ func formatSeed(v any) string {
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func validateConsoleCommand(command string) error {
+	command = strings.TrimSpace(command)
+	if command == "" {
+		return fmt.Errorf("empty console command")
+	}
+	if strings.ContainsAny(command, "\r\n\x00") {
+		return fmt.Errorf("console command contains unsafe control characters")
+	}
+	return nil
+}
+
+func validateWorldName(name string) error {
+	name = strings.TrimSpace(name)
+	if !reWorldName.MatchString(name) {
+		return fmt.Errorf("invalid world name: %q", name)
+	}
+	return nil
+}
+
+func validatePlayerName(name string) error {
+	name = strings.TrimSpace(name)
+	if !rePlayerName.MatchString(name) {
+		return fmt.Errorf("invalid player name: %q", name)
+	}
+	return nil
+}
+
+func validateFunctionID(functionID string) error {
+	functionID = strings.TrimSpace(functionID)
+	if !reFunctionID.MatchString(functionID) {
+		return fmt.Errorf("invalid function id: %q", functionID)
+	}
+	return nil
 }
