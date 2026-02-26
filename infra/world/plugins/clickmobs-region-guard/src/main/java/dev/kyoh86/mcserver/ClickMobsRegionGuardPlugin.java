@@ -45,7 +45,7 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
   private static final String CLICKMOBS_PLACE = "clickmobs.place";
   private static final NamespacedKey CLICKMOBS_ENTITY_KEY = new NamespacedKey("clickmobs", "entity");
 
-  private final Map<String, Set<String>> allowedRegionsByWorld = new HashMap<>();
+  private final Set<String> defaultAllowedRegionIds = new HashSet<>();
   private final Map<UUID, PermissionAttachment> attachments = new HashMap<>();
   private final Map<UUID, BossBar> statusBars = new HashMap<>();
   private final Map<UUID, RegionStatus> lastRegionStatus = new HashMap<>();
@@ -163,20 +163,16 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
   }
 
   private void loadAllowedRegions() {
-    allowedRegionsByWorld.clear();
-    if (!getConfig().isConfigurationSection("allowed_regions")) {
-      return;
-    }
-    for (String world : getConfig().getConfigurationSection("allowed_regions").getKeys(false)) {
-      List<String> regionIDs = getConfig().getStringList("allowed_regions." + world);
-      Set<String> ids = new HashSet<>();
-      for (String regionID : regionIDs) {
-        String normalized = normalizeRegionId(regionID);
-        if (!normalized.isEmpty()) {
-          ids.add(normalized);
-        }
+    defaultAllowedRegionIds.clear();
+
+    for (String regionID : getConfig().getStringList("allowed_region_ids")) {
+      String normalized = normalizeRegionId(regionID);
+      if (!normalized.isEmpty()) {
+        defaultAllowedRegionIds.add(normalized);
       }
-      allowedRegionsByWorld.put(world, ids);
+    }
+    if (defaultAllowedRegionIds.isEmpty()) {
+      defaultAllowedRegionIds.add("clickmobs_allowed");
     }
   }
 
@@ -282,7 +278,7 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
 
   private boolean isClickMobsAllowed(Player player) {
     String worldName = player.getWorld().getName();
-    Set<String> allowedRegions = allowedRegionsByWorld.getOrDefault(worldName, Collections.emptySet());
+    Set<String> allowedRegions = resolveAllowedRegions(worldName);
     if (allowedRegions.isEmpty()) {
       return false;
     }
@@ -306,6 +302,10 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
       return true;
     }
     return false;
+  }
+
+  private Set<String> resolveAllowedRegions(String worldName) {
+    return defaultAllowedRegionIds;
   }
 
   private String normalizeRegionId(String regionID) {

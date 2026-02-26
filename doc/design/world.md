@@ -165,17 +165,11 @@ mc-ctl world spawn apply
 `infra/world/plugins/clickmobs-region-guard` から build された
 `ClickMobsRegionGuard.jar` を導入し、
 `infra/world/plugins/clickmobs-region-guard/config/config.yml` の
-`allowed_regions.<world>` に許可リージョンIDを列挙する。
+`allowed_region_ids` に許可リージョンIDを列挙する。
 
 ```yaml
-allowed_regions:
-  mainhall: []
-  residence:
-    - clickmobs_allowed
-  resource:
-    - clickmobs_allowed
-  factory:
-    - clickmobs_allowed
+allowed_region_ids:
+  - clickmobs_allowed
 ```
 
 列挙したリージョン内でのみ `ClickMobs` の捕獲・設置操作を許可する。

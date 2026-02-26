@@ -1,13 +1,6 @@
-# ClickMobs を許可するリージョンIDをワールドごとに列挙する。
-# 空配列のワールドでは ClickMobs は無効。
-allowed_regions:
-  mainhall: []
-  residence:
-    - clickmobs_allowed
-  resource:
-    - clickmobs_allowed
-  factory:
-    - clickmobs_allowed
+# ClickMobs を許可するリージョンID（全ワールド共通）。
+allowed_region_ids:
+  - clickmobs_allowed
 
 status_bossbar:
   enabled: true
