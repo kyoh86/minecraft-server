@@ -87,6 +87,7 @@
 
 - `mc-ctl world ensure`
     - world 定義に従って create/import する
+    - 適用後に `Multiverse` 登録と world ディレクトリ実体の両方を検証する
     - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
 - `mc-ctl world setup [--world <name>]`
     - `setup.commands` を対象次元で実行する

@@ -300,29 +300,43 @@ func (a app) ensureWorld(cfg worldConfig, forceCreate bool) error {
 		return fmt.Errorf("invalid world config: name/environment required")
 	}
 
-	if !forceCreate {
-		registered, err := a.worldRegisteredInMultiverse(cfg.Name)
-		if err != nil {
+	registered, err := a.worldRegisteredInMultiverse(cfg.Name)
+	if err != nil {
+		return err
+	}
+	onDisk := fileExists(filepath.Join(a.baseDir, "runtime", "world", cfg.Name))
+
+	if !forceCreate && registered && onDisk {
+		return nil
+	}
+	if registered && !onDisk {
+		fmt.Printf("world '%s' is registered but missing on disk; removing stale registration...\n", cfg.Name)
+		if err := a.sendConsole(fmt.Sprintf("mv remove %s", cfg.Name)); err != nil {
 			return err
 		}
-		if registered {
-			return nil
-		}
-
-		onDisk := fileExists(filepath.Join(a.baseDir, "runtime", "world", cfg.Name))
-		if onDisk {
-			return a.sendConsole(fmt.Sprintf("mv import %s %s", cfg.Name, cfg.Environment))
-		}
+		registered = false
 	}
 
-	parts := []string{"mv", "create", cfg.Name, cfg.Environment}
-	if seed := formatSeed(cfg.Seed); seed != "" {
-		parts = append(parts, "-s", seed)
+	var ensureErr error
+	if onDisk {
+		ensureErr = a.sendConsole(fmt.Sprintf("mv import %s %s", cfg.Name, cfg.Environment))
+	} else {
+		parts := []string{"mv", "create", cfg.Name, cfg.Environment}
+		if seed := formatSeed(cfg.Seed); seed != "" {
+			parts = append(parts, "-s", seed)
+		}
+		if cfg.WorldType != "" {
+			parts = append(parts, "-t", strings.ToUpper(cfg.WorldType))
+		}
+		ensureErr = a.sendConsole(strings.Join(parts, " "))
 	}
-	if cfg.WorldType != "" {
-		parts = append(parts, "-t", strings.ToUpper(cfg.WorldType))
+	if ensureErr != nil {
+		return ensureErr
 	}
-	return a.sendConsole(strings.Join(parts, " "))
+	if err := a.waitWorldEnsureReady(cfg.Name, 10*time.Second); err != nil {
+		return err
+	}
+	return nil
 }
 
 func worldDimensionID(worldName string) string {
@@ -1031,4 +1045,21 @@ func (a app) worldRegisteredInMultiverse(worldName string) (bool, error) {
 	}
 	re := regexp.MustCompile(`(?m)^` + regexp.QuoteMeta(worldName) + `:`)
 	return re.Match(b), nil
+}
+
+func (a app) waitWorldEnsureReady(worldName string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	worldPath := filepath.Join(a.baseDir, "runtime", "world", worldName)
+	for time.Now().Before(deadline) {
+		onDisk := fileExists(worldPath)
+		registered, err := a.worldRegisteredInMultiverse(worldName)
+		if err != nil {
+			return err
+		}
+		if onDisk && registered {
+			return nil
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	return fmt.Errorf("world '%s' was not ensured (registered/on-disk check failed); check server logs", worldName)
 }
