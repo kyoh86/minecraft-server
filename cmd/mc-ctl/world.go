@@ -875,7 +875,7 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 			MainhallSignZ:       -7,
 			ReturnGateMinY:      p.SurfaceY,
 			ReturnGateMaxY:      p.SurfaceY + 3,
-			ReturnGateMinX:      returnGateCenterX - 1,
+			ReturnGateMinX:      returnGateCenterX,
 			ReturnGateMaxX:      returnGateCenterX + 1,
 			ReturnGateMinZ:      2,
 			ReturnGateMaxZ:      3,
