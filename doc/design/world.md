@@ -66,6 +66,10 @@
     - `mainhall` ハブのレイアウトテンプレート
     - `WorldItems` をループしてゲートと看板を生成する
     - `mc-ctl world spawn stage` が runtime の datapack に描画する
+- `infra/world/schematics/hub.schem`
+    - `mainhall` 以外のワールドで使用する Hub 建築スキーマ
+    - `mc-ctl world spawn stage` / `mc-ctl world spawn apply` が runtime の
+      `plugins/FastAsyncWorldEdit/schematics/hub.schem` へ同期する
 - `worlds/env.schema.json`
     - `world.env.yml` 用 JSON Schema
 - `worlds/policy.schema.json`
@@ -107,8 +111,7 @@
     - `--world` 指定時は対象ワールドのみ適用する
     - `residence/resource/factory` では profile の `surface_y` を使い、
       `hubterraform apply <world> <surface_y>` でHub周辺整地を先に実行し、
-      `execute in <dimension> run execute positioned ...` で
-      `mcserver:world/hub_layout` を適用する
+      `hub.schem` を `0,surface_y,0` へ貼り付ける
 - `mc-ctl world regenerate [--world <name>]`
     - world を削除して再生成する（`deletable: true` のみ）
 
@@ -132,10 +135,9 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 中心座標（`0 -51 0`）の天井を開口している。
 
 `mainhall` のハブは `mc-ctl world spawn stage` が world 定義から生成した function を
-`mc-ctl world spawn apply` が
-`mcserver:mainhall/hub_layout` を実行して構築する。
+`mc-ctl world spawn apply` が `mcserver:mainhall/hub_layout` を実行して構築する。
 `residence` / `resource` / `factory` の小ハブは
-`mc-ctl world spawn apply` が profile 座標を基準に構築する。
+`mc-ctl world spawn apply` が profile 座標を基準に `hub.schem` を貼り付けて構築する。
 小ハブは施工前に `HubTerraform` で次を実行する。
 
 - `x,z=-32..32` を profile の `surfaceY` 高さへ平準化する
@@ -145,6 +147,7 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 - 継承時は非地形ブロック（柵・原木・葉・絨毯など）を除外する
 - 上空クリア高さは対象範囲の実地形最大Y + 96 を基準に決定し、浮島残りを防ぐ
 - 基礎は `surfaceY-16` と `OCEAN_FLOOR` の低い方まで石で充填する
+- 液体の再充填は `water` のみ行い、`lava` は再充填しない
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
 同時に `worldguard.regions.yml.tmpl` の反映結果により
 スポーン周辺での建設・破壊・爆破を禁止する。

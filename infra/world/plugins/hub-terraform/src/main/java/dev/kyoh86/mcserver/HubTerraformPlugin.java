@@ -123,7 +123,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
           fill(edit, x, targetTopY + 1, z, x, clearMaxY, z, air);
           Material fluidMat = originalFluidMaterial[x + OUTER][z + OUTER];
           int fluidSurfaceY = originalFluidSurfaceY[x + OUTER][z + OUTER];
-          if (fluidMat != null && fluidSurfaceY > targetTopY) {
+          if (fluidMat == Material.WATER && fluidSurfaceY > targetTopY) {
             BlockState fluid = toBlockStateOrDefault(fluidMat, null);
             if (fluid != null) {
               fill(edit, x, targetTopY + 1, z, x, Math.min(clearMaxY, fluidSurfaceY), z, fluid);
