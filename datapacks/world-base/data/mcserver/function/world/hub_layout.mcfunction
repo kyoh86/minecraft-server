@@ -1,5 +1,5 @@
 # Room
-fill ~-9 ~-2 ~-9 ~9 ~-2 ~9 polished_deepslate
+fill ~-9 ~-2 ~-9 ~9 ~-2 ~9 obsidian
 fill ~-8 ~-1 ~-8 ~8 ~5 ~8 smooth_quartz outline
 fill ~-7 ~ ~-7 ~7 ~4 ~7 air
 
@@ -14,9 +14,8 @@ fill ~ ~-1 ~ ~ ~-1 ~ sea_lantern
 ## East
 setblock ~-8 ~0 ~ iron_door[facing=west,half=lower,open=false]
 setblock ~-8 ~1 ~ iron_door[facing=west,half=upper,open=false]
-setblock ~-7 ~0 ~ heavy_weighted_pressure_plate
 ### Circuit guard blocks
-fill ~-9 ~-2 ~3 ~-3 ~-5 ~-5 minecraft:smooth_stone
+fill ~-9 ~-2 ~3 ~-3 ~-5 ~-5 minecraft:obsidian
 fill ~-8 ~-2 ~2 ~-4 ~-4 ~-4 minecraft:air
 ### Circuit
 fill ~-8 ~0 ~-1 ~-8 ~-2 ~-1 minecraft:observer[facing=up]
@@ -41,9 +40,8 @@ fill ~-6 ~-3 ~-0 ~-6 ~-3 ~1 minecraft:redstone_wire
 ## West
 setblock ~8 ~0 ~0 minecraft:iron_door[facing=east,half=lower]
 setblock ~8 ~1 ~0 minecraft:iron_door[facing=east,half=upper]
-setblock ~7 ~0 ~ heavy_weighted_pressure_plate
 ### Circuit guard blocks
-fill ~9 ~-2 ~3 ~3 ~-5 ~-5 minecraft:smooth_stone
+fill ~9 ~-2 ~3 ~3 ~-5 ~-5 minecraft:obsidian
 fill ~8 ~-2 ~2 ~4 ~-4 ~-4 minecraft:air
 ### Circuit
 fill ~8 ~0 ~-1 ~8 ~-2 ~-1 minecraft:observer[facing=up]
@@ -65,7 +63,7 @@ setblock ~5 ~-3 ~-2 minecraft:comparator[facing=north]
 fill ~6 ~-3 ~-1 ~5 ~-3 ~-1 minecraft:redstone_wire
 fill ~6 ~-3 ~-0 ~6 ~-3 ~1 minecraft:redstone_wire
 
-fill ~-2 ~ ~-9 ~2 ~5 ~-9 polished_deepslate
+fill ~-2 ~ ~-9 ~2 ~5 ~-9 obsidian
 fill ~-2 ~ ~-8 ~2 ~4 ~-8 obsidian outline
 fill ~-1 ~1 ~-8 ~1 ~3 ~-8 air
 setblock ~ ~ ~-6 oak_sign[rotation=0]
