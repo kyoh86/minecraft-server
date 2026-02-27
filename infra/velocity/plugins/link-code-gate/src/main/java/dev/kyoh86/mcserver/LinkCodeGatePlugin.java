@@ -18,8 +18,8 @@ import org.slf4j.Logger;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -27,12 +27,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.yaml.snakeyaml.Yaml;
 
 @Plugin(
   id = "linkcodegate",
@@ -193,86 +196,28 @@ public final class LinkCodeGatePlugin {
 
   private WhitelistEntries loadWhitelistEntries() {
     Set<String> uuids = new HashSet<>();
-    try (BufferedReader reader = Files.newBufferedReader(Paths.get(allowlistPath), StandardCharsets.UTF_8)) {
-      String line;
-      String section = "";
-      while ((line = reader.readLine()) != null) {
-        String trimmed = stripComments(line.trim());
-        if (trimmed.isEmpty()) {
+    try (InputStream in = Files.newInputStream(Paths.get(allowlistPath))) {
+      Yaml yaml = new Yaml();
+      AllowlistFile allowlist = yaml.loadAs(in, AllowlistFile.class);
+      if (allowlist == null || allowlist.uuids == null) {
+        return new WhitelistEntries(uuids);
+      }
+      for (String uuid : allowlist.uuids) {
+        if (uuid == null || uuid.isBlank()) {
           continue;
         }
-        if (trimmed.toLowerCase().startsWith("uuids:")) {
-          String rest = trimmed.substring("uuids:".length()).trim();
-          if (!rest.isEmpty()) {
-            for (String item : parseInlineYamlList(rest)) {
-              if (!item.isBlank()) {
-                uuids.add(item.toLowerCase());
-              }
-            }
-            section = "";
-            continue;
-          }
-          section = "uuids";
-          continue;
-        }
-        if (trimmed.startsWith("-")) {
-          String value = parseYamlListValue(trimmed);
-          if (value.isBlank()) {
-            continue;
-          }
-          if ("uuids".equals(section)) {
-            uuids.add(value.toLowerCase());
-          }
-        }
+        uuids.add(uuid.trim().toLowerCase());
       }
     } catch (IOException e) {
       logger.warn("failed to read allowlist file: {}", allowlistPath, e);
+    } catch (Exception e) {
+      logger.warn("failed to parse allowlist file: {}", allowlistPath, e);
     }
     return new WhitelistEntries(uuids);
   }
 
-  private static String stripComments(String line) {
-    int idx = line.indexOf('#');
-    if (idx >= 0) {
-      return line.substring(0, idx).trim();
-    }
-    return line;
-  }
-
-  private static String parseYamlListValue(String line) {
-    int idx = line.indexOf('-');
-    if (idx < 0 || idx + 1 >= line.length()) {
-      return "";
-    }
-    String raw = line.substring(idx + 1).trim();
-    return unquoteYamlScalar(raw.trim());
-  }
-
-  private static List<String> parseInlineYamlList(String value) {
-    String trimmed = value.trim();
-    if (!(trimmed.startsWith("[") && trimmed.endsWith("]"))) {
-      return Collections.emptyList();
-    }
-    String body = trimmed.substring(1, trimmed.length() - 1).trim();
-    if (body.isEmpty()) {
-      return Collections.emptyList();
-    }
-    String[] parts = body.split(",");
-    List<String> out = new java.util.ArrayList<>(parts.length);
-    for (String part : parts) {
-      String item = unquoteYamlScalar(stripComments(part).trim());
-      if (!item.isEmpty()) {
-        out.add(item);
-      }
-    }
-    return out;
-  }
-
-  private static String unquoteYamlScalar(String raw) {
-    if (raw.length() >= 2 && ((raw.startsWith("\"") && raw.endsWith("\"")) || (raw.startsWith("'") && raw.endsWith("'")))) {
-      return raw.substring(1, raw.length() - 1).trim();
-    }
-    return raw.trim();
+  private static final class AllowlistFile {
+    public List<String> uuids = new ArrayList<>();
   }
 
   private record WhitelistEntries(Set<String> uuidSet) {}

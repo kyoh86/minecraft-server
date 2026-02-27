@@ -60,6 +60,7 @@
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
     - チャット案内は1行のみ表示し、`LINK CODE` と `/mc link code:XXXX` の両方を
       クリックコピー可能にする
+    - `runtime/velocity/allowlist.yml` は `SnakeYAML` で読み取り、`uuids` 配列を正規パースする
     - 本体は `infra/velocity/plugins/link-code-gate/src` を `infra/velocity/Dockerfile` の build 時に生成
 - `HubTerraform`
     - ワールドHub周辺の整地を自動化するプラグイン
