@@ -1,0 +1,96 @@
+surface:
+  frozen_cover_ignore_min_y: 64
+  probe:
+    radius: 24
+    step: 12
+    min_y: 63
+  frozen_cover_materials:
+    - ICE
+    - PACKED_ICE
+    - BLUE_ICE
+    - SNOW
+    - SNOW_BLOCK
+
+terrain:
+  non_terrain:
+    exact:
+      - WATER
+      - LAVA
+      - MOSS_BLOCK
+      - NETHERRACK
+      - MAGMA_BLOCK
+      - BEE_NEST
+      - BEEHIVE
+      - COBBLESTONE
+      - MOSSY_COBBLESTONE
+      - SMOOTH_STONE
+      - BOOKSHELF
+      - HAY_BLOCK
+      - PUMPKIN
+      - CARVED_PUMPKIN
+      - MELON
+      - CRAFTING_TABLE
+      - FURNACE
+      - BLAST_FURNACE
+      - SMOKER
+      - CARTOGRAPHY_TABLE
+      - BREWING_STAND
+      - COMPOSTER
+      - BARREL
+      - FLETCHING_TABLE
+      - CAULDRON
+      - LECTERN
+      - STONECUTTER
+      - LOOM
+      - SMITHING_TABLE
+      - GRINDSTONE
+      - BRICKS
+      - MUD_BRICKS
+      - SUSPICIOUS_GRAVEL
+      - SUSPICIOUS_SAND
+      - MUDDY_MANGROVE_ROOTS
+      - MANGROVE_ROOTS
+      - GRAVEL
+      - CLAY
+      - BLUE_ICE
+      - OBSIDIAN
+      - CRYING_OBSIDIAN
+      - STONE_BRICKS
+      - CHISELED_STONE_BRICKS
+      - MOSSY_STONE_BRICKS
+      - GOLD_BLOCK
+      - TNT
+    suffix:
+      - _ORE
+      - _CARPET
+      - _TERRACOTTA
+      - _WOOL
+      - _PLANKS
+      - _RAIL
+      - _TORCH
+      - _WALL_TORCH
+      - _BUTTON
+      - _PRESSURE_PLATE
+      - _SIGN
+      - _WALL_SIGN
+      - _BANNER
+      - _WALL_BANNER
+    contains:
+      - FENCE
+      - DOOR
+      - TRAPDOOR
+      - LEAVES
+      - LOG
+      - _WOOD
+      - CORAL
+      - KELP
+      - SEAGRASS
+      - SEA_PICKLE
+      - STEM
+      - VINE
+      - CHAIN
+      - LANTERN
+      - SAPLING
+      - FLOWER
+      - MUSHROOM
+      - SANDSTONE

@@ -10,7 +10,12 @@ import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import org.bukkit.HeightMap;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -24,15 +29,28 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   private static final int OUTER = 64;
   private static final int BLUR_RADIUS = 2;
   private static final int CLEAR_MARGIN = 96;
-  private static final int SURFACE_FROZEN_COVER_IGNORE_MIN_Y = 64;
-  private static final int SURFACE_PROBE_RADIUS = 24;
-  private static final int SURFACE_PROBE_STEP = 12;
+
+  private static final int DEFAULT_SURFACE_FROZEN_COVER_IGNORE_MIN_Y = 64;
+  private static final int DEFAULT_SURFACE_PROBE_RADIUS = 24;
+  private static final int DEFAULT_SURFACE_PROBE_STEP = 12;
   private static final int SEA_LEVEL_Y = 63;
+  private static final int DEFAULT_SURFACE_PROBE_MIN_Y = SEA_LEVEL_Y;
   private static final int WATER_FILL_TOP_BLOCK_Y = SEA_LEVEL_Y - 1;
   private static final int WATER_SEED_MAX_Y = WATER_FILL_TOP_BLOCK_Y;
 
+  private int surfaceFrozenCoverIgnoreMinY = DEFAULT_SURFACE_FROZEN_COVER_IGNORE_MIN_Y;
+  private int surfaceProbeRadius = DEFAULT_SURFACE_PROBE_RADIUS;
+  private int surfaceProbeStep = DEFAULT_SURFACE_PROBE_STEP;
+  private int surfaceProbeMinY = DEFAULT_SURFACE_PROBE_MIN_Y;
+  private Set<Material> frozenCoverMaterials = new HashSet<>();
+  private Set<Material> nonTerrainExactMaterials = new HashSet<>();
+  private List<String> nonTerrainSuffixes = new ArrayList<>();
+  private List<String> nonTerrainContains = new ArrayList<>();
+
   @Override
   public void onEnable() {
+    saveDefaultConfig();
+    loadBehaviorConfig();
     if (getCommand("hubterraform") != null) {
       getCommand("hubterraform").setExecutor(this);
     }
@@ -88,17 +106,20 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   }
 
   private SurfaceProbeResult probeSurfaceY(World world) {
-    int rowCount = (SURFACE_PROBE_RADIUS * 2) / SURFACE_PROBE_STEP + 1;
+    int rowCount = (surfaceProbeRadius * 2) / surfaceProbeStep + 1;
     int totalSamples = rowCount * rowCount;
     int[] samples = new int[totalSamples];
     int sampleCount = 0;
     long sum = 0;
 
-    for (int x = -SURFACE_PROBE_RADIUS; x <= SURFACE_PROBE_RADIUS; x += SURFACE_PROBE_STEP) {
-      for (int z = -SURFACE_PROBE_RADIUS; z <= SURFACE_PROBE_RADIUS; z += SURFACE_PROBE_STEP) {
+    for (int x = -surfaceProbeRadius; x <= surfaceProbeRadius; x += surfaceProbeStep) {
+      for (int z = -surfaceProbeRadius; z <= surfaceProbeRadius; z += surfaceProbeStep) {
         int terrainY = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
         int feetY = terrainY + 1;
         feetY = descendHighAltitudeFrozenCover(world, x, z, feetY);
+        if (feetY < surfaceProbeMinY) {
+          feetY = surfaceProbeMinY;
+        }
         samples[sampleCount] = feetY;
         sampleCount++;
         sum += feetY;
@@ -116,7 +137,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   private int descendHighAltitudeFrozenCover(World world, int x, int z, int feetY) {
     int y = feetY;
     for (int i = 0; i < 256; i++) {
-      if (y < SURFACE_FROZEN_COVER_IGNORE_MIN_Y) {
+      if (y < surfaceFrozenCoverIgnoreMinY) {
         break;
       }
       Material below = world.getBlockAt(x, y - 1, z).getType();
@@ -398,6 +419,14 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
     if (worldSurface == Material.WATER || worldSurface == Material.LAVA) {
       fluidSurfaceY = worldSurfaceY;
       fluid = worldSurface;
+    } else if (worldSurface == Material.ICE) {
+      if (worldSurfaceY > minY) {
+        Material belowSurface = world.getBlockAt(x, worldSurfaceY - 1, z).getType();
+        if (belowSurface == Material.WATER) {
+          fluidSurfaceY = worldSurfaceY;
+          fluid = Material.WATER;
+        }
+      }
     }
 
     for (int y = startY; y >= minY; y--) {
@@ -440,18 +469,14 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   }
 
   private boolean isHighAltitudeFrozenCover(Material material, int y) {
-    if (y < SURFACE_FROZEN_COVER_IGNORE_MIN_Y) {
+    if (y < surfaceFrozenCoverIgnoreMinY) {
       return false;
     }
     return isFrozenCover(material);
   }
 
   private boolean isFrozenCover(Material material) {
-    return material == Material.ICE
-      || material == Material.PACKED_ICE
-      || material == Material.BLUE_ICE
-      || material == Material.SNOW
-      || material == Material.SNOW_BLOCK;
+    return frozenCoverMaterials.contains(material);
   }
 
   private boolean isTerrainFillCandidate(Material material) {
@@ -468,52 +493,84 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   }
 
   private boolean isNonTerrainMaterial(Material material) {
-    if (material == Material.WATER || material == Material.LAVA) {
-      return true;
+    if (material == null) {
+      return false;
     }
-    if (material == Material.MOSS_BLOCK
-      || material == Material.MUDDY_MANGROVE_ROOTS
-      || material == Material.MANGROVE_ROOTS
-      || material == Material.GRAVEL
-      || material == Material.CLAY) {
+    if (nonTerrainExactMaterials.contains(material)) {
       return true;
     }
     String name = material.name();
-    if (name.endsWith("_ORE")) {
-      return true;
+    for (String suffix : nonTerrainSuffixes) {
+      if (!suffix.isEmpty() && name.endsWith(suffix)) {
+        return true;
+      }
     }
-    if (name.endsWith("_CARPET")
-      || name.endsWith("_RAIL")
-      || name.endsWith("_TORCH")
-      || name.endsWith("_WALL_TORCH")
-      || name.endsWith("_BUTTON")
-      || name.endsWith("_PRESSURE_PLATE")
-      || name.endsWith("_SIGN")
-      || name.endsWith("_WALL_SIGN")
-      || name.endsWith("_BANNER")
-      || name.endsWith("_WALL_BANNER")) {
-      return true;
-    }
-    if (name.contains("FENCE")
-      || name.contains("DOOR")
-      || name.contains("TRAPDOOR")
-      || name.contains("LEAVES")
-      || name.contains("LOG")
-      || name.contains("_WOOD")
-      || name.contains("CORAL")
-      || name.contains("KELP")
-      || name.contains("SEAGRASS")
-      || name.contains("SEA_PICKLE")
-      || name.contains("STEM")
-      || name.contains("VINE")
-      || name.contains("CHAIN")
-      || name.contains("LANTERN")
-      || name.contains("SAPLING")
-      || name.contains("FLOWER")
-      || name.contains("MUSHROOM")) {
-      return true;
+    for (String token : nonTerrainContains) {
+      if (!token.isEmpty() && name.contains(token)) {
+        return true;
+      }
     }
     return false;
+  }
+
+  private void loadBehaviorConfig() {
+    surfaceFrozenCoverIgnoreMinY = getConfig().getInt(
+      "surface.frozen_cover_ignore_min_y",
+      DEFAULT_SURFACE_FROZEN_COVER_IGNORE_MIN_Y
+    );
+    surfaceProbeRadius = Math.max(1, getConfig().getInt("surface.probe.radius", DEFAULT_SURFACE_PROBE_RADIUS));
+    surfaceProbeStep = Math.max(1, getConfig().getInt("surface.probe.step", DEFAULT_SURFACE_PROBE_STEP));
+    surfaceProbeMinY = getConfig().getInt("surface.probe.min_y", DEFAULT_SURFACE_PROBE_MIN_Y);
+    frozenCoverMaterials = loadMaterialSet("surface.frozen_cover_materials");
+    nonTerrainExactMaterials = loadMaterialSet("terrain.non_terrain.exact");
+    nonTerrainSuffixes = loadPatternList("terrain.non_terrain.suffix");
+    nonTerrainContains = loadPatternList("terrain.non_terrain.contains");
+    getLogger().info(
+      "hubterraform config loaded: probeRadius=" + surfaceProbeRadius
+        + " probeStep=" + surfaceProbeStep
+        + " probeMinY=" + surfaceProbeMinY
+        + " frozenCoverIgnoreMinY=" + surfaceFrozenCoverIgnoreMinY
+        + " nonTerrainExact=" + nonTerrainExactMaterials.size()
+        + " suffix=" + nonTerrainSuffixes.size()
+        + " contains=" + nonTerrainContains.size()
+    );
+  }
+
+  private Set<Material> loadMaterialSet(String path) {
+    List<String> raw = getConfig().getStringList(path);
+    Set<Material> result = new HashSet<>();
+    if (raw == null || raw.isEmpty()) {
+      getLogger().warning("hubterraform config: empty list " + path);
+      return result;
+    }
+    for (String value : raw) {
+      if (value == null || value.isBlank()) {
+        continue;
+      }
+      Material material = Material.matchMaterial(value.trim().toUpperCase(Locale.ROOT), false);
+      if (material == null) {
+        getLogger().warning("hubterraform config: unknown material in " + path + ": " + value);
+        continue;
+      }
+      result.add(material);
+    }
+    return result;
+  }
+
+  private List<String> loadPatternList(String path) {
+    List<String> raw = getConfig().getStringList(path);
+    List<String> result = new ArrayList<>();
+    if (raw == null || raw.isEmpty()) {
+      getLogger().warning("hubterraform config: empty list " + path);
+      return result;
+    }
+    for (String value : raw) {
+      if (value == null || value.isBlank()) {
+        continue;
+      }
+      result.add(value.trim().toUpperCase(Locale.ROOT));
+    }
+    return result;
   }
 
   private static final class TerrainColumn {

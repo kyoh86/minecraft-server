@@ -70,6 +70,13 @@
     - `mainhall` 以外のワールドで使用する Hub 建築スキーマ
     - `mc-ctl world spawn stage` / `mc-ctl world spawn apply` が runtime の
       `plugins/FastAsyncWorldEdit/schematics/hub.schem` へ同期する
+- `infra/world/plugins/hub-terraform/src/main/resources/config.yml`
+    - `HubTerraform` の地表判定設定
+    - 非地形ブロック除外は `terrain.non_terrain.exact`（個別）/ `suffix` / `contains` で管理する
+    - `exact` には液体・作業台系・装飾/加工済み建材（例: 黒曜石系、石レンガ系、金ブロック、TNT）を含め、自然地形判定から除外する
+    - `contains` で語を指定して系統除外できる（例: `SANDSTONE` で砂岩系全般）
+    - `surface.probe.*` で profile 用サンプリングの半径・刻み・下限を管理する
+    - プラグイン内部に同等の除外リストは持たず、挙動は config のみを正として決定する
 - `worlds/env.schema.json`
     - `world.env.yml` 用 JSON Schema
 - `worlds/policy.schema.json`
@@ -96,6 +103,7 @@
 - `mc-ctl world spawn profile [--world <name>]`
     - `HubTerraform` の `hubterraform probe <world>` を使って地表Y（`motion_blocking_no_leaves`）を中心周辺の複数点で検出する
     - サンプル点は `x,z=-24..24` を `12` 刻みで走査する（25点）
+    - 各サンプルの地表Yは下限 `y=63` を適用する（`63` 未満は `63` に丸める）
     - 最終 `surface_y` は `中央値` / `平均値(切り捨て)` / `40パーセンタイル` の最小値を採用する
     - `y=64` 以上では `ice` / `packed_ice` / `blue_ice` / `snow` / `snow_block` を地表候補から除外する
     - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
@@ -149,12 +157,13 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 - 外周 `x,z=-64..64` を `smoothstep` 補間で元地形へ接続する
 - 補間先の高さは元地形を近傍平均した値を使い、局所的な凹凸を抑える
 - 表層1層とその下層は元地形のブロック種を可能な限り継承する
-- 継承時は非地形ブロック（柵・原木・葉・絨毯など）を除外する
+- 継承時は `HubTerraform` 設定（`terrain.non_terrain.exact` / `suffix` / `contains`）に一致する非地形ブロックを除外する
 - `y=64` 以上では `ice` / `packed_ice` / `blue_ice` / `snow` / `snow_block` を地表判定に使わない
 - 上空クリア高さは対象範囲の実地形最大Y + 96 を基準に決定し、浮島残りを防ぐ
 - 基礎は `surfaceY-16` と `OCEAN_FLOOR` の低い方まで石で充填する
 - 液体の再充填は `water` のみ行い、`lava` は再充填しない
 - 水面の再充填は元の水面セルを起点に、整地後の地形高を見ながら隣接方向へ伝播して欠けを埋める
+- 凍結面では `ice` の直下が `water` の列も再充填シードとして扱う（`packed_ice` / `blue_ice` はシード化しない）
 - 伝播シードに使う水面は海面（`y=63`）基準で、水ブロック座標 `y=62` 以下に限定し、高高度の水源で低地が過充填されるのを防ぐ
 - 伝播結果が未設定のセルには水再充填を行わない
 - 再充填する水ブロックの上端は固定で `y=62`（海面 `y=63`）とし、列ごとの水位ぶれを抑制する
