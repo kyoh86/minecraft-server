@@ -104,7 +104,7 @@ services:
       REPLACE_ENV_VARIABLE_PREFIX: "CFG_"
       MC_LINK_REDIS_ADDR: "redis:6379"
       MC_LINK_REDIS_DB: "0"
-      MC_LINK_ALLOWLIST_PATH: "/server/allowlist.yml"
+      MC_LINK_ALLOWLIST_PATH: "/allowlist/allowlist.yml"
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f velocity >/dev/null"]
       interval: 5s
@@ -129,6 +129,12 @@ services:
         read_only: true
         bind:
           create_host_path: false
+      - type: bind
+        source: ../runtime/allowlist
+        target: /allowlist
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - mcnet
   mc-link:
@@ -144,7 +150,7 @@ services:
     environment:
       MC_LINK_REDIS_ADDR: "redis:6379"
       MC_LINK_REDIS_DB: "0"
-      MC_LINK_ALLOWLIST_PATH: "/allowlist.yml"
+      MC_LINK_ALLOWLIST_PATH: "/allowlist/allowlist.yml"
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f mc-link-bot >/dev/null"]
       interval: 5s
@@ -155,8 +161,8 @@ services:
       - mc_link_discord
     volumes:
       - type: bind
-        source: ../runtime/velocity/allowlist.yml
-        target: /allowlist.yml
+        source: ../runtime/allowlist
+        target: /allowlist
         bind:
           create_host_path: false
     networks:

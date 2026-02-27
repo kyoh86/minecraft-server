@@ -96,7 +96,7 @@ func loadConfig() (config, error) {
 	cfg := config{
 		RedisAddr:     env("MC_LINK_REDIS_ADDR", "redis:6379"),
 		RedisPassword: env("MC_LINK_REDIS_PASSWORD", ""),
-		AllowlistPath: env("MC_LINK_ALLOWLIST_PATH", "/data/velocity/allowlist.yml"),
+		AllowlistPath: env("MC_LINK_ALLOWLIST_PATH", "/allowlist/allowlist.yml"),
 		AllowedRoleID: map[string]struct{}{},
 	}
 	secretPath := env("MC_LINK_DISCORD_SECRET_FILE", defaultDiscordSecretPath)
@@ -185,7 +185,7 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 		respond(s, i, "code が必要です。")
 		return
 	}
-	code := strings.ToUpper(strings.TrimSpace(sub[0].StringValue()))
+	code := normalizeLinkCodeInput(sub[0].StringValue())
 	if code == "" {
 		respond(s, i, "code が空です。")
 		return
@@ -201,6 +201,7 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 
 	entry, status, err := claimCodeAtomically(ctx, rdb, code, interactionUserID(i), time.Now().UTC())
 	if err != nil {
+		log.Printf("claim code failed: code=%q err=%v", code, err)
 		respond(s, i, "内部エラー: code storage を読めませんでした。")
 		return
 	}
@@ -216,7 +217,11 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, cfg con
 		return
 	}
 
-	if err := mclink.AddAllowlistEntry(cfg.AllowlistPath, entry.Type, entry.Value); err != nil {
+	if err := mclink.AddAllowlistEntry(ctx, rdb, cfg.AllowlistPath, entry.Type, entry.Value); err != nil {
+		log.Printf(
+			"allowlist update failed: path=%q type=%q value=%q err=%v",
+			cfg.AllowlistPath, entry.Type, entry.Value, err,
+		)
 		_ = rollbackClaimIfOwned(ctx, rdb, entry)
 		respond(s, i, "内部エラー: allowlist 更新に失敗しました。")
 		return
@@ -273,6 +278,14 @@ func env(key, fallback string) string {
 		return fallback
 	}
 	return v
+}
+
+func normalizeLinkCodeInput(raw string) string {
+	code := strings.TrimSpace(raw)
+	code = strings.TrimPrefix(code, "/mc link ")
+	code = strings.TrimPrefix(code, "code:")
+	code = strings.TrimSpace(code)
+	return strings.ToUpper(code)
 }
 
 func claimCodeAtomically(ctx context.Context, rdb *redis.Client, code, claimer string, claimedAt time.Time) (mclink.CodeEntry, claimCodeStatus, error) {

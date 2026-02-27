@@ -136,7 +136,7 @@ mc-ctl player delink
 mc-ctl player delink <uuid>
 ```
 
-`mc-ctl player delink` は `runtime/velocity/allowlist.yml` を読み込み、
+`mc-ctl player delink` は `runtime/allowlist/allowlist.yml` を読み込み、
 対話選択した1件を削除する。
 `mc-ctl player delink <uuid>` を指定した場合は、対話なしで UUID エントリを削除する。
 `mc-ctl player op/admin` の `<name>` は Minecraft ユーザー名形式（英数字と `_`、3〜16文字）のみ受け付ける。

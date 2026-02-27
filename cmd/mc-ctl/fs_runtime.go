@@ -13,6 +13,7 @@ import (
 func (a app) ensureRuntimeLayout() error {
 	for _, dir := range []string{
 		filepath.Join(a.baseDir, "runtime"),
+		filepath.Join(a.baseDir, "runtime", "allowlist"),
 		filepath.Join(a.baseDir, "runtime", "mc-link"),
 		filepath.Join(a.baseDir, "runtime", "limbo"),
 		filepath.Join(a.baseDir, "runtime", "redis"),
@@ -36,9 +37,16 @@ func (a app) ensureRuntimeLayout() error {
 		}
 		_ = os.Remove(probePath)
 	}
-	allowlistPath := filepath.Join(a.baseDir, "runtime", "velocity", "allowlist.yml")
+	allowlistPath := filepath.Join(a.baseDir, "runtime", "allowlist", "allowlist.yml")
+	legacyAllowlistPath := filepath.Join(a.baseDir, "runtime", "velocity", "allowlist.yml")
 	if !fileExists(allowlistPath) {
-		const defaultAllowlist = "uuids: []\nnicks: []\n"
+		if fileExists(legacyAllowlistPath) {
+			if err := copyFile(legacyAllowlistPath, allowlistPath); err != nil {
+				return err
+			}
+			return nil
+		}
+		const defaultAllowlist = "uuids: []\n"
 		if err := os.WriteFile(allowlistPath, []byte(defaultAllowlist), 0o644); err != nil {
 			return err
 		}

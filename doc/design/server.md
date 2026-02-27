@@ -60,7 +60,7 @@
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
     - チャット案内は1行のみ表示し、`LINK CODE` と `/mc link code:XXXX` の両方を
       クリックコピー可能にする
-    - `runtime/velocity/allowlist.yml` は `SnakeYAML` で読み取り、`uuids` 配列を正規パースする
+    - `runtime/allowlist/allowlist.yml` は `SnakeYAML` で読み取り、`uuids` 配列を正規パースする
     - Redis へのワンタイムコード書き込みは `Jedis` クライアントで実行する
     - 本体は `infra/velocity/plugins/link-code-gate/src` を `infra/velocity/Dockerfile` の build 時に生成
 - `HubTerraform`
@@ -81,7 +81,7 @@
 `mc-link-bot` の `/mc link` 実行者は `secrets/mc_link_discord.toml` の
 `allowed_role_ids` で制限できる（空配列なら制限なし）。
 
-- `runtime/velocity/allowlist.yml`
+- `runtime/allowlist/allowlist.yml`
     - 実運用時の実体
 
 未登録プレイヤーがログインしようとすると、Velocity の `LinkCodeGate` 一時コードを自動発行する。
@@ -90,9 +90,10 @@ NOTE: ワンタイムコードは Redis（`runtime/redis`）に保存される�
 `LinkCodeGate` の Redis 書き込みは接続イベント本体から分離して非同期実行し、
 接続/読取タイムアウトを設定する。
 
-`mc-link` コンテナが Discord の `/mc link <code>` を受け取り、`runtime/velocity/allowlist.yml` にエントリを追加します。
-`mc-link` が書き込む bind mount は `allowlist.yml` 単体のみとし、
-`runtime/velocity` 全体にはアクセスさせない。
+`mc-link` コンテナが Discord の `/mc link <code>` を受け取り、`runtime/allowlist/allowlist.yml` にエントリを追加します。
+`mc-link` は `runtime/allowlist` を `/allowlist` へ bind mount し、
+`/allowlist/allowlist.yml` を更新する。
+allowlist 更新時は Redis ロックを取得し、`allowlist.yml.tmp` への出力後に `rename` で置換する。
 コード消費は Redis 上で原子的に確定し、同一コードの多重利用を防ぐ。
 allowlist 更新に失敗した場合は、同一ユーザーによる当該 claim を巻き戻して再試行可能にする。
 `LinkCodeGate` の通常ログにはワンタイムコード値を出力しない。
@@ -103,7 +104,9 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - Paper 本体データ
 - `runtime/velocity`
     - Velocity 本体データとプラグインデータ
-    - `runtime/velocity/allowlist.yml`
+- `runtime/allowlist`
+    - 認可リスト保存ディレクトリ
+    - `runtime/allowlist/allowlist.yml`
         - 認可リスト
 - `runtime/redis`
     - Redis データ
@@ -129,7 +132,7 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - `redis` コンテナ（`/mc link` ワンタイムコード保存）
     - `mc-link` コンテナ（Discord `/mc link` 連携）
         - `mc_link_discord.toml` を Docker secrets 経由で `/run/secrets/mc_link_discord` に注入する
-        - `../runtime/velocity/allowlist.yml` のみを `/allowlist.yml` として書き込みマウントする
+        - `../runtime/allowlist` を `/allowlist` として書き込みマウントし、`/allowlist/allowlist.yml` を更新する
     - `playit` コンテナ（playit.gg トンネル）
         - `runtime/playit` を `/playit-state` へ bind し、`playit.toml` を永続化する
         - `playit_secret_key` を Docker secrets 経由で `/run/secrets/playit_secret_key` に注入する

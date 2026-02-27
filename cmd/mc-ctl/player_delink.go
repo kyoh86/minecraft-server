@@ -15,7 +15,6 @@ import (
 
 type velocityAllowlist struct {
 	UUIDs []string `yaml:"uuids"`
-	Nicks []string `yaml:"nicks"`
 }
 
 type allowlistEntry struct {
@@ -24,7 +23,7 @@ type allowlistEntry struct {
 }
 
 func (a app) playerDelink(uuid string) error {
-	path := filepath.Join(a.baseDir, "runtime", "velocity", "allowlist.yml")
+	path := filepath.Join(a.baseDir, "runtime", "allowlist", "allowlist.yml")
 	if strings.TrimSpace(uuid) != "" {
 		removed, err := removeAllowlistEntry(path, allowlistEntry{typ: "uuid", value: uuid})
 		if err != nil {
@@ -107,17 +106,11 @@ func loadVelocityAllowlist(path string) (velocityAllowlist, error) {
 }
 
 func flattenAllowlistEntries(cfg velocityAllowlist) []allowlistEntry {
-	entries := make([]allowlistEntry, 0, len(cfg.UUIDs)+len(cfg.Nicks))
+	entries := make([]allowlistEntry, 0, len(cfg.UUIDs))
 	for _, v := range cfg.UUIDs {
 		v = strings.TrimSpace(v)
 		if v != "" {
 			entries = append(entries, allowlistEntry{typ: "uuid", value: v})
-		}
-	}
-	for _, v := range cfg.Nicks {
-		v = strings.TrimSpace(v)
-		if v != "" {
-			entries = append(entries, allowlistEntry{typ: "nick", value: v})
 		}
 	}
 	return entries
@@ -147,8 +140,6 @@ func removeAllowlistEntry(path string, target allowlistEntry) (bool, error) {
 	switch target.typ {
 	case "uuid":
 		cfg.UUIDs, removed = removeOneFold(cfg.UUIDs, target.value)
-	case "nick":
-		cfg.Nicks, removed = removeOneFold(cfg.Nicks, target.value)
 	default:
 		return false, fmt.Errorf("unknown entry type: %s", target.typ)
 	}

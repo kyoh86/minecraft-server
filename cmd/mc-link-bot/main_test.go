@@ -29,3 +29,18 @@ func TestParseCodeEntryHash(t *testing.T) {
 		t.Fatalf("unexpected claimed_at: got=%v want=%v", got, want)
 	}
 }
+
+func TestNormalizeLinkCodeInput(t *testing.T) {
+	t.Parallel()
+	cases := map[string]string{
+		"ABCD1234":               "ABCD1234",
+		"abcd1234":               "ABCD1234",
+		" code:abcd1234 ":        "ABCD1234",
+		"/mc link code:abcd1234": "ABCD1234",
+	}
+	for in, want := range cases {
+		if got := normalizeLinkCodeInput(in); got != want {
+			t.Fatalf("normalize mismatch: input=%q got=%q want=%q", in, got, want)
+		}
+	}
+}

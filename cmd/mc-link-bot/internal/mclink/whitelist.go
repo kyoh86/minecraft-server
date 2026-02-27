@@ -1,64 +1,64 @@
 package mclink
 
 import (
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
-	"io"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
-	"syscall"
+	"time"
 
 	"github.com/goccy/go-yaml"
+	"github.com/redis/go-redis/v9"
 )
 
 type Allowlist struct {
 	UUIDs []string `yaml:"uuids"`
-	Nicks []string `yaml:"nicks"`
+	// Backward-compatibility input field. Nick entries are ignored and dropped on write.
+	Nicks []string `yaml:"nicks,omitempty"`
 }
 
-func AddAllowlistEntry(path string, typ EntryType, value string) error {
+func AddAllowlistEntry(ctx context.Context, cli *redis.Client, path string, typ EntryType, value string) error {
+	if cli == nil {
+		return errors.New("redis client is nil")
+	}
 	value = strings.TrimSpace(value)
 	if value == "" {
 		return errors.New("value must not be empty")
 	}
+	unlock, err := acquireAllowlistRedisLock(ctx, cli, path)
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	return addAllowlistEntryUnlocked(path, typ, value)
+}
 
+func addAllowlistEntryUnlocked(path string, typ EntryType, value string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	lockPath := path + ".lock"
-	lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o600)
+	b, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		if !os.IsNotExist(err) {
+			return err
+		}
+		b = nil
 	}
-	defer lockFile.Close()
-	if err := syscall.Flock(int(lockFile.Fd()), syscall.LOCK_EX); err != nil {
-		return err
-	}
-	defer func() { _ = syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN) }()
-
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
 
 	cfg := Allowlist{}
-	if _, err := f.Seek(0, 0); err != nil {
-		return err
-	}
-	if b, err := io.ReadAll(f); err == nil {
+	if len(b) > 0 {
 		if err := yaml.Unmarshal(b, &cfg); err != nil {
 			return err
 		}
-	} else if !os.IsNotExist(err) {
-		return err
 	}
+
 	switch typ {
-	case EntryTypeNick:
-		if !containsFold(cfg.Nicks, value) {
-			cfg.Nicks = append(cfg.Nicks, value)
-		}
 	case EntryTypeUUID:
 		if !containsFold(cfg.UUIDs, value) {
 			cfg.UUIDs = append(cfg.UUIDs, value)
@@ -66,29 +66,14 @@ func AddAllowlistEntry(path string, typ EntryType, value string) error {
 	default:
 		return errors.New("unsupported entry type")
 	}
-	slices.Sort(cfg.Nicks)
+	cfg.Nicks = nil
 	slices.Sort(cfg.UUIDs)
 
 	out, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
 	}
-	if err := f.Truncate(0); err != nil {
-		return err
-	}
-	if _, err := f.Seek(0, 0); err != nil {
-		return err
-	}
-	if _, err := f.Write(out); err != nil {
-		return err
-	}
-	if err := f.Chmod(0o644); err != nil {
-		return err
-	}
-	if err := f.Sync(); err != nil {
-		return err
-	}
-	return nil
+	return writeAllowlist(path, out)
 }
 
 func containsFold(values []string, needle string) bool {
@@ -98,4 +83,67 @@ func containsFold(values []string, needle string) bool {
 		}
 	}
 	return false
+}
+
+func allowlistRedisLockKey(path string) string {
+	sum := sha256.Sum256([]byte(path))
+	return "mc-link:allowlist:lock:" + hex.EncodeToString(sum[:8])
+}
+
+func acquireAllowlistRedisLock(ctx context.Context, cli *redis.Client, path string) (func(), error) {
+	const (
+		lockTTL      = 5 * time.Second
+		retryCount   = 20
+		retryInterval = 50 * time.Millisecond
+	)
+	key := allowlistRedisLockKey(path)
+	token, err := randomHex(16)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < retryCount; i++ {
+		ok, err := cli.SetNX(ctx, key, token, lockTTL).Result()
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			return func() { releaseAllowlistRedisLock(ctx, cli, key, token) }, nil
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(retryInterval):
+		}
+	}
+	return nil, fmt.Errorf("failed to acquire allowlist redis lock: key=%s", key)
+}
+
+func releaseAllowlistRedisLock(ctx context.Context, cli *redis.Client, key, token string) {
+	const script = `
+if redis.call("get", KEYS[1]) == ARGV[1] then
+  return redis.call("del", KEYS[1])
+end
+return 0
+`
+	_, _ = cli.Eval(ctx, script, []string{key}, token).Result()
+}
+
+func randomHex(n int) (string, error) {
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+func writeAllowlist(path string, out []byte) error {
+	tmpPath := path + ".tmp"
+	if err := os.WriteFile(tmpPath, out, 0o644); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	return nil
 }

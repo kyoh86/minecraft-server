@@ -212,6 +212,7 @@ public final class LinkCodeGatePlugin {
 
   private static final class AllowlistFile {
     public List<String> uuids = new ArrayList<>();
+    public List<String> nicks = new ArrayList<>();
   }
 
   private record WhitelistEntries(Set<String> uuidSet) {}
