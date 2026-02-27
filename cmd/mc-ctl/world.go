@@ -101,6 +101,13 @@ type portalEntry struct {
 	CheckDestinationSafety bool   `yaml:"check-destination-safety"`
 }
 
+type dimensionTarget struct {
+	Name        string
+	Environment string
+	Seed        any
+	LinkKind    string
+}
+
 func (a app) worldEnsure() error {
 	cfgs, err := a.listWorldConfigs()
 	if err != nil {
@@ -137,22 +144,31 @@ func (a app) worldRegenerate(target string) error {
 	if err != nil {
 		return err
 	}
-	if target == primaryWorldName {
+	if cfg.Name == primaryWorldName {
 		return fmt.Errorf("world '%s' cannot be regenerated", primaryWorldName)
 	}
 	if !cfg.Deletable {
 		return fmt.Errorf("world '%s' is not deletable", target)
 	}
-
-	if err := a.worldDrop(target); err != nil {
+	targets, err := managedDimensionTargets(cfg)
+	if err != nil {
 		return err
 	}
 
-	for _, p := range []string{
-		filepath.Join(a.baseDir, "runtime", "world", target),
-		filepath.Join(a.baseDir, "runtime", "world", target+"_nether"),
-		filepath.Join(a.baseDir, "runtime", "world", target+"_the_end"),
-	} {
+	if err := a.worldDrop(cfg.Name); err != nil {
+		return err
+	}
+	for _, t := range targets {
+		if err := a.worldDrop(t.Name); err != nil {
+			return err
+		}
+	}
+
+	paths := []string{filepath.Join(a.baseDir, "runtime", "world", cfg.Name)}
+	for _, t := range targets {
+		paths = append(paths, filepath.Join(a.baseDir, "runtime", "world", t.Name))
+	}
+	for _, p := range paths {
 		if err := os.RemoveAll(p); err != nil {
 			return err
 		}
@@ -162,7 +178,7 @@ func (a app) worldRegenerate(target string) error {
 		return err
 	}
 
-	fmt.Printf("regenerated world '%s'\n", target)
+	fmt.Printf("regenerated world '%s'\n", cfg.Name)
 	return nil
 }
 
@@ -218,21 +234,29 @@ func (a app) worldDelete(target string, yes bool) error {
 	if !cfg.Deletable {
 		return fmt.Errorf("world '%s' is not deletable", target)
 	}
-
-	if err := a.worldDrop(target); err != nil {
+	targets, err := managedDimensionTargets(cfg)
+	if err != nil {
 		return err
 	}
-	paths := []string{
-		filepath.Join(a.baseDir, "runtime", "world", target),
-		filepath.Join(a.baseDir, "runtime", "world", target+"_nether"),
-		filepath.Join(a.baseDir, "runtime", "world", target+"_the_end"),
+
+	if err := a.worldDrop(cfg.Name); err != nil {
+		return err
+	}
+	for _, t := range targets {
+		if err := a.worldDrop(t.Name); err != nil {
+			return err
+		}
+	}
+	paths := []string{filepath.Join(a.baseDir, "runtime", "world", cfg.Name)}
+	for _, t := range targets {
+		paths = append(paths, filepath.Join(a.baseDir, "runtime", "world", t.Name))
 	}
 	for _, p := range paths {
 		if err := os.RemoveAll(p); err != nil {
 			return err
 		}
 	}
-	fmt.Printf("deleted world '%s'\n", target)
+	fmt.Printf("deleted world '%s'\n", cfg.Name)
 	return nil
 }
 
@@ -316,98 +340,89 @@ func (a app) worldFunctionRun(functionID string) error {
 }
 
 func (a app) ensureWorld(cfg worldConfig, forceCreate bool) error {
-	if cfg.Name == "" || cfg.Environment == "" {
-		return fmt.Errorf("invalid world config: name/environment required")
+	if cfg.Name == "" {
+		return fmt.Errorf("invalid world config: name is required")
 	}
 	if err := validateWorldName(cfg.Name); err != nil {
 		return err
 	}
 
-	if err := a.ensureSingleWorld(cfg, forceCreate); err != nil {
+	if err := a.ensureSingleWorld(cfg.Name, "normal", cfg.WorldType, cfg.Seed, forceCreate); err != nil {
 		return err
 	}
-	if cfg.Name == primaryWorldName {
+	targets, err := managedDimensionTargets(cfg)
+	if err != nil {
+		return err
+	}
+	if len(targets) == 0 {
 		return nil
 	}
-	if err := a.ensureLinkedDimensions(cfg, forceCreate); err != nil {
+	if err := a.ensureLinkedDimensions(targets, cfg.WorldType, cfg.Seed, forceCreate); err != nil {
 		return err
 	}
-	if err := a.linkWorldDimensions(cfg.Name); err != nil {
+	if err := a.linkWorldDimensions(cfg.Name, targets); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a app) ensureSingleWorld(cfg worldConfig, forceCreate bool) error {
-	registered, err := a.worldRegisteredInMultiverse(cfg.Name)
+func (a app) ensureSingleWorld(worldName, environment, worldType string, seed any, forceCreate bool) error {
+	registered, err := a.worldRegisteredInMultiverse(worldName)
 	if err != nil {
 		return err
 	}
-	onDisk := fileExists(filepath.Join(a.baseDir, "runtime", "world", cfg.Name))
+	onDisk := fileExists(filepath.Join(a.baseDir, "runtime", "world", worldName))
 
 	if !forceCreate && registered && onDisk {
 		return nil
 	}
 	if registered && !onDisk {
-		fmt.Printf("world '%s' is registered but missing on disk; removing stale registration...\n", cfg.Name)
-		if err := a.sendConsole(fmt.Sprintf("mv remove %s", cfg.Name)); err != nil {
+		fmt.Printf("world '%s' is registered but missing on disk; removing stale registration...\n", worldName)
+		if err := a.sendConsole(fmt.Sprintf("mv remove %s", worldName)); err != nil {
 			return err
 		}
-		registered = false
 	}
 
 	var ensureErr error
 	if onDisk {
-		ensureErr = a.sendConsole(fmt.Sprintf("mv import %s %s", cfg.Name, cfg.Environment))
+		ensureErr = a.sendConsole(fmt.Sprintf("mv import %s %s", worldName, environment))
 	} else {
-		parts := []string{"mv", "create", cfg.Name, cfg.Environment}
-		if seed := formatSeed(cfg.Seed); seed != "" {
-			parts = append(parts, "-s", seed)
+		parts := []string{"mv", "create", worldName, environment}
+		if formattedSeed := formatSeed(seed); formattedSeed != "" {
+			parts = append(parts, "-s", formattedSeed)
 		}
-		if cfg.WorldType != "" {
-			parts = append(parts, "-t", strings.ToUpper(cfg.WorldType))
+		if worldType != "" {
+			parts = append(parts, "-t", strings.ToUpper(worldType))
 		}
 		ensureErr = a.sendConsole(strings.Join(parts, " "))
 	}
 	if ensureErr != nil {
 		return ensureErr
 	}
-	if err := a.waitWorldEnsureReady(cfg.Name, 10*time.Second); err != nil {
+	if err := a.waitWorldEnsureReady(worldName, 10*time.Second); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a app) ensureLinkedDimensions(base worldConfig, forceCreate bool) error {
-	for _, dim := range []struct {
-		suffix      string
-		environment string
-	}{
-		{suffix: "_nether", environment: "nether"},
-		{suffix: "_the_end", environment: "the_end"},
-	} {
-		cfg := worldConfig{
-			Name:        base.Name + dim.suffix,
-			Environment: dim.environment,
-			Seed:        base.Seed,
-			Deletable:   base.Deletable,
+func (a app) ensureLinkedDimensions(targets []dimensionTarget, worldType string, baseSeed any, forceCreate bool) error {
+	for _, target := range targets {
+		seed := baseSeed
+		if target.Seed != nil {
+			seed = target.Seed
 		}
-		if err := a.ensureSingleWorld(cfg, forceCreate); err != nil {
+		if err := a.ensureSingleWorld(target.Name, target.Environment, worldType, seed, forceCreate); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (a app) linkWorldDimensions(worldName string) error {
-	if worldName == primaryWorldName {
-		return nil
-	}
-	if err := a.sendConsole(fmt.Sprintf("mvnp link nether %s %s_nether", worldName, worldName)); err != nil {
-		return err
-	}
-	if err := a.sendConsole(fmt.Sprintf("mvnp link end %s %s_the_end", worldName, worldName)); err != nil {
-		return err
+func (a app) linkWorldDimensions(worldName string, targets []dimensionTarget) error {
+	for _, target := range targets {
+		if err := a.sendConsole(fmt.Sprintf("mvnp link %s %s %s", target.LinkKind, worldName, target.Name)); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -1001,6 +1016,41 @@ func mainhallGateXForIndex(i, total int) (minX, maxX int) {
 	return minX, maxX
 }
 
+func managedDimensionTargets(cfg worldConfig) ([]dimensionTarget, error) {
+	targets := make([]dimensionTarget, 0, 2)
+	used := map[string]struct{}{cfg.Name: {}}
+	addTarget := func(defaultName, env, linkKind string, dim *worldDimension) error {
+		if dim == nil {
+			return nil
+		}
+		name := strings.TrimSpace(dim.Name)
+		if name == "" {
+			name = defaultName
+		}
+		if err := validateWorldName(name); err != nil {
+			return fmt.Errorf("invalid dimensions.%s.name %q: %w", linkKind, name, err)
+		}
+		if _, exists := used[name]; exists {
+			return fmt.Errorf("duplicate managed world name %q in dimensions", name)
+		}
+		used[name] = struct{}{}
+		targets = append(targets, dimensionTarget{
+			Name:        name,
+			Environment: env,
+			Seed:        dim.Seed,
+			LinkKind:    linkKind,
+		})
+		return nil
+	}
+	if err := addTarget(cfg.Name+"_nether", "nether", "nether", cfg.Dimensions.Nether); err != nil {
+		return nil, err
+	}
+	if err := addTarget(cfg.Name+"_the_end", "the_end", "end", cfg.Dimensions.End); err != nil {
+		return nil, err
+	}
+	return targets, nil
+}
+
 func normalizeDisplayName(displayName, fallback string) string {
 	displayName = strings.TrimSpace(displayName)
 	if displayName == "" {
@@ -1177,7 +1227,79 @@ func loadWorldConfig(path string) (worldConfig, error) {
 	if err := yaml.Unmarshal(b, &cfg); err != nil {
 		return worldConfig{}, fmt.Errorf("parse world config %s: %w", path, err)
 	}
+	var raw map[string]any
+	if err := yaml.Unmarshal(b, &raw); err == nil {
+		if err := validateNoExplicitNullSeed(raw); err != nil {
+			return worldConfig{}, fmt.Errorf("invalid world config %s: %w", path, err)
+		}
+	}
+	if err := validateSeedValue("seed", cfg.Seed); err != nil {
+		return worldConfig{}, fmt.Errorf("invalid world config %s: %w", path, err)
+	}
+	if cfg.Dimensions.Nether != nil {
+		if err := validateSeedValue("dimensions.nether.seed", cfg.Dimensions.Nether.Seed); err != nil {
+			return worldConfig{}, fmt.Errorf("invalid world config %s: %w", path, err)
+		}
+	}
+	if cfg.Dimensions.End != nil {
+		if err := validateSeedValue("dimensions.end.seed", cfg.Dimensions.End.Seed); err != nil {
+			return worldConfig{}, fmt.Errorf("invalid world config %s: %w", path, err)
+		}
+	}
+	if strings.TrimSpace(cfg.WorldType) == "" {
+		cfg.WorldType = "normal"
+	}
 	return cfg, nil
+}
+
+func validateSeedValue(path string, seed any) error {
+	if s, ok := seed.(string); ok && strings.TrimSpace(s) == "" {
+		return fmt.Errorf("%s must not be empty string; omit it for random seed", path)
+	}
+	return nil
+}
+
+func validateNoExplicitNullSeed(raw map[string]any) error {
+	if v, exists := raw["seed"]; exists && v == nil {
+		return fmt.Errorf("seed must not be null; omit it for random seed")
+	}
+	dimensions, ok := toStringAnyMap(raw["dimensions"])
+	if !ok {
+		return nil
+	}
+	for _, dimName := range []string{"nether", "end"} {
+		dimValue, exists := dimensions[dimName]
+		if !exists {
+			continue
+		}
+		dimMap, ok := toStringAnyMap(dimValue)
+		if !ok {
+			continue
+		}
+		if v, exists := dimMap["seed"]; exists && v == nil {
+			return fmt.Errorf("dimensions.%s.seed must not be null; omit it for fallback", dimName)
+		}
+	}
+	return nil
+}
+
+func toStringAnyMap(v any) (map[string]any, bool) {
+	switch m := v.(type) {
+	case map[string]any:
+		return m, true
+	case map[any]any:
+		out := make(map[string]any, len(m))
+		for k, value := range m {
+			key, ok := k.(string)
+			if !ok {
+				continue
+			}
+			out[key] = value
+		}
+		return out, true
+	default:
+		return nil, false
+	}
 }
 
 func (a app) worldRegisteredInMultiverse(worldName string) (bool, error) {

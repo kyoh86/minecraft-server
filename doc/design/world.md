@@ -38,11 +38,19 @@
     - `mainhall` は `LEVEL` 基底ワールドのため `world.env.yml` は持たない（全て固定値）
     - 対象は Multiverse 管理ワールド（`residence` / `resource` / `factory`）
     - 先頭に `# yaml-language-server: $schema=../env.schema.json` を記述
-    - `name` / `environment` / `world_type` / `seed` / `deletable`
+    - `name` / `world_type` / `seed` / `deletable`
+    - `world_type` は任意。未指定時は `normal` として扱う
     - `display_name`（任意）で `mainhall` ゲートの表示名を指定できる（未指定時は `name`）
     - `display_color`（任意）で `mainhall` ゲート表示色を指定できる（未指定時は `gold`）
     - `display_color` は Minecraft の色名（`green` など）または `#RRGGBB` を使用する
-    - `seed` が空文字の場合は `mv create -s` を付与せず、ランダムシードで生成する
+    - 基底ワールドは常に `normal` 環境として作成する
+    - `name` / `display_name` / `dimensions.<dim>.name` は指定時に空文字不可
+    - `dimensions` を記述する場合は `nether` または `end` の少なくとも一方が必須
+    - `dimensions.nether` / `dimensions.end` を記述した次元のみ managed world として生成・リンクする
+    - `dimensions.<dim>.name` は任意。未指定時は `<name>_nether` / `<name>_the_end`
+    - `seed` の優先順位は `dimensions.<dim>.seed` > ルート `seed` > random
+    - `dimensions.<dim>.seed` は任意。未指定（キー省略）の場合は次順位へフォールバックする
+    - `seed` / `dimensions.<dim>.seed` は空文字を許可しない（random を使う場合は未指定）
 - `worlds/<name>/world.policy.yml`
     - MultiVerse で設定するワールドごとの特性情報群
     - 対象は`mainhall` を含む全ワールド
@@ -82,6 +90,7 @@
     - プラグイン内部に同等の除外リストは持たず、挙動は config のみを正として決定する
 - `worlds/env.schema.json`
     - `world.env.yml` 用 JSON Schema
+    - `default` はスキーマ補完ではなく、`mc-ctl` 実装上の既定動作を明示するために記述する
 - `worlds/policy.schema.json`
     - `world.policy.yml` 用 JSON Schema
 
@@ -99,8 +108,8 @@
 
 - `mc-ctl world ensure`
     - world 定義に従って create/import する
-    - `mainhall` 以外は同時に `<world>_nether` / `<world>_the_end` も create/import する
-    - `mainhall` 以外は `mvnp link nether <world> <world>_nether` と `mvnp link end <world> <world>_the_end` を自動適用する
+    - `dimensions` に定義された次元のみ create/import する
+    - `dimensions` に定義された次元に対して `mvnp link nether/end` を自動適用する
     - 上記 link 機能は `Multiverse-NetherPortals` 導入を前提とする
     - 適用後に `Multiverse` 登録と world ディレクトリ実体の両方を検証する
     - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する

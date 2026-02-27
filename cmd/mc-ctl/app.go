@@ -9,13 +9,23 @@ import (
 )
 
 type worldConfig struct {
-	Name         string `yaml:"name"`
-	DisplayName  string `yaml:"display_name"`
-	DisplayColor string `yaml:"display_color"`
-	Environment  string `yaml:"environment"`
-	WorldType    string `yaml:"world_type"`
-	Seed         any    `yaml:"seed"`
-	Deletable    bool   `yaml:"deletable"`
+	Name         string          `yaml:"name"`
+	DisplayName  string          `yaml:"display_name"`
+	DisplayColor string          `yaml:"display_color"`
+	WorldType    string          `yaml:"world_type"`
+	Seed         any             `yaml:"seed"`
+	Deletable    bool            `yaml:"deletable"`
+	Dimensions   worldDimensions `yaml:"dimensions"`
+}
+
+type worldDimensions struct {
+	Nether *worldDimension `yaml:"nether"`
+	End    *worldDimension `yaml:"end"`
+}
+
+type worldDimension struct {
+	Name string `yaml:"name"`
+	Seed any    `yaml:"seed"`
 }
 
 type worldPolicy struct {
