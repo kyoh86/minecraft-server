@@ -12,7 +12,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -56,6 +58,15 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
   private BarColor statusSpawnColor;
   private BarColor statusClickMobsColor;
   private String spawnProtectedRegionId;
+  private boolean loginSafetyEnabled;
+  private String loginSafetyMainhallWorld;
+  private String loginSafetyMessage;
+  private int spawnSafeMinX;
+  private int spawnSafeMinY;
+  private int spawnSafeMinZ;
+  private int spawnSafeMaxX;
+  private int spawnSafeMaxY;
+  private int spawnSafeMaxZ;
 
   private enum RegionStatus {
     NONE,
@@ -96,8 +107,10 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
 
   @EventHandler
   public void onJoin(PlayerJoinEvent event) {
-    ensureClickMobsPermission(event.getPlayer());
-    updateStatusDisplay(event.getPlayer(), true);
+    Player player = event.getPlayer();
+    ensureClickMobsPermission(player);
+    updateStatusDisplay(player, true);
+    scheduleLoginSafetyChecks(player);
   }
 
   @EventHandler
@@ -108,7 +121,9 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
 
   @EventHandler
   public void onChangedWorld(PlayerChangedWorldEvent event) {
-    updateStatusDisplay(event.getPlayer(), true);
+    Player player = event.getPlayer();
+    updateStatusDisplay(player, true);
+    scheduleLoginSafetyChecks(player);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -183,6 +198,15 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
     statusClickMobsText = getConfig().getString("status_bossbar.clickmobs_allowed_text", "ClickMobs許可エリア");
     statusSpawnColor = parseColor(getConfig().getString("status_bossbar.spawn_protected_color", "RED"), BarColor.RED);
     statusClickMobsColor = parseColor(getConfig().getString("status_bossbar.clickmobs_allowed_color", "GREEN"), BarColor.GREEN);
+    loginSafetyEnabled = getConfig().getBoolean("login_safety.enabled", true);
+    loginSafetyMainhallWorld = getConfig().getString("login_safety.mainhall_world", "mainhall");
+    loginSafetyMessage = getConfig().getString("login_safety.teleport_message", "§e安全な地点へ移動しました");
+    spawnSafeMinX = getConfig().getInt("spawn_safe.min.x", -64);
+    spawnSafeMinY = getConfig().getInt("spawn_safe.min.y", -80);
+    spawnSafeMinZ = getConfig().getInt("spawn_safe.min.z", -64);
+    spawnSafeMaxX = getConfig().getInt("spawn_safe.max.x", 64);
+    spawnSafeMaxY = getConfig().getInt("spawn_safe.max.y", 0);
+    spawnSafeMaxZ = getConfig().getInt("spawn_safe.max.z", 64);
   }
 
   private BarColor parseColor(String value, BarColor fallback) {
@@ -274,6 +298,53 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
     int y = player.getLocation().getBlockY();
     int z = player.getLocation().getBlockZ();
     return region.contains(x, y, z);
+  }
+
+  private void enforceLoginSafety(Player player) {
+    if (!loginSafetyEnabled || !player.isOnline()) {
+      return;
+    }
+    World world = player.getWorld();
+    if (!world.getName().equals(loginSafetyMainhallWorld)) {
+      return;
+    }
+    if (isWithinSpawnSafeBounds(player.getLocation())) {
+      return;
+    }
+    Location from = player.getLocation().clone();
+    Location spawn = world.getSpawnLocation().clone().add(0.5, 0.0, 0.5);
+    player.teleport(spawn);
+    if (loginSafetyMessage != null && !loginSafetyMessage.isBlank()) {
+      player.sendActionBar(loginSafetyMessage);
+    }
+    getLogger().info(
+      "login safety: teleported " + player.getName()
+        + " to spawn from " + formatBlockPosition(from)
+    );
+  }
+
+  private void scheduleLoginSafetyChecks(Player player) {
+    // Multiverse may apply destination after join/world-change handling,
+    // so probe multiple ticks to catch post-teleport drift.
+    Bukkit.getScheduler().runTask(this, () -> enforceLoginSafety(player));
+    Bukkit.getScheduler().runTaskLater(this, () -> enforceLoginSafety(player), 20L);
+    Bukkit.getScheduler().runTaskLater(this, () -> enforceLoginSafety(player), 60L);
+  }
+
+  private boolean isWithinSpawnSafeBounds(Location location) {
+    int x = location.getBlockX();
+    int y = location.getBlockY();
+    int z = location.getBlockZ();
+    return x >= spawnSafeMinX && x <= spawnSafeMaxX
+      && y >= spawnSafeMinY && y <= spawnSafeMaxY
+      && z >= spawnSafeMinZ && z <= spawnSafeMaxZ;
+  }
+
+  private String formatBlockPosition(Location location) {
+    return location.getWorld().getName()
+      + ":" + location.getBlockX()
+      + "," + location.getBlockY()
+      + "," + location.getBlockZ();
   }
 
   private boolean isClickMobsAllowed(Player player) {

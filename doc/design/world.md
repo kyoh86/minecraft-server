@@ -194,10 +194,29 @@ mc-ctl world spawn apply
 `ClickMobsRegionGuard.jar` を導入し、
 `infra/world/plugins/clickmobs-region-guard/config/config.yml` の
 `allowed_region_ids` に許可リージョンIDを列挙する。
+運用時に反映される設定は上記 `config/config.yml` であり、
+`src/main/resources/config.yml` は jar 同梱の初期値としてのみ扱う。
+同設定の `login_safety` では、ログイン時の補正動作を有効化できる。
+`spawn_safe.min/max.(x|y|z)` で安全範囲を明示し、範囲外に出現したプレイヤーを
+`mainhall` spawn へ補正できる。
 
 ```yaml
 allowed_region_ids:
   - clickmobs_allowed
+
+login_safety:
+  enabled: true
+  mainhall_world: mainhall
+
+spawn_safe:
+  min:
+    x: -7
+    y: -58
+    z: -7
+  max:
+    x: 7
+    y: -55
+    z: 7
 ```
 
 列挙したリージョン内でのみ `ClickMobs` の捕獲・設置操作を許可する。

@@ -9,3 +9,18 @@ status_bossbar:
   spawn_protected_color: RED
   clickmobs_allowed_text: "ClickMobs許可エリア"
   clickmobs_allowed_color: GREEN
+
+login_safety:
+  enabled: true
+  mainhall_world: mainhall
+  teleport_message: "§e安全な地点へ移動しました"
+
+spawn_safe:
+  min:
+    x: -7
+    y: -58
+    z: -7
+  max:
+    x: 7
+    y: -55
+    z: 7
