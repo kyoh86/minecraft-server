@@ -95,7 +95,8 @@
     - `world-base` datapack を runtime へそのままコピーする
 - `mc-ctl world spawn profile [--world <name>]`
     - 管理対象ワールドの地表Y（`motion_blocking_no_leaves`）を中心周辺の複数点で検出する
-    - サンプル点は `x,z=-24..24` を `8` 刻みで走査し、最終値は中央値を採用する
+    - サンプル点は `x,z=-24..24` を `12` 刻みで走査する（25点）
+    - 最終 `surface_y` は `中央値` / `平均値(切り捨て)` / `40パーセンタイル` の最小値を採用する
     - `y=64` 以上では `ice` / `packed_ice` / `blue_ice` / `snow` / `snow_block` を地表候補から除外する
     - 地表判定ロジックは `mc-ctl` 実装側に持つ
     - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
@@ -157,7 +158,7 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 - 水面の再充填は元の水面セルを起点に、整地後の地形高を見ながら隣接方向へ伝播して欠けを埋める
 - 伝播シードに使う水面は `y=63` 以下に限定し、高高度の水源で低地が過充填されるのを防ぐ
 - 伝播結果が未設定のセルには水再充填を行わない
-- 再充填する水の上端は伝播した水面Yより1段下げ、過剰な水位上振れを抑制する
+- 再充填する水の上端は固定で `y=63` とし、列ごとの水位ぶれを抑制する
 
 地表判定ロジックは `mc-ctl world spawn profile` と `HubTerraform` の2箇所に存在する。
 除外対象ブロックや高度条件を変更する場合は、両実装を同時に更新して挙動を一致させる。

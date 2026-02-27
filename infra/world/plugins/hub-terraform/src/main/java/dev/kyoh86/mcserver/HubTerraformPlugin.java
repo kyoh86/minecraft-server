@@ -24,8 +24,8 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   private static final int BLUR_RADIUS = 2;
   private static final int CLEAR_MARGIN = 96;
   private static final int SURFACE_FROZEN_COVER_IGNORE_MIN_Y = 64;
-  private static final int WATER_FILL_TOP_OFFSET = 1;
-  private static final int WATER_SEED_MAX_Y = 63;
+  private static final int WATER_SURFACE_Y = 63;
+  private static final int WATER_SEED_MAX_Y = WATER_SURFACE_Y;
 
   @Override
   public void onEnable() {
@@ -144,11 +144,11 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
             continue;
           }
           int targetY = targetTop[ix][iz];
-          int waterFillTop = waterTop - WATER_FILL_TOP_OFFSET;
+          int waterFillTop = Math.min(clearMaxY, WATER_SURFACE_Y);
           if (waterFillTop <= targetY) {
             continue;
           }
-          fill(edit, x, targetY + 1, z, x, Math.min(clearMaxY, waterFillTop), z, water);
+          fill(edit, x, targetY + 1, z, x, waterFillTop, z, water);
         }
       }
 
