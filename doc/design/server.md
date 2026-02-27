@@ -83,6 +83,13 @@
       値がある場合は案内文へ Discord サーバー名を埋め込む
     - `runtime/allowlist/allowlist.yml` は `SnakeYAML` で読み取り、`uuids` 配列を正規パースする
     - Redis へのワンタイムコード書き込みは `Jedis` クライアントで実行する
+    - 実装責務は以下に分割する
+        - `LinkCodeGatePlugin`: イベント配線と非同期発行フロー制御
+        - `LinkCodeGateConfig`: 環境変数/secretの解決
+        - `AllowlistService`: allowlist.yml の読込とUUID許可判定
+        - `LinkCodeStore`: Redis へのコード保存
+        - `LinkCodeGenerator`: 一時コード生成
+        - `LinkCodeMessageService`: チャット案内メッセージ生成
     - 本体は `infra/velocity/plugins/link-code-gate/src` を `infra/velocity/Dockerfile` の build 時に生成
 - `HubTerraform`
     - ワールドHub周辺の整地を自動化するプラグイン
