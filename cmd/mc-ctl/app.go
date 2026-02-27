@@ -9,11 +9,13 @@ import (
 )
 
 type worldConfig struct {
-	Name        string `yaml:"name"`
-	Environment string `yaml:"environment"`
-	WorldType   string `yaml:"world_type"`
-	Seed        any    `yaml:"seed"`
-	Deletable   bool   `yaml:"deletable"`
+	Name         string `yaml:"name"`
+	DisplayName  string `yaml:"display_name"`
+	DisplayColor string `yaml:"display_color"`
+	Environment  string `yaml:"environment"`
+	WorldType    string `yaml:"world_type"`
+	Seed         any    `yaml:"seed"`
+	Deletable    bool   `yaml:"deletable"`
 }
 
 type worldPolicy struct {

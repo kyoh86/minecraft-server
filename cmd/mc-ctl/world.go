@@ -23,6 +23,8 @@ const (
 	hubSchematicName = "hub.schem"
 )
 
+var reHexDisplayColor = regexp.MustCompile(`^#[0-9a-f]{6}$`)
+
 type spawnProfile struct {
 	Worlds map[string]spawnProfileWorld `yaml:"worlds"`
 }
@@ -63,6 +65,7 @@ type spawnTemplateWorld struct {
 type spawnTemplateWorldItem struct {
 	Name                string
 	DisplayName         string
+	DisplayColor        string
 	MainhallGateMinX    int
 	MainhallGateMaxX    int
 	MainhallGateCenterX int
@@ -526,7 +529,11 @@ func (a app) worldSpawnStage(target string) error {
 	if err != nil {
 		return err
 	}
-	data, err := buildSpawnTemplateData(worldNames, profile)
+	worldCfgs, err := a.loadWorldConfigsByNames(worldNames)
+	if err != nil {
+		return err
+	}
+	data, err := buildSpawnTemplateData(worldNames, worldCfgs, profile)
 	if err != nil {
 		return err
 	}
@@ -626,7 +633,11 @@ func (a app) worldSpawnApply(target string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := buildSpawnTemplateData(worldNames, profile); err != nil {
+	worldCfgs, err := a.loadWorldConfigsByNames(worldNames)
+	if err != nil {
+		return err
+	}
+	if _, err := buildSpawnTemplateData(worldNames, worldCfgs, profile); err != nil {
 		return err
 	}
 	if err := a.ensureRuntimeHubSchematic(); err != nil {
@@ -794,6 +805,19 @@ func (a app) listManagedWorldNames(target string) ([]string, error) {
 	return names, nil
 }
 
+func (a app) loadWorldConfigsByNames(worldNames []string) (map[string]worldConfig, error) {
+	cfgs := make(map[string]worldConfig, len(worldNames))
+	for _, worldName := range worldNames {
+		cfgPath := filepath.Join(a.baseDir, "worlds", worldName, "world.env.yml")
+		cfg, err := loadWorldConfig(cfgPath)
+		if err != nil {
+			return nil, err
+		}
+		cfgs[worldName] = cfg
+	}
+	return cfgs, nil
+}
+
 func (a app) loadSpawnProfile() (spawnProfile, error) {
 	path := filepath.Join(a.baseDir, spawnProfilePath)
 	if !fileExists(path) {
@@ -825,7 +849,7 @@ func (a app) saveSpawnProfile(p spawnProfile) error {
 	return os.WriteFile(path, b, 0o644)
 }
 
-func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTemplateData, error) {
+func buildSpawnTemplateData(worldNames []string, cfgs map[string]worldConfig, profile spawnProfile) (spawnTemplateData, error) {
 	data := spawnTemplateData{
 		Worlds:     map[string]spawnTemplateWorld{},
 		WorldItems: make([]spawnTemplateWorldItem, 0, len(worldNames)),
@@ -843,6 +867,10 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 		},
 	}
 	for i, worldName := range worldNames {
+		cfg, ok := cfgs[worldName]
+		if !ok {
+			return spawnTemplateData{}, fmt.Errorf("world config for %q is missing", worldName)
+		}
 		p, ok := profile.Worlds[worldName]
 		if !ok {
 			return spawnTemplateData{}, fmt.Errorf("spawn profile for world %q is missing: run `mc-ctl world spawn profile` first", worldName)
@@ -860,7 +888,8 @@ func buildSpawnTemplateData(worldNames []string, profile spawnProfile) (spawnTem
 		centerX := (gateMinX + gateMaxX) / 2
 		data.WorldItems = append(data.WorldItems, spawnTemplateWorldItem{
 			Name:                worldName,
-			DisplayName:         worldName,
+			DisplayName:         normalizeDisplayName(cfg.DisplayName, worldName),
+			DisplayColor:        normalizeDisplayColor(cfg.DisplayColor),
 			MainhallGateMinX:    gateMinX,
 			MainhallGateMaxX:    gateMaxX,
 			MainhallGateCenterX: centerX,
@@ -920,6 +949,31 @@ func mainhallGateXForIndex(i, total int) (minX, maxX int) {
 	minX = centerX - 1
 	maxX = centerX + 1
 	return minX, maxX
+}
+
+func normalizeDisplayName(displayName, fallback string) string {
+	displayName = strings.TrimSpace(displayName)
+	if displayName == "" {
+		return fallback
+	}
+	return displayName
+}
+
+func normalizeDisplayColor(color string) string {
+	color = strings.TrimSpace(strings.ToLower(color))
+	if color == "" {
+		return "gold"
+	}
+	if reHexDisplayColor.MatchString(color) {
+		return color
+	}
+	switch color {
+	case "black", "dark_blue", "dark_green", "dark_aqua", "dark_red", "dark_purple", "gold",
+		"gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white":
+		return color
+	default:
+		return "gold"
+	}
 }
 
 func minInt(a, b int) int {

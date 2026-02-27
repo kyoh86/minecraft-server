@@ -42,8 +42,8 @@ execute in minecraft:overworld run fill {{$w.MainhallGateMinX}} -58 -8 {{$w.Main
 execute in minecraft:overworld run fill {{$w.MainhallGateMinX}} -58 {{$w.MainhallGateBackZ}} {{$w.MainhallGateMaxX}} -56 {{$w.MainhallGateBackZ}} smooth_quartz
 execute in minecraft:overworld run fill {{$w.MainhallFrameMinX}} -58 {{$w.MainhallGateZ}} {{$w.MainhallFrameMaxX}} -55 {{$w.MainhallGateZ}} obsidian
 execute in minecraft:overworld run fill {{$w.MainhallGateMinX}} -58 {{$w.MainhallGateZ}} {{$w.MainhallGateMaxX}} -56 {{$w.MainhallGateZ}} air
-execute in minecraft:overworld run setblock {{$w.MainhallSignX}} -58 {{$w.MainhallSignZ}} oak_sign[rotation=0]
-execute in minecraft:overworld run data merge block {{$w.MainhallSignX}} -58 {{$w.MainhallSignZ}} {front_text:{messages:[{text:"{{$w.DisplayName}}",color:"gold",bold:1b},"","",""]}}
+execute in minecraft:overworld run kill @e[type=minecraft:text_display,tag=mcserver_gate_label_{{$w.Name}}]
+execute in minecraft:overworld run summon minecraft:text_display {{$w.MainhallSignX}} -56.5 -7.5 {Tags:["mcserver_gate_label","mcserver_gate_label_{{$w.Name}}"],billboard:"center",background:0,default_background:0b,shadow:1b,see_through:0b,alignment:"center",transformation:{scale:[1.4f,1.4f,1.4f]},text:{text:{{printf "%q" $w.DisplayName}},color:{{printf "%q" $w.DisplayColor}},bold:1b}}
 
 execute in minecraft:overworld run setblock {{$w.MainhallGateCenterX}} -59 {{$w.MainhallGateZ}} waxed_copper_bulb
 execute in minecraft:overworld run setblock {{$w.MainhallGateCenterX}} -55 {{$w.MainhallGateZ}} waxed_copper_bulb

@@ -39,6 +39,9 @@
     - 対象は Multiverse 管理ワールド（`residence` / `resource` / `factory`）
     - 先頭に `# yaml-language-server: $schema=../env.schema.json` を記述
     - `name` / `environment` / `world_type` / `seed` / `deletable`
+    - `display_name`（任意）で `mainhall` ゲートの表示名を指定できる（未指定時は `name`）
+    - `display_color`（任意）で `mainhall` ゲート表示色を指定できる（未指定時は `gold`）
+    - `display_color` は Minecraft の色名（`green` など）または `#RRGGBB` を使用する
     - `seed` が空文字の場合は `mv create -s` を付与せず、ランダムシードで生成する
 - `worlds/<name>/world.policy.yml`
     - MultiVerse で設定するワールドごとの特性情報群
@@ -142,8 +145,11 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 ```
 
 この function は、御殿風の簡易ハブと管理対象ワールド行きの
-案内看板を設置する。
+案内表示を設置する。
 各ゲートは北側の1辺に並べ、背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
+ゲート名は `text_display` で表示し、`world.env.yml` の `display_name` / `display_color` を使う。
+表示は一律で `transformation.scale=[1.4,1.4,1.4]` を適用する。
+配置座標は `x=<ゲート中央>, y=-56.5, z=-7.5`（ゲート面 `z=-9` から 1.5 ブロック手前）とする。
 初回ログイン時の安全スポーン補正で屋根上に出ないよう、
 中心座標（`0 -51 0`）の天井を開口している。
 
