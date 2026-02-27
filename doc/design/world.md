@@ -90,6 +90,8 @@
 - Datapack 配置元: `datapacks/world-base`
 - Datapack 出力先: `runtime/world/mainhall/datapacks/world-base`
 - `mainhall` の地形生成は `infra/docker-compose.yml` の `LEVEL_TYPE=FLAT` で制御する
+- `secrets/world/paper-global.yml` では `unsupported-settings.allow-unsafe-end-portal-teleportation: true` を設定し、
+  マルチワールド環境で End ポータル遷移が安全判定で阻害されるのを防ぐ
 - `mainhall` のセットアップは `minecraft:overworld` を対象に実行する
 - それ以外のワールドは `minecraft:<world>` を対象に実行する
 
@@ -97,6 +99,9 @@
 
 - `mc-ctl world ensure`
     - world 定義に従って create/import する
+    - `mainhall` 以外は同時に `<world>_nether` / `<world>_the_end` も create/import する
+    - `mainhall` 以外は `mvnp link nether <world> <world>_nether` と `mvnp link end <world> <world>_the_end` を自動適用する
+    - 上記 link 機能は `Multiverse-NetherPortals` 導入を前提とする
     - 適用後に `Multiverse` 登録と world ディレクトリ実体の両方を検証する
     - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
 - `mc-ctl world setup [--world <name>]`

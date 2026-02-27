@@ -42,7 +42,7 @@ services:
       ENFORCE_SECURE_PROFILE: "FALSE"
       ENABLE_RCON: "FALSE"
       CREATE_CONSOLE_IN_PIPE: "true"
-      MODRINTH_PROJECTS: "multiverse-core,multiverse-portals,fastasyncworldedit,worldguard,clickmobs"
+      MODRINTH_PROJECTS: "multiverse-core,multiverse-portals,multiverse-netherportals,fastasyncworldedit,worldguard,clickmobs"
       SPIGET_RESOURCES: "28140"
     healthcheck:
       test: ["CMD", "mc-health"]

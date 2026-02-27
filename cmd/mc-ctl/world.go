@@ -323,6 +323,22 @@ func (a app) ensureWorld(cfg worldConfig, forceCreate bool) error {
 		return err
 	}
 
+	if err := a.ensureSingleWorld(cfg, forceCreate); err != nil {
+		return err
+	}
+	if cfg.Name == primaryWorldName {
+		return nil
+	}
+	if err := a.ensureLinkedDimensions(cfg, forceCreate); err != nil {
+		return err
+	}
+	if err := a.linkWorldDimensions(cfg.Name); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a app) ensureSingleWorld(cfg worldConfig, forceCreate bool) error {
 	registered, err := a.worldRegisteredInMultiverse(cfg.Name)
 	if err != nil {
 		return err
@@ -357,6 +373,40 @@ func (a app) ensureWorld(cfg worldConfig, forceCreate bool) error {
 		return ensureErr
 	}
 	if err := a.waitWorldEnsureReady(cfg.Name, 10*time.Second); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a app) ensureLinkedDimensions(base worldConfig, forceCreate bool) error {
+	for _, dim := range []struct {
+		suffix      string
+		environment string
+	}{
+		{suffix: "_nether", environment: "nether"},
+		{suffix: "_the_end", environment: "the_end"},
+	} {
+		cfg := worldConfig{
+			Name:        base.Name + dim.suffix,
+			Environment: dim.environment,
+			Seed:        base.Seed,
+			Deletable:   base.Deletable,
+		}
+		if err := a.ensureSingleWorld(cfg, forceCreate); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (a app) linkWorldDimensions(worldName string) error {
+	if worldName == primaryWorldName {
+		return nil
+	}
+	if err := a.sendConsole(fmt.Sprintf("mvnp link nether %s %s_nether", worldName, worldName)); err != nil {
+		return err
+	}
+	if err := a.sendConsole(fmt.Sprintf("mvnp link end %s %s_the_end", worldName, worldName)); err != nil {
 		return err
 	}
 	return nil
