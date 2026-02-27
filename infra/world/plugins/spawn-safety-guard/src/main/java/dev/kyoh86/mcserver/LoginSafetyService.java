@@ -8,9 +8,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 final class LoginSafetyService {
   private final JavaPlugin plugin;
-  private final GuardConfig config;
+  private final SpawnSafetyConfig config;
 
-  LoginSafetyService(JavaPlugin plugin, GuardConfig config) {
+  LoginSafetyService(JavaPlugin plugin, SpawnSafetyConfig config) {
     this.plugin = plugin;
     this.config = config;
   }

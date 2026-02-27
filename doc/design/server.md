@@ -51,18 +51,30 @@
 
 - `ClickMobsRegionGuard`
     - `WorldGuard` のリージョンIDに基づき `ClickMobs` を制御する
+    - `allowed_region_ids` に列挙したリージョン内のみ `ClickMobs` 操作を許可する
     - 実装責務は以下に分割する
         - `ClickMobsRegionGuardPlugin`: イベント配線と依存初期化
-        - `GuardConfig`: 設定読込と既定値補完
+        - `ClickMobsGuardConfig`: 設定読込と既定値補完
         - `RegionAccessService`: WorldGuardリージョン判定
         - `ClickMobsPermissionService`: `clickmobs.pickup` / `clickmobs.place` の付与管理
-        - `RegionStatusBarService`: bossbar表示の状態管理
-        - `LoginSafetyService`: `spawn_safe` 範囲外プレイヤーの退避
         - `ClickMobsActionDetector`: ClickMobsアイテム/操作判定
     - 本体は `infra/world/plugins/clickmobs-region-guard/src` を `infra/world/Dockerfile` の build 時に生成
     - 設定: `infra/world/plugins/clickmobs-region-guard/config/config.yml`
         - `allowed_region_ids` に許可リージョンIDを列挙する
-        - `status_bossbar` で領域状態の bossbar 表示を設定する
+- `RegionStatusUI`
+    - `WorldGuard` のリージョン状態を bossbar 表示する
+    - `spawn_protected_region_id` と `allowed_region_ids` の一致状態で表示を切り替える
+    - 本体は `infra/world/plugins/region-status-ui/src` を `infra/world/Dockerfile` の build 時に生成
+    - 設定: `infra/world/plugins/region-status-ui/config/config.yml`
+        - `allowed_region_ids` に `ClickMobs` 許可リージョンIDを列挙する
+        - `status_bossbar` で表示文言・色・リージョンIDを設定する
+- `SpawnSafetyGuard`
+    - `mainhall` の `spawn_safe` 範囲外にいるプレイヤーをスポーン地点へ退避させる
+    - join / world change 後に複数tickで再確認し、遅延テレポートの競合を吸収する
+    - 本体は `infra/world/plugins/spawn-safety-guard/src` を `infra/world/Dockerfile` の build 時に生成
+    - 設定: `infra/world/plugins/spawn-safety-guard/config/config.yml`
+        - `login_safety` で有効化・対象ワールド・通知文言を設定する
+        - `spawn_safe` で安全範囲座標を設定する
 - `LinkCodeGate`
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
     - チャット案内は1行のみ表示し、`LINK CODE` と `/mc link code:XXXX` の両方を
@@ -180,8 +192,12 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
 - `infra/world/Dockerfile`
     - world用カスタムイメージ定義
     - `infra/world/plugins/clickmobs-region-guard/src` を Maven でビルドし、生成JARを `/plugins/ClickMobsRegionGuard.jar` へ同梱する
+    - `infra/world/plugins/region-status-ui/src` を Maven でビルドし、生成JARを `/plugins/RegionStatusUI.jar` へ同梱する
+    - `infra/world/plugins/spawn-safety-guard/src` を Maven でビルドし、生成JARを `/plugins/SpawnSafetyGuard.jar` へ同梱する
     - `infra/world/plugins/clickmobs/config/config.yml` と
       `infra/world/plugins/clickmobs-region-guard/config/config.yml` を同梱する
+    - `infra/world/plugins/region-status-ui/config/config.yml` と
+      `infra/world/plugins/spawn-safety-guard/config/config.yml` を同梱する
 - `infra/world/config/paper-global.yml.tmpl`
     - Paper 用 `paper-global.yml` のテンプレート
     - `mc-ctl init` が forwarding secret を埋め込んで `secrets/world/paper-global.yml` を生成する
@@ -190,6 +206,14 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - compose で `/config/paper-global.yml` に bind し、起動時に `/data/config` へ同期される
 - `infra/world/plugins/clickmobs-region-guard`
     - world用ローカルプラグイン `ClickMobsRegionGuard` のビルド環境
+    - `src`: プラグイン実装（Mavenプロジェクト）
+    - `config`: プラグイン設定ファイル
+- `infra/world/plugins/region-status-ui`
+    - world用ローカルプラグイン `RegionStatusUI` のビルド環境
+    - `src`: プラグイン実装（Mavenプロジェクト）
+    - `config`: プラグイン設定ファイル
+- `infra/world/plugins/spawn-safety-guard`
+    - world用ローカルプラグイン `SpawnSafetyGuard` のビルド環境
     - `src`: プラグイン実装（Mavenプロジェクト）
     - `config`: プラグイン設定ファイル
 - `infra/world/plugins/clickmobs`

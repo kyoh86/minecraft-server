@@ -1,0 +1,7 @@
+name: RegionStatusUI
+version: '0.1.0'
+main: dev.kyoh86.mcserver.RegionStatusUIPlugin
+api-version: '1.21'
+authors: [kyoh86]
+description: Show region status by WorldGuard region via bossbar.
+depend: [WorldGuard]

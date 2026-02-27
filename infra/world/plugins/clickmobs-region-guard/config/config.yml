@@ -1,26 +1,3 @@
 # ClickMobs を許可するリージョンID（全ワールド共通）。
 allowed_region_ids:
   - clickmobs_allowed
-
-status_bossbar:
-  enabled: true
-  spawn_protected_region_id: spawn_protected
-  spawn_protected_text: "保護エリア（建築・破壊不可）"
-  spawn_protected_color: RED
-  clickmobs_allowed_text: "ClickMobs許可エリア"
-  clickmobs_allowed_color: GREEN
-
-login_safety:
-  enabled: true
-  mainhall_world: mainhall
-  teleport_message: "§e安全な地点へ移動しました"
-
-spawn_safe:
-  min:
-    x: -7
-    y: -58
-    z: -7
-  max:
-    x: 7
-    y: -55
-    z: 7

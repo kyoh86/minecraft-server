@@ -36,6 +36,8 @@ jobs:
         run: |
           mvn -f infra/velocity/plugins/link-code-gate/pom.xml -DskipTests package
           mvn -f infra/world/plugins/clickmobs-region-guard/pom.xml -DskipTests package
+          mvn -f infra/world/plugins/region-status-ui/pom.xml -DskipTests package
+          mvn -f infra/world/plugins/spawn-safety-guard/pom.xml -DskipTests package
           mvn -f infra/world/plugins/hub-terraform/pom.xml -DskipTests package
 
       - name: Run GoReleaser

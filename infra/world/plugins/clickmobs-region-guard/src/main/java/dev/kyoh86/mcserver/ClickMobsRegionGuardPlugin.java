@@ -8,7 +8,6 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.Plugin;
@@ -16,11 +15,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
   private static final String BYPASS_PERMISSION = "clickmobsregionguard.bypass";
-  private GuardConfig config;
+
+  private ClickMobsGuardConfig config;
   private RegionAccessService regionAccessService;
   private ClickMobsPermissionService permissionService;
-  private RegionStatusBarService statusBarService;
-  private LoginSafetyService loginSafetyService;
 
   @Override
   public void onEnable() {
@@ -32,57 +30,34 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
     }
 
     saveDefaultConfig();
-    config = GuardConfig.load(this);
+    config = ClickMobsGuardConfig.load(this);
     regionAccessService = new RegionAccessService(config.allowedRegionIds);
     permissionService = new ClickMobsPermissionService(this);
-    statusBarService = new RegionStatusBarService(config);
-    loginSafetyService = new LoginSafetyService(this, config);
 
     getServer().getPluginManager().registerEvents(this, this);
     for (Player player : getServer().getOnlinePlayers()) {
       permissionService.ensureClickMobsPermission(player);
-      statusBarService.updateStatusDisplay(player, true, regionAccessService);
     }
   }
 
   @Override
   public void onDisable() {
     permissionService.clear(getServer().getOnlinePlayers());
-    statusBarService.clear(getServer().getOnlinePlayers());
   }
 
   @EventHandler
   public void onJoin(PlayerJoinEvent event) {
-    Player player = event.getPlayer();
-    permissionService.ensureClickMobsPermission(player);
-    statusBarService.updateStatusDisplay(player, true, regionAccessService);
-    loginSafetyService.scheduleChecks(player);
+    permissionService.ensureClickMobsPermission(event.getPlayer());
   }
 
   @EventHandler
   public void onQuit(PlayerQuitEvent event) {
     permissionService.removeAttachment(event.getPlayer());
-    statusBarService.removeStatusBar(event.getPlayer());
   }
 
   @EventHandler
   public void onChangedWorld(PlayerChangedWorldEvent event) {
-    Player player = event.getPlayer();
-    statusBarService.updateStatusDisplay(player, true, regionAccessService);
-    loginSafetyService.scheduleChecks(player);
-  }
-
-  @EventHandler(ignoreCancelled = true)
-  public void onMove(PlayerMoveEvent event) {
-    if (event.getTo() == null) {
-      return;
-    }
-    if (event.getFrom().getBlockX() == event.getTo().getBlockX()
-      && event.getFrom().getBlockY() == event.getTo().getBlockY()
-      && event.getFrom().getBlockZ() == event.getTo().getBlockZ()) {
-      return;
-    }
-    statusBarService.updateStatusDisplay(event.getPlayer(), false, regionAccessService);
+    permissionService.ensureClickMobsPermission(event.getPlayer());
   }
 
   @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

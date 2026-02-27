@@ -11,11 +11,11 @@ import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 
 final class RegionStatusBarService {
-  private final GuardConfig config;
+  private final RegionStatusUIConfig config;
   private final Map<UUID, BossBar> statusBars = new HashMap<>();
   private final Map<UUID, RegionStatus> lastRegionStatus = new HashMap<>();
 
-  RegionStatusBarService(GuardConfig config) {
+  RegionStatusBarService(RegionStatusUIConfig config) {
     this.config = config;
   }
 

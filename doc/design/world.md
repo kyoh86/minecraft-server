@@ -210,27 +210,10 @@ mc-ctl spawn apply
 `allowed_region_ids` に許可リージョンIDを列挙する。
 運用時に反映される設定は上記 `config/config.yml` であり、
 `src/main/resources/config.yml` は jar 同梱の初期値としてのみ扱う。
-同設定の `login_safety` では、ログイン時の補正動作を有効化できる。
-`spawn_safe.min/max.(x|y|z)` で安全範囲を明示し、範囲外に出現したプレイヤーを
-`mainhall` spawn へ補正できる。
 
 ```yaml
 allowed_region_ids:
   - clickmobs_allowed
-
-login_safety:
-  enabled: true
-  mainhall_world: mainhall
-
-spawn_safe:
-  min:
-    x: -7
-    y: -58
-    z: -7
-  max:
-    x: 7
-    y: -55
-    z: 7
 ```
 
 列挙したリージョン内でのみ `ClickMobs` の捕獲・設置操作を許可する。
@@ -247,8 +230,37 @@ spawn_safe:
 - Mob 捕獲/解放許可エリア（`clickmobs_allowed`）
 
 WorldGuard の `greeting` / `farewell` を使って入退域時にメッセージ表示する。
-加えて `ClickMobsRegionGuard` がプレイヤー移動イベントで領域判定し、
+加えて `RegionStatusUI` がプレイヤー移動イベントで領域判定し、
 `bossbar` で現在位置の状態を表示する。
 
 - `保護エリア（建築・破壊不可）`
 - `ClickMobs許可エリア`
+
+設定は `infra/world/plugins/region-status-ui/config/config.yml` の
+`allowed_region_ids` と `status_bossbar` を使用する。
+
+## ログイン時スポーン補正
+
+`infra/world/plugins/spawn-safety-guard` から build された
+`SpawnSafetyGuard.jar` を導入し、
+`infra/world/plugins/spawn-safety-guard/config/config.yml` で
+`mainhall` の安全範囲補正を制御する。
+
+```yaml
+login_safety:
+  enabled: true
+  mainhall_world: mainhall
+
+spawn_safe:
+  min:
+    x: -7
+    y: -58
+    z: -7
+  max:
+    x: 7
+    y: -55
+    z: 7
+```
+
+`spawn_safe.min/max.(x|y|z)` で安全範囲を明示し、範囲外に出現したプレイヤーを
+`mainhall` spawn へ補正できる。

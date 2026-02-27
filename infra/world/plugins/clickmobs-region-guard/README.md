@@ -3,9 +3,6 @@
 WorldGuard のリージョンIDに基づいて `clickmobs.pickup` / `clickmobs.place` を制御する
 Paper プラグイン。
 
-`status_bossbar` を有効にすると、プレイヤー移動イベントを契機に
-現在のリージョン状態を `bossbar` で表示する。
-
 ## build
 
 ```console

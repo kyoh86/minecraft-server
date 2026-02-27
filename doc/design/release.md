@@ -27,7 +27,7 @@
 - `/.github/workflows/release-on-tag.yml`
   - `v*` タグ push で実行する
   - `go test ./...` 成功後に GoReleaser を実行する
-  - `link-code-gate` / `clickmobs-region-guard` / `hub-terraform` の Maven build 成功を確認する
+  - `link-code-gate` / `clickmobs-region-guard` / `region-status-ui` / `spawn-safety-guard` / `hub-terraform` の Maven build 成功を確認する
 - `/.github/workflows/secret-scan.yml`
   - `pull_request` と `main` push で `gitleaks` を実行する
   - `fetch-depth: 0` で履歴を含めて検査する

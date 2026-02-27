@@ -1,0 +1,6 @@
+name: SpawnSafetyGuard
+version: '0.1.0'
+main: dev.kyoh86.mcserver.SpawnSafetyGuardPlugin
+api-version: '1.21'
+authors: [kyoh86]
+description: Keep players in mainhall spawn-safe bounds after join/world change.
