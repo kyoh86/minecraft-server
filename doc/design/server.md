@@ -21,7 +21,6 @@
     - `${LOCAL_UID}:${LOCAL_GID}` で実行し、`secrets/limbo/server.toml` を読み込む
     - `bind=0.0.0.0:25565`
     - MODERN forwarding (`secrets/limbo/server.toml`)
-    - `welcome_message` で「Tキーでチャットを開く」導線を簡潔に案内
     - `velocity` からのみ到達
 - `mc-link`（Discord認証受付サーバー）
     - 外部非公開
@@ -68,6 +67,8 @@
     - 未認証プレイヤーを `limbo` に隔離し、ワンタイムコードをチャット表示するVelocityプラグイン
     - チャット案内は1行のみ表示し、`LINK CODE` と `/mc link code:XXXX` の両方を
       クリックコピー可能にする
+    - `secrets/mc_link_discord_guild_name.txt`（または `MC_LINK_DISCORD_GUILD_NAME`）を参照し、
+      値がある場合は案内文へ Discord サーバー名を埋め込む
     - `runtime/allowlist/allowlist.yml` は `SnakeYAML` で読み取り、`uuids` 配列を正規パースする
     - Redis へのワンタイムコード書き込みは `Jedis` クライアントで実行する
     - 本体は `infra/velocity/plugins/link-code-gate/src` を `infra/velocity/Dockerfile` の build 時に生成
@@ -126,10 +127,12 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - `LOCAL_UID` / `LOCAL_GID` を保持し、compose の標準 `.env` 読込で使用する
 - `secrets/limbo/server.toml`
     - `mc-ctl init` が `infra/limbo/config/server.toml.tmpl` から描画する PicoLimbo 設定
-    - Discord のサーバー名を含む案内文を埋め込む
 - `secrets/mc_link_discord.toml`
     - `mc-link-bot` 用 secret
     - `bot_token` / `guild_id` / `allowed_role_ids` を保持する
+- `secrets/mc_link_discord_guild_name.txt`
+    - Discord サーバー表示名
+    - `velocity` の LinkCodeGate 案内文に利用する
 - `secrets/playit_secret_key.txt`
     - playit.gg トンネル接続用 secret key
 - `infra/docker-compose.yml`
@@ -155,9 +158,9 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
         - `limbo`: `pico_limbo --help`
 - `infra/limbo/config/server.toml.tmpl`
     - PicoLimbo 設定テンプレート
-    - `mc-ctl init` が `secrets/mc_forwarding_secret.txt` と
-      `secrets/mc_link_discord_guild_name.txt`
-      を埋め込んで `secrets/limbo/server.toml` を生成する
+    - `mc-ctl init` が `secrets/mc_forwarding_secret.txt` を埋め込んで `secrets/limbo/server.toml` を生成する
+    - `server_list` を定義し、サーバー一覧応答（MOTD/最大人数/アイコン/オンライン人数表示）を固定する
+    - `world` を定義し、スポーン座標・回転・次元・時刻を固定する
 - `infra/velocity/Dockerfile`
     - Velocity用カスタムイメージ定義
     - `infra/velocity/plugins/link-code-gate/src` を Maven でビルドし、生成JARを `/plugins/LinkCodeGate.jar` へ同梱する

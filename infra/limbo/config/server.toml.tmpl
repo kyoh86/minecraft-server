@@ -1,9 +1,39 @@
 bind = "0.0.0.0:25565"
-welcome_message = "<gray>Tキーでチャットを開いて、Discordの {{ .DiscordGuildName }} で /mc link を実行してください。</gray>"
+welcome_message = ""
 
 [forwarding]
 method = "MODERN"
 secret = "{{ .ForwardingSecret }}"
+
+[server_list]
+reply_to_status = true
+# Maximum count shown in your server list, does not affect the player limit
+max_players = 100
+# MOTD displayed in server lists
+message_of_the_day = "kyoh86's Minecraft Server"
+# Show actual online player count in your server list?
+show_online_player_count = true
+server_icon = "server-icon.png"
+
+[world]
+# Custom spawn position as [x, y, z] coordinates
+spawn_position = [0.0, 64.0, 0.0]
+# Custom spawn rotation as [yaw, pitch] coordinates
+spawn_rotation = [0.0, 0.0]
+# Default spawn dimension
+# Allowed values: "overworld", "nether", or "end"
+dimension = "overworld"
+# Sets the time in the world
+# Allowed values: "day", "noon", "night", "midnight", or a specific time in ticks (0-24000)
+time = "day"
+
+[title]
+enabled = true
+title = "<bold>Welcome!</bold>"
+subtitle = "Tキーでチャットを開いて"
+fade_in = 10
+stay = 70
+fade_out = 50
 
 [boss_bar]
 enabled = true

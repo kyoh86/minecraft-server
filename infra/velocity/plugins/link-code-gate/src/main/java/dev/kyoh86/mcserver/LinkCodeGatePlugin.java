@@ -20,6 +20,7 @@ import redis.clients.jedis.Jedis;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -47,6 +48,7 @@ public final class LinkCodeGatePlugin {
   private static final String MAINHALL_SERVER = "mainhall";
   private static final String LIMBO_SERVER = "limbo";
   private static final String DEFAULT_ALLOWLIST_PATH = "/server/allowlist.yml";
+  private static final String DEFAULT_DISCORD_GUILD_NAME_PATH = "/run/secrets/mc_link_discord_guild_name.txt";
   private static final long NOTICE_INTERVAL_MILLIS = 3_000;
   private static final int REDIS_CONNECT_TIMEOUT_MILLIS = 1_500;
   private static final int REDIS_READ_TIMEOUT_MILLIS = 1_500;
@@ -58,6 +60,7 @@ public final class LinkCodeGatePlugin {
   private final int redisPort;
   private final int redisDB;
   private final String allowlistPath;
+  private final String discordGuildName;
   private final ConcurrentMap<UUID, Long> lastNoticeAt = new ConcurrentHashMap<>();
 
   @Inject
@@ -70,6 +73,7 @@ public final class LinkCodeGatePlugin {
     this.redisPort = hp.length == 2 ? parseIntOr(hp[1], 6379) : 6379;
     this.redisDB = parseIntOr(envOr("MC_LINK_REDIS_DB", "0"), 0);
     this.allowlistPath = envOr("MC_LINK_ALLOWLIST_PATH", DEFAULT_ALLOWLIST_PATH);
+    this.discordGuildName = resolveDiscordGuildName();
   }
 
   @Subscribe(order = PostOrder.LAST)
@@ -138,14 +142,19 @@ public final class LinkCodeGatePlugin {
 
   private void sendLinkMessage(Player player, String code) {
     String cmd = "/mc link code:" + code;
+    String guide = discordGuildName.isEmpty()
+      ? "コピーしたコマンドをDiscordで送信してください"
+      : "コピーしたコマンドをDiscord「" + discordGuildName + "」で送信してください";
     player.sendMessage(
       Component.text("クリックしてコマンドをコピーしてください: ", NamedTextColor.GRAY)
+        .append(Component.newline())
         .append(
           Component.text(" [" + cmd + "]", NamedTextColor.WHITE)
             .clickEvent(ClickEvent.copyToClipboard(cmd))
             .hoverEvent(HoverEvent.showText(Component.text("クリックでコマンドをコピー")))
         )
-        .append(Component.text("コピーしたコマンドをDiscordで送信してください", NamedTextColor.GRAY))
+        .append(Component.newline())
+        .append(Component.text(guide, NamedTextColor.GRAY))
     );
   }
 
@@ -231,5 +240,30 @@ public final class LinkCodeGatePlugin {
     } catch (Exception ignored) {
       return fallback;
     }
+  }
+
+  private String resolveDiscordGuildName() {
+    String fromEnv = envOr("MC_LINK_DISCORD_GUILD_NAME", "");
+    if (!fromEnv.isEmpty() && !looksLikePlaceholder(fromEnv)) {
+      return fromEnv;
+    }
+    String path = envOr("MC_LINK_DISCORD_GUILD_NAME_PATH", DEFAULT_DISCORD_GUILD_NAME_PATH);
+    if (path.isEmpty()) {
+      return "";
+    }
+    try {
+      String value = Files.readString(Path.of(path)).trim();
+      if (value.isEmpty() || looksLikePlaceholder(value)) {
+        return "";
+      }
+      return value;
+    } catch (IOException e) {
+      logger.debug("discord guild name file is not available: {}", path);
+      return "";
+    }
+  }
+
+  private static boolean looksLikePlaceholder(String value) {
+    return value.startsWith("REPLACE_WITH_");
   }
 }
