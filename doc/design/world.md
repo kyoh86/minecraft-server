@@ -94,11 +94,10 @@
     - `world.policy.yml` に定義された MV 管理項目を適用する
     - `world-base` datapack を runtime へそのままコピーする
 - `mc-ctl world spawn profile [--world <name>]`
-    - 管理対象ワールドの地表Y（`motion_blocking_no_leaves`）を中心周辺の複数点で検出する
+    - `HubTerraform` の `hubterraform probe <world>` を使って地表Y（`motion_blocking_no_leaves`）を中心周辺の複数点で検出する
     - サンプル点は `x,z=-24..24` を `12` 刻みで走査する（25点）
     - 最終 `surface_y` は `中央値` / `平均値(切り捨て)` / `40パーセンタイル` の最小値を採用する
     - `y=64` 以上では `ice` / `packed_ice` / `blue_ice` / `snow` / `snow_block` を地表候補から除外する
-    - 地表判定ロジックは `mc-ctl` 実装側に持つ
     - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
     - 各ワールドに `mcserver_spawn_anchor_<world>` marker を配置する
     - `setworldspawn` と `mvsetspawn` を同期する
@@ -156,12 +155,12 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 - 基礎は `surfaceY-16` と `OCEAN_FLOOR` の低い方まで石で充填する
 - 液体の再充填は `water` のみ行い、`lava` は再充填しない
 - 水面の再充填は元の水面セルを起点に、整地後の地形高を見ながら隣接方向へ伝播して欠けを埋める
-- 伝播シードに使う水面は `y=63` 以下に限定し、高高度の水源で低地が過充填されるのを防ぐ
+- 伝播シードに使う水面は海面（`y=63`）基準で、水ブロック座標 `y=62` 以下に限定し、高高度の水源で低地が過充填されるのを防ぐ
 - 伝播結果が未設定のセルには水再充填を行わない
-- 再充填する水の上端は固定で `y=63` とし、列ごとの水位ぶれを抑制する
+- 再充填する水ブロックの上端は固定で `y=62`（海面 `y=63`）とし、列ごとの水位ぶれを抑制する
 
-地表判定ロジックは `mc-ctl world spawn profile` と `HubTerraform` の2箇所に存在する。
-除外対象ブロックや高度条件を変更する場合は、両実装を同時に更新して挙動を一致させる。
+地表判定ロジックは `HubTerraform` 内の `probe`（profile用）と terraform本体（地形解析用）の2箇所に存在する。
+除外対象ブロックや高度条件を変更する場合は、両ロジックを同時に更新して挙動を一致させる。
 小ハブの東西出入口には、Mob に開けられないよう圧力板入力の鉄ドア回路を配置する。
 同時に `worldguard.regions.yml.tmpl` の反映結果により
 スポーン周辺での建設・破壊・爆破を禁止する。

@@ -7,8 +7,8 @@ description: Automated hub terrain leveling and blending via WorldEdit/FAWE.
 softdepend: [FastAsyncWorldEdit, WorldEdit]
 commands:
   hubterraform:
-    description: Apply hub terrain leveling and blending.
-    usage: /hubterraform apply <world> <surfaceY>
+    description: Apply hub terrain leveling/blending or probe surface Y.
+    usage: /hubterraform apply <world> <surfaceY> | /hubterraform probe <world>
     permission: hubterraform.apply
 permissions:
   hubterraform.apply:

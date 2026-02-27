@@ -10,6 +10,7 @@ import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import org.bukkit.HeightMap;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -24,8 +25,11 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
   private static final int BLUR_RADIUS = 2;
   private static final int CLEAR_MARGIN = 96;
   private static final int SURFACE_FROZEN_COVER_IGNORE_MIN_Y = 64;
-  private static final int WATER_SURFACE_Y = 63;
-  private static final int WATER_SEED_MAX_Y = WATER_SURFACE_Y;
+  private static final int SURFACE_PROBE_RADIUS = 24;
+  private static final int SURFACE_PROBE_STEP = 12;
+  private static final int SEA_LEVEL_Y = 63;
+  private static final int WATER_FILL_TOP_BLOCK_Y = SEA_LEVEL_Y - 1;
+  private static final int WATER_SEED_MAX_Y = WATER_FILL_TOP_BLOCK_Y;
 
   @Override
   public void onEnable() {
@@ -36,14 +40,32 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
 
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-    if (args.length != 3 || !"apply".equalsIgnoreCase(args[0])) {
-      sender.sendMessage("Usage: /hubterraform apply <world> <surfaceY>");
+    if (args.length < 2) {
+      sender.sendMessage("Usage: /hubterraform apply <world> <surfaceY> | /hubterraform probe <world>");
       return true;
     }
 
     World world = getServer().getWorld(args[1]);
     if (world == null) {
       sender.sendMessage("world not found: " + args[1]);
+      return true;
+    }
+
+    if ("probe".equalsIgnoreCase(args[0])) {
+      SurfaceProbeResult result = probeSurfaceY(world);
+      sender.sendMessage(
+        "hubterraform probe: world=" + world.getName()
+          + " surfaceY=" + result.surfaceY
+          + " samples=" + result.sampleCount
+          + " median=" + result.median
+          + " p40=" + result.p40
+          + " meanFloor=" + result.meanFloor
+      );
+      return true;
+    }
+
+    if (!"apply".equalsIgnoreCase(args[0]) || args.length != 3) {
+      sender.sendMessage("Usage: /hubterraform apply <world> <surfaceY> | /hubterraform probe <world>");
       return true;
     }
 
@@ -63,6 +85,47 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
       sender.sendMessage("hubterraform failed: " + e.getMessage());
     }
     return true;
+  }
+
+  private SurfaceProbeResult probeSurfaceY(World world) {
+    int rowCount = (SURFACE_PROBE_RADIUS * 2) / SURFACE_PROBE_STEP + 1;
+    int totalSamples = rowCount * rowCount;
+    int[] samples = new int[totalSamples];
+    int sampleCount = 0;
+    long sum = 0;
+
+    for (int x = -SURFACE_PROBE_RADIUS; x <= SURFACE_PROBE_RADIUS; x += SURFACE_PROBE_STEP) {
+      for (int z = -SURFACE_PROBE_RADIUS; z <= SURFACE_PROBE_RADIUS; z += SURFACE_PROBE_STEP) {
+        int terrainY = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
+        int feetY = terrainY + 1;
+        feetY = descendHighAltitudeFrozenCover(world, x, z, feetY);
+        samples[sampleCount] = feetY;
+        sampleCount++;
+        sum += feetY;
+      }
+    }
+
+    Arrays.sort(samples, 0, sampleCount);
+    int median = samples[sampleCount / 2];
+    int p40 = samples[(sampleCount - 1) * 40 / 100];
+    int meanFloor = (int) (sum / sampleCount);
+    int surfaceY = Math.min(median, Math.min(p40, meanFloor));
+    return new SurfaceProbeResult(surfaceY, sampleCount, median, p40, meanFloor);
+  }
+
+  private int descendHighAltitudeFrozenCover(World world, int x, int z, int feetY) {
+    int y = feetY;
+    for (int i = 0; i < 256; i++) {
+      if (y < SURFACE_FROZEN_COVER_IGNORE_MIN_Y) {
+        break;
+      }
+      Material below = world.getBlockAt(x, y - 1, z).getType();
+      if (!isFrozenCover(below)) {
+        break;
+      }
+      y--;
+    }
+    return y;
   }
 
   private int terraform(World world, int surfaceY) throws Exception {
@@ -144,7 +207,7 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
             continue;
           }
           int targetY = targetTop[ix][iz];
-          int waterFillTop = Math.min(clearMaxY, WATER_SURFACE_Y);
+          int waterFillTop = Math.min(clearMaxY, WATER_FILL_TOP_BLOCK_Y);
           if (waterFillTop <= targetY) {
             continue;
           }
@@ -380,6 +443,10 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
     if (y < SURFACE_FROZEN_COVER_IGNORE_MIN_Y) {
       return false;
     }
+    return isFrozenCover(material);
+  }
+
+  private boolean isFrozenCover(Material material) {
     return material == Material.ICE
       || material == Material.PACKED_ICE
       || material == Material.BLUE_ICE
@@ -462,6 +529,22 @@ public class HubTerraformPlugin extends JavaPlugin implements CommandExecutor {
       this.fill = fill;
       this.fluidSurfaceY = fluidSurfaceY;
       this.fluid = fluid;
+    }
+  }
+
+  private static final class SurfaceProbeResult {
+    private final int surfaceY;
+    private final int sampleCount;
+    private final int median;
+    private final int p40;
+    private final int meanFloor;
+
+    private SurfaceProbeResult(int surfaceY, int sampleCount, int median, int p40, int meanFloor) {
+      this.surfaceY = surfaceY;
+      this.sampleCount = sampleCount;
+      this.median = median;
+      this.p40 = p40;
+      this.meanFloor = meanFloor;
     }
   }
 }
