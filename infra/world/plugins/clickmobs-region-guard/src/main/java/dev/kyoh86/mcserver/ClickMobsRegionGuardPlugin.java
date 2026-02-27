@@ -1,27 +1,5 @@
 package dev.kyoh86.mcserver;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
-import org.bukkit.World;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
-import org.bukkit.entity.Boat;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -33,46 +11,16 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
   private static final String BYPASS_PERMISSION = "clickmobsregionguard.bypass";
-  private static final String CLICKMOBS_PICKUP = "clickmobs.pickup";
-  private static final String CLICKMOBS_PLACE = "clickmobs.place";
-  private static final NamespacedKey CLICKMOBS_ENTITY_KEY = new NamespacedKey("clickmobs", "entity");
-
-  private final Set<String> defaultAllowedRegionIds = new HashSet<>();
-  private final Map<UUID, PermissionAttachment> attachments = new HashMap<>();
-  private final Map<UUID, BossBar> statusBars = new HashMap<>();
-  private final Map<UUID, RegionStatus> lastRegionStatus = new HashMap<>();
-
-  private boolean statusBossbarEnabled;
-  private String statusSpawnText;
-  private String statusClickMobsText;
-  private BarColor statusSpawnColor;
-  private BarColor statusClickMobsColor;
-  private String spawnProtectedRegionId;
-  private boolean loginSafetyEnabled;
-  private String loginSafetyMainhallWorld;
-  private String loginSafetyMessage;
-  private int spawnSafeMinX;
-  private int spawnSafeMinY;
-  private int spawnSafeMinZ;
-  private int spawnSafeMaxX;
-  private int spawnSafeMaxY;
-  private int spawnSafeMaxZ;
-
-  private enum RegionStatus {
-    NONE,
-    CLICKMOBS_ALLOWED,
-    SPAWN_PROTECTED
-  }
+  private GuardConfig config;
+  private RegionAccessService regionAccessService;
+  private ClickMobsPermissionService permissionService;
+  private RegionStatusBarService statusBarService;
+  private LoginSafetyService loginSafetyService;
 
   @Override
   public void onEnable() {
@@ -84,46 +32,44 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
     }
 
     saveDefaultConfig();
-    loadAllowedRegions();
-    loadStatusConfig();
+    config = GuardConfig.load(this);
+    regionAccessService = new RegionAccessService(config.allowedRegionIds);
+    permissionService = new ClickMobsPermissionService(this);
+    statusBarService = new RegionStatusBarService(config);
+    loginSafetyService = new LoginSafetyService(this, config);
 
     getServer().getPluginManager().registerEvents(this, this);
     for (Player player : getServer().getOnlinePlayers()) {
-      ensureClickMobsPermission(player);
-      updateStatusDisplay(player, true);
+      permissionService.ensureClickMobsPermission(player);
+      statusBarService.updateStatusDisplay(player, true, regionAccessService);
     }
   }
 
   @Override
   public void onDisable() {
-    for (Player player : getServer().getOnlinePlayers()) {
-      removeAttachment(player);
-      removeStatusBar(player);
-    }
-    attachments.clear();
-    statusBars.clear();
-    lastRegionStatus.clear();
+    permissionService.clear(getServer().getOnlinePlayers());
+    statusBarService.clear(getServer().getOnlinePlayers());
   }
 
   @EventHandler
   public void onJoin(PlayerJoinEvent event) {
     Player player = event.getPlayer();
-    ensureClickMobsPermission(player);
-    updateStatusDisplay(player, true);
-    scheduleLoginSafetyChecks(player);
+    permissionService.ensureClickMobsPermission(player);
+    statusBarService.updateStatusDisplay(player, true, regionAccessService);
+    loginSafetyService.scheduleChecks(player);
   }
 
   @EventHandler
   public void onQuit(PlayerQuitEvent event) {
-    removeAttachment(event.getPlayer());
-    removeStatusBar(event.getPlayer());
+    permissionService.removeAttachment(event.getPlayer());
+    statusBarService.removeStatusBar(event.getPlayer());
   }
 
   @EventHandler
   public void onChangedWorld(PlayerChangedWorldEvent event) {
     Player player = event.getPlayer();
-    updateStatusDisplay(player, true);
-    scheduleLoginSafetyChecks(player);
+    statusBarService.updateStatusDisplay(player, true, regionAccessService);
+    loginSafetyService.scheduleChecks(player);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -136,7 +82,7 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
       && event.getFrom().getBlockZ() == event.getTo().getBlockZ()) {
       return;
     }
-    updateStatusDisplay(event.getPlayer(), false);
+    statusBarService.updateStatusDisplay(event.getPlayer(), false, regionAccessService);
   }
 
   @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -146,15 +92,15 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
     }
 
     Player player = event.getPlayer();
-    ensureClickMobsPermission(player);
+    permissionService.ensureClickMobsPermission(player);
     if (player.hasPermission(BYPASS_PERMISSION)) {
       return;
     }
-    if (isClickMobsAllowed(player)) {
+    if (regionAccessService.isClickMobsAllowed(player)) {
       return;
     }
 
-    if (isPickupAttempt(event) || isVehiclePlaceAttempt(event)) {
+    if (ClickMobsActionDetector.isPickupAttempt(event) || ClickMobsActionDetector.isVehiclePlaceAttempt(event)) {
       event.setCancelled(true);
       player.sendActionBar("§cこのエリアでは ClickMobs は使えません");
     }
@@ -163,277 +109,18 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
   @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
   public void onBlockPlace(BlockPlaceEvent event) {
     Player player = event.getPlayer();
-    ensureClickMobsPermission(player);
+    permissionService.ensureClickMobsPermission(player);
     if (player.hasPermission(BYPASS_PERMISSION)) {
       return;
     }
-    if (isClickMobsAllowed(player)) {
+    if (regionAccessService.isClickMobsAllowed(player)) {
       return;
     }
 
-    if (isClickMobsItem(player.getInventory().getItemInMainHand()) || isClickMobsItem(player.getInventory().getItemInOffHand())) {
+    if (ClickMobsActionDetector.isClickMobsItem(player.getInventory().getItemInMainHand())
+      || ClickMobsActionDetector.isClickMobsItem(player.getInventory().getItemInOffHand())) {
       event.setCancelled(true);
       player.sendActionBar("§cこのエリアでは ClickMobs は使えません");
     }
-  }
-
-  private void loadAllowedRegions() {
-    defaultAllowedRegionIds.clear();
-
-    for (String regionID : getConfig().getStringList("allowed_region_ids")) {
-      String normalized = normalizeRegionId(regionID);
-      if (!normalized.isEmpty()) {
-        defaultAllowedRegionIds.add(normalized);
-      }
-    }
-    if (defaultAllowedRegionIds.isEmpty()) {
-      defaultAllowedRegionIds.add("clickmobs_allowed");
-    }
-  }
-
-  private void loadStatusConfig() {
-    statusBossbarEnabled = getConfig().getBoolean("status_bossbar.enabled", true);
-    spawnProtectedRegionId = normalizeRegionId(getConfig().getString("status_bossbar.spawn_protected_region_id", "spawn_protected"));
-    statusSpawnText = getConfig().getString("status_bossbar.spawn_protected_text", "保護エリア（建築・破壊不可）");
-    statusClickMobsText = getConfig().getString("status_bossbar.clickmobs_allowed_text", "ClickMobs許可エリア");
-    statusSpawnColor = parseColor(getConfig().getString("status_bossbar.spawn_protected_color", "RED"), BarColor.RED);
-    statusClickMobsColor = parseColor(getConfig().getString("status_bossbar.clickmobs_allowed_color", "GREEN"), BarColor.GREEN);
-    loginSafetyEnabled = getConfig().getBoolean("login_safety.enabled", true);
-    loginSafetyMainhallWorld = getConfig().getString("login_safety.mainhall_world", "mainhall");
-    loginSafetyMessage = getConfig().getString("login_safety.teleport_message", "§e安全な地点へ移動しました");
-    spawnSafeMinX = getConfig().getInt("spawn_safe.min.x", -64);
-    spawnSafeMinY = getConfig().getInt("spawn_safe.min.y", -80);
-    spawnSafeMinZ = getConfig().getInt("spawn_safe.min.z", -64);
-    spawnSafeMaxX = getConfig().getInt("spawn_safe.max.x", 64);
-    spawnSafeMaxY = getConfig().getInt("spawn_safe.max.y", 0);
-    spawnSafeMaxZ = getConfig().getInt("spawn_safe.max.z", 64);
-  }
-
-  private BarColor parseColor(String value, BarColor fallback) {
-    if (value == null || value.isBlank()) {
-      return fallback;
-    }
-    try {
-      return BarColor.valueOf(value.trim().toUpperCase());
-    } catch (IllegalArgumentException ignored) {
-      return fallback;
-    }
-  }
-
-  private void updateStatusDisplay(Player player, boolean force) {
-    RegionStatus next = detectRegionStatus(player);
-    RegionStatus previous = lastRegionStatus.getOrDefault(player.getUniqueId(), RegionStatus.NONE);
-    if (!force && previous == next) {
-      return;
-    }
-    lastRegionStatus.put(player.getUniqueId(), next);
-
-    if (!statusBossbarEnabled || next == RegionStatus.NONE) {
-      hideStatusBar(player);
-      return;
-    }
-
-    BossBar bar = statusBars.computeIfAbsent(player.getUniqueId(), uuid -> {
-      BossBar created = Bukkit.createBossBar("", BarColor.WHITE, BarStyle.SOLID);
-      created.setProgress(1.0);
-      created.addPlayer(player);
-      return created;
-    });
-
-    if (!bar.getPlayers().contains(player)) {
-      bar.addPlayer(player);
-    }
-
-    if (next == RegionStatus.SPAWN_PROTECTED) {
-      bar.setTitle(statusSpawnText);
-      bar.setColor(statusSpawnColor);
-    } else {
-      bar.setTitle(statusClickMobsText);
-      bar.setColor(statusClickMobsColor);
-    }
-    bar.setVisible(true);
-  }
-
-  private void hideStatusBar(Player player) {
-    BossBar bar = statusBars.get(player.getUniqueId());
-    if (bar == null) {
-      return;
-    }
-    bar.setVisible(false);
-  }
-
-  private void removeStatusBar(Player player) {
-    BossBar bar = statusBars.remove(player.getUniqueId());
-    lastRegionStatus.remove(player.getUniqueId());
-    if (bar == null) {
-      return;
-    }
-    bar.removePlayer(player);
-    bar.setVisible(false);
-  }
-
-  private RegionStatus detectRegionStatus(Player player) {
-    if (isPlayerInRegion(player, spawnProtectedRegionId)) {
-      return RegionStatus.SPAWN_PROTECTED;
-    }
-    if (isClickMobsAllowed(player)) {
-      return RegionStatus.CLICKMOBS_ALLOWED;
-    }
-    return RegionStatus.NONE;
-  }
-
-  private boolean isPlayerInRegion(Player player, String regionId) {
-    if (regionId.isEmpty()) {
-      return false;
-    }
-    RegionManager manager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(player.getWorld()));
-    if (manager == null) {
-      return false;
-    }
-    ProtectedRegion region = manager.getRegion(regionId);
-    if (region == null) {
-      return false;
-    }
-    int x = player.getLocation().getBlockX();
-    int y = player.getLocation().getBlockY();
-    int z = player.getLocation().getBlockZ();
-    return region.contains(x, y, z);
-  }
-
-  private void enforceLoginSafety(Player player) {
-    if (!loginSafetyEnabled || !player.isOnline()) {
-      return;
-    }
-    World world = player.getWorld();
-    if (!world.getName().equals(loginSafetyMainhallWorld)) {
-      return;
-    }
-    if (isWithinSpawnSafeBounds(player.getLocation())) {
-      return;
-    }
-    Location from = player.getLocation().clone();
-    Location spawn = world.getSpawnLocation().clone().add(0.5, 0.0, 0.5);
-    player.teleport(spawn);
-    if (loginSafetyMessage != null && !loginSafetyMessage.isBlank()) {
-      player.sendActionBar(loginSafetyMessage);
-    }
-    getLogger().info(
-      "login safety: teleported " + player.getName()
-        + " to spawn from " + formatBlockPosition(from)
-    );
-  }
-
-  private void scheduleLoginSafetyChecks(Player player) {
-    // Multiverse may apply destination after join/world-change handling,
-    // so probe multiple ticks to catch post-teleport drift.
-    Bukkit.getScheduler().runTask(this, () -> enforceLoginSafety(player));
-    Bukkit.getScheduler().runTaskLater(this, () -> enforceLoginSafety(player), 20L);
-    Bukkit.getScheduler().runTaskLater(this, () -> enforceLoginSafety(player), 60L);
-  }
-
-  private boolean isWithinSpawnSafeBounds(Location location) {
-    int x = location.getBlockX();
-    int y = location.getBlockY();
-    int z = location.getBlockZ();
-    return x >= spawnSafeMinX && x <= spawnSafeMaxX
-      && y >= spawnSafeMinY && y <= spawnSafeMaxY
-      && z >= spawnSafeMinZ && z <= spawnSafeMaxZ;
-  }
-
-  private String formatBlockPosition(Location location) {
-    return location.getWorld().getName()
-      + ":" + location.getBlockX()
-      + "," + location.getBlockY()
-      + "," + location.getBlockZ();
-  }
-
-  private boolean isClickMobsAllowed(Player player) {
-    String worldName = player.getWorld().getName();
-    Set<String> allowedRegions = resolveAllowedRegions(worldName);
-    if (allowedRegions.isEmpty()) {
-      return false;
-    }
-
-    RegionManager manager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(player.getWorld()));
-    if (manager == null) {
-      return false;
-    }
-
-    int x = player.getLocation().getBlockX();
-    int y = player.getLocation().getBlockY();
-    int z = player.getLocation().getBlockZ();
-    for (String regionID : allowedRegions) {
-      ProtectedRegion region = manager.getRegion(regionID);
-      if (region == null) {
-        continue;
-      }
-      if (!region.contains(x, y, z)) {
-        continue;
-      }
-      return true;
-    }
-    return false;
-  }
-
-  private Set<String> resolveAllowedRegions(String worldName) {
-    return defaultAllowedRegionIds;
-  }
-
-  private String normalizeRegionId(String regionID) {
-    if (regionID == null) {
-      return "";
-    }
-    return regionID.trim().toLowerCase();
-  }
-
-  private void ensureClickMobsPermission(Player player) {
-    PermissionAttachment attachment = attachments.computeIfAbsent(player.getUniqueId(), uuid -> player.addAttachment(this));
-    attachment.setPermission(CLICKMOBS_PICKUP, true);
-    attachment.setPermission(CLICKMOBS_PLACE, true);
-    player.recalculatePermissions();
-  }
-
-  private void removeAttachment(Player player) {
-    PermissionAttachment attachment = attachments.remove(player.getUniqueId());
-    if (attachment == null) {
-      return;
-    }
-    player.removeAttachment(attachment);
-    player.recalculatePermissions();
-  }
-
-  private boolean isPickupAttempt(PlayerInteractEntityEvent event) {
-    if (!event.getPlayer().isSneaking()) {
-      return false;
-    }
-    if (!(event.getRightClicked() instanceof LivingEntity)) {
-      return false;
-    }
-    return !(event.getRightClicked() instanceof HumanEntity);
-  }
-
-  private boolean isVehiclePlaceAttempt(PlayerInteractEntityEvent event) {
-    if (!event.getPlayer().isSneaking()) {
-      return false;
-    }
-    if (!(event.getRightClicked() instanceof Boat) && !(event.getRightClicked() instanceof Minecart)) {
-      return false;
-    }
-    return isClickMobsItem(event.getPlayer().getInventory().getItemInMainHand());
-  }
-
-  private boolean isClickMobsItem(ItemStack item) {
-    if (item == null || item.getType().isAir()) {
-      return false;
-    }
-    if (!item.getType().toString().equals("PLAYER_HEAD")) {
-      return false;
-    }
-    ItemMeta meta = item.getItemMeta();
-    if (meta == null) {
-      return false;
-    }
-    PersistentDataContainer pdc = meta.getPersistentDataContainer();
-    return pdc.has(CLICKMOBS_ENTITY_KEY, PersistentDataType.BOOLEAN);
   }
 }

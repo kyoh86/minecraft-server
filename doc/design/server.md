@@ -52,6 +52,14 @@
 
 - `ClickMobsRegionGuard`
     - `WorldGuard` のリージョンIDに基づき `ClickMobs` を制御する
+    - 実装責務は以下に分割する
+        - `ClickMobsRegionGuardPlugin`: イベント配線と依存初期化
+        - `GuardConfig`: 設定読込と既定値補完
+        - `RegionAccessService`: WorldGuardリージョン判定
+        - `ClickMobsPermissionService`: `clickmobs.pickup` / `clickmobs.place` の付与管理
+        - `RegionStatusBarService`: bossbar表示の状態管理
+        - `LoginSafetyService`: `spawn_safe` 範囲外プレイヤーの退避
+        - `ClickMobsActionDetector`: ClickMobsアイテム/操作判定
     - 本体は `infra/world/plugins/clickmobs-region-guard/src` を `infra/world/Dockerfile` の build 時に生成
     - 設定: `infra/world/plugins/clickmobs-region-guard/config/config.yml`
         - `allowed_region_ids` に許可リージョンIDを列挙する
