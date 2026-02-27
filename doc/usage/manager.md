@@ -34,9 +34,9 @@ mc-ctl init
 mc-ctl server up
 mc-ctl world ensure
 mc-ctl world setup
-mc-ctl world spawn profile
-mc-ctl world spawn stage
-mc-ctl world spawn apply
+mc-ctl spawn profile
+mc-ctl spawn stage
+mc-ctl spawn apply
 ```
 
 `mc-ctl init` は対話入力で secret 設定を促す。
@@ -69,8 +69,8 @@ Redis/allowlist の環境変数名は `MC_LINK_*` に統一されており、旧
 
 ```console
 mc-ctl world setup
-mc-ctl world spawn stage
-mc-ctl world spawn apply
+mc-ctl spawn stage
+mc-ctl spawn apply
 ```
 
 ## プラグイン更新の反映
@@ -95,15 +95,15 @@ mc-ctl world setup --world mainhall
 ```console
 mc-ctl world regenerate --world resource
 mc-ctl world setup --world resource
-mc-ctl world spawn profile --world resource
-mc-ctl world spawn stage --world resource
-mc-ctl world spawn apply --world resource
+mc-ctl spawn profile --world resource
+mc-ctl spawn stage --world resource
+mc-ctl spawn apply --world resource
 ```
 
 特定ワールドだけスポーン関連処理を実行したい場合は `--world <name>` を指定できる。
-`world spawn stage --world <name>` は対象ワールドの `WorldGuard` 設定だけを更新する。
+`spawn stage --world <name>` は対象ワールドの `WorldGuard` 設定だけを更新する。
 `portals.yml` と `mainhall/hub_layout.mcfunction` は `--world` なしで全体再描画し、`--world` 指定時は `portals.yml` の対象ワールド定義だけ更新する。
-`world spawn apply --world <name>` は対象ワールドのみを適用し、`mainhall` には触れない。
+`spawn apply --world <name>` は対象ワールドのみを適用し、`mainhall` には触れない。
 
 ## ワールド drop / delete
 

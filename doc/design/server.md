@@ -63,7 +63,7 @@
     - 本体は `infra/velocity/plugins/link-code-gate/src` を `infra/velocity/Dockerfile` の build 時に生成
 - `HubTerraform`
     - ワールドHub周辺の整地を自動化するプラグイン
-    - `world spawn apply` が `hubterraform apply <world> <surfaceY>` を実行して適用する
+    - `spawn apply` が `hubterraform apply <world> <surfaceY>` を実行して適用する
     - 本体は `infra/world/plugins/hub-terraform` を `infra/world/Dockerfile` の build 時に生成
 
 `LuckPerms` は `infra/docker-compose.yml` の `SPIGET_RESOURCES` で導入している。
@@ -181,7 +181,7 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - `config/config.yml` を world イメージへ同梱する
 - `infra/world/schematics/hub.schem`
     - `mainhall` 以外のワールドへ貼り付ける Hub 建築スキーマ
-    - `mc-ctl world spawn stage` / `mc-ctl world spawn apply` が runtime へ同期する
+    - `mc-ctl spawn stage` / `mc-ctl spawn apply` が runtime へ同期する
 - `datapacks/world-base`
     - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `worlds`
@@ -210,9 +210,11 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
 - `mc-ctl server up|down|restart|ps|logs velocity|logs world|reload`
     - サーバーの起動、停止、リスタート、状態やログの確認
     - `mc-ctl server restart <service> --build` で image 再ビルド + 再作成を実行できる
-- `mc-ctl world ensure|regenerate|setup|spawn profile|spawn stage|spawn apply|function run`
+- `mc-ctl world ensure|regenerate|setup|function run`
     - `mc-ctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
-    - 座標依存の反映は `mc-ctl world spawn profile/stage/apply` で行い、ポータル定義などを読み込む。
+    - 座標依存の反映は `mc-ctl spawn profile/stage/apply` で行い、ポータル定義などを読み込む。
+- `mc-ctl spawn profile|stage|apply`
+    - スポーン基準のプロファイル取得、テンプレート描画、反映を行う。
 - `mc-ctl world drop|delete`
 - `mc-ctl player op ...|admin ...|delink`
 

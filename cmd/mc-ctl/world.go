@@ -527,7 +527,7 @@ func (a app) worldSpawnProfile(target string) error {
 		profile = p
 	}
 	for _, worldName := range worldNames {
-		fmt.Printf("world spawn profile: probing surface Y for %s...\n", worldName)
+		fmt.Printf("spawn profile: probing surface Y for %s...\n", worldName)
 		y, ok, err := a.resolveWorldSurfaceY(worldName)
 		if err != nil {
 			return err
@@ -538,7 +538,7 @@ func (a app) worldSpawnProfile(target string) error {
 		anchorY := y - 32
 		dimension := worldDimensionID(worldName)
 		worldTag := "mcserver_spawn_anchor_" + worldName
-		fmt.Printf("world spawn profile: applying anchor/spawn for %s (surface=%d anchor=%d)...\n", worldName, y, anchorY)
+		fmt.Printf("spawn profile: applying anchor/spawn for %s (surface=%d anchor=%d)...\n", worldName, y, anchorY)
 		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add 0 0", dimension)); err != nil {
 			return err
 		}
@@ -565,7 +565,7 @@ func (a app) worldSpawnProfile(target string) error {
 	if err := a.saveSpawnProfile(profile); err != nil {
 		return err
 	}
-	fmt.Printf("profiled world spawn data for %d worlds\n", len(profile.Worlds))
+	fmt.Printf("profiled spawn data for %d worlds\n", len(profile.Worlds))
 	return nil
 }
 
@@ -607,31 +607,31 @@ func (a app) worldSpawnStage(target string) error {
 	}
 	worldGuardTargets = append(worldGuardTargets, targetWorlds...)
 	for _, worldName := range worldGuardTargets {
-		fmt.Printf("world spawn stage: rendering WorldGuard regions for %s...\n", worldName)
+		fmt.Printf("spawn stage: rendering WorldGuard regions for %s...\n", worldName)
 		if err := a.renderWorldGuardRegions(worldName, data); err != nil {
 			return err
 		}
 	}
 	if target == "" {
-		fmt.Println("world spawn stage: rendering portals.yml...")
+		fmt.Println("spawn stage: rendering portals.yml...")
 		portalsSrc := filepath.Join(a.baseDir, "worlds", primaryWorldName, "portals.yml.tmpl")
 		portalsDst := filepath.Join(a.baseDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
 		if err := renderTemplateFile(portalsSrc, portalsDst, data); err != nil {
 			return err
 		}
-		fmt.Println("world spawn stage: rendering mainhall hub layout...")
+		fmt.Println("spawn stage: rendering mainhall hub layout...")
 		hubLayoutSrc := filepath.Join(a.baseDir, "worlds", primaryWorldName, "hub_layout.mcfunction.tmpl")
 		hubLayoutDst := filepath.Join(a.baseDir, "runtime", "world", primaryWorldName, "datapacks", "world-base", "data", "mcserver", "function", "mainhall", "hub_layout.mcfunction")
 		if err := renderTemplateFile(hubLayoutSrc, hubLayoutDst, data); err != nil {
 			return err
 		}
 	} else {
-		fmt.Println("world spawn stage: patching portals.yml for target world...")
+		fmt.Println("spawn stage: patching portals.yml for target world...")
 		if err := a.patchPortalsForWorlds(targetWorlds); err != nil {
 			return err
 		}
 	}
-	fmt.Println("world spawn stage: reloading server/plugins...")
+	fmt.Println("spawn stage: reloading server/plugins...")
 	if err := a.sendConsole("reload"); err != nil {
 		return err
 	}
@@ -644,7 +644,7 @@ func (a app) worldSpawnStage(target string) error {
 	if err := a.sendConsole("mv reload"); err != nil {
 		return err
 	}
-	fmt.Printf("staged world spawn runtime configs for %d worlds (worldguard targets=%d)\n", len(targetWorlds), len(worldGuardTargets))
+	fmt.Printf("staged spawn runtime configs for %d worlds (worldguard targets=%d)\n", len(targetWorlds), len(worldGuardTargets))
 	return nil
 }
 
@@ -701,13 +701,13 @@ func (a app) worldSpawnApply(target string) error {
 	if err := a.ensureRuntimeHubSchematic(); err != nil {
 		return err
 	}
-	fmt.Println("world spawn apply: reloading datapacks...")
+	fmt.Println("spawn apply: reloading datapacks...")
 	if err := a.sendConsole("reload"); err != nil {
 		return err
 	}
 	appliedMainhall := false
 	if target == "" {
-		fmt.Println("world spawn apply: applying mainhall hub layout...")
+		fmt.Println("spawn apply: applying mainhall hub layout...")
 		if err := a.sendConsole("execute in minecraft:overworld run forceload add -1 -1 0 0"); err != nil {
 			return err
 		}
@@ -722,7 +722,7 @@ func (a app) worldSpawnApply(target string) error {
 	for _, worldName := range worldNames {
 		p := profile.Worlds[worldName]
 		dimension := worldDimensionID(worldName)
-		fmt.Printf("world spawn apply: applying %s hub schematic at y=%d...\n", worldName, p.SurfaceY)
+		fmt.Printf("spawn apply: applying %s hub schematic at y=%d...\n", worldName, p.SurfaceY)
 		if err := a.sendConsole(fmt.Sprintf("execute in %s run forceload add -64 -64 64 64", dimension)); err != nil {
 			return err
 		}
@@ -834,7 +834,7 @@ func (a app) applyWorldHubSchematic(worldName string, surfaceY int) (err error) 
 func (a app) listManagedWorldNames(target string) ([]string, error) {
 	target = strings.TrimSpace(target)
 	if target == primaryWorldName {
-		return nil, fmt.Errorf("world '%s' is not managed by world spawn commands", primaryWorldName)
+		return nil, fmt.Errorf("world '%s' is not managed by spawn commands", primaryWorldName)
 	}
 	cfgs, err := a.listWorldConfigs()
 	if err != nil {
@@ -879,7 +879,7 @@ func (a app) loadWorldConfigsByNames(worldNames []string) (map[string]worldConfi
 func (a app) loadSpawnProfile() (spawnProfile, error) {
 	path := filepath.Join(a.baseDir, spawnProfilePath)
 	if !fileExists(path) {
-		return spawnProfile{}, fmt.Errorf("spawn profile not found: run `mc-ctl world spawn profile` first")
+		return spawnProfile{}, fmt.Errorf("spawn profile not found: run `mc-ctl spawn profile` first")
 	}
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -931,7 +931,7 @@ func buildSpawnTemplateData(worldNames []string, cfgs map[string]worldConfig, pr
 		}
 		p, ok := profile.Worlds[worldName]
 		if !ok {
-			return spawnTemplateData{}, fmt.Errorf("spawn profile for world %q is missing: run `mc-ctl world spawn profile` first", worldName)
+			return spawnTemplateData{}, fmt.Errorf("spawn profile for world %q is missing: run `mc-ctl spawn profile` first", worldName)
 		}
 		data.Worlds[worldName] = spawnTemplateWorld{
 			SurfaceY:       p.SurfaceY,
@@ -1063,7 +1063,7 @@ func (a app) patchPortalsForWorlds(targetWorlds []string) error {
 	}
 	path := filepath.Join(a.baseDir, "runtime", "world", "plugins", "Multiverse-Portals", "portals.yml")
 	if !fileExists(path) {
-		return fmt.Errorf("missing portals runtime file: %s (run `mc-ctl world spawn stage` without --world first)", path)
+		return fmt.Errorf("missing portals runtime file: %s (run `mc-ctl spawn stage` without --world first)", path)
 	}
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -1083,7 +1083,7 @@ func (a app) patchPortalsForWorlds(targetWorlds []string) error {
 		}
 		p, ok := profile.Worlds[worldName]
 		if !ok {
-			return fmt.Errorf("spawn profile for world %q is missing: run `mc-ctl world spawn profile --world %s` first", worldName, worldName)
+			return fmt.Errorf("spawn profile for world %q is missing: run `mc-ctl spawn profile --world %s` first", worldName, worldName)
 		}
 		minX, maxX := mainhallGateXForIndex(idx, len(allWorlds))
 		cfg.Portals["gate_"+worldName] = portalEntry{

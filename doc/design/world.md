@@ -68,18 +68,18 @@
     - `mainhall` 用 `WorldGuard` リージョン定義テンプレート
 - `worlds/_defaults/worldguard.regions.yml.tmpl`
     - `mainhall` 以外のワールド向け既定 `WorldGuard` リージョン定義テンプレート
-    - `mc-ctl world spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ描画する
+    - `mc-ctl spawn stage` が runtime の `plugins/WorldGuard/worlds/<name>/regions.yml` へ描画する
 - `worlds/mainhall/portals.yml.tmpl`
     - `Multiverse-Portals` 用のポータル定義テンプレート
     - `gate_<world>` / `gate_<world>_to_mainhall` を `.WorldItems` ループで生成する
-    - `mc-ctl world spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
+    - `mc-ctl spawn stage` が runtime の `plugins/Multiverse-Portals/portals.yml` へ描画する
 - `worlds/mainhall/hub_layout.mcfunction.tmpl`
     - `mainhall` ハブのレイアウトテンプレート
     - `WorldItems` をループしてゲートと看板を生成する
-    - `mc-ctl world spawn stage` が runtime の datapack に描画する
+    - `mc-ctl spawn stage` が runtime の datapack に描画する
 - `infra/world/schematics/hub.schem`
     - `mainhall` 以外のワールドで使用する Hub 建築スキーマ
-    - `mc-ctl world spawn stage` / `mc-ctl world spawn apply` が runtime の
+    - `mc-ctl spawn stage` / `mc-ctl spawn apply` が runtime の
       `plugins/FastAsyncWorldEdit/schematics/hub.schem` へ同期する
 - `infra/world/plugins/hub-terraform/src/main/resources/config.yml`
     - `HubTerraform` の地表判定設定
@@ -117,7 +117,7 @@
     - `setup.commands` を対象次元で実行する
     - `world.policy.yml` に定義された MV 管理項目を適用する
     - `world-base` datapack を runtime へそのままコピーする
-- `mc-ctl world spawn profile [--world <name>]`
+- `mc-ctl spawn profile [--world <name>]`
     - `HubTerraform` の `hubterraform probe <world>` を使って地表Y（`motion_blocking_no_leaves`）を中心周辺の複数点で検出する
     - サンプル点は `x,z=-24..24` を `12` 刻みで走査する（25点）
     - 各サンプルの地表Yは下限 `y=63` を適用する（`63` 未満は `63` に丸める）
@@ -126,7 +126,7 @@
     - `surface_y` と `anchor_y=surface_y-32` を runtime profile に保存する
     - 各ワールドに `mcserver_spawn_anchor_<world>` marker を配置する
     - `setworldspawn` と `mvsetspawn` を同期する
-- `mc-ctl world spawn stage [--world <name>]`
+- `mc-ctl spawn stage [--world <name>]`
     - `worldguard.regions.yml.tmpl` を対象ワールド分だけ runtime に描画する
     - `--world` なし実行時は、profile を入力に `portals.yml.tmpl` を runtime に描画する
     - `--world` なし実行時は、`mainhall/hub_layout.mcfunction.tmpl` も runtime に描画する
@@ -136,7 +136,7 @@
     - `spawn_protected` / `clickmobs_allowed` の Y 範囲は `surface_y-8 .. surface_y+12` とする（`mainhall` は `-64 .. -35`）
     - `*_to_mainhall` ポータルの Y 範囲は `surface_y .. surface_y+3` とする
     - `*_to_mainhall` ポータル面は `x=-2..0, z=2..3`（中心 `x=-1, z=2.5`）とする
-- `mc-ctl world spawn apply [--world <name>]`
+- `mc-ctl spawn apply [--world <name>]`
     - `--world` なし実行時のみ、`mainhall` で `mcserver:mainhall/hub_layout` を適用する
     - `--world` 指定時は対象ワールドのみ適用する
     - `residence/resource/factory` では profile の `surface_y` を使い、
@@ -148,7 +148,7 @@
 ## 補足
 
 `world setup` は固定値適用のみを担当し、地表Y判定やポータル座標補正は行わない。
-座標依存の反映は `world spawn profile/stage/apply` のみで行う。
+座標依存の反映は `spawn profile/stage/apply` のみで行う。
 
 ## hub_layout
 
@@ -167,10 +167,10 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 初回ログイン時の安全スポーン補正で屋根上に出ないよう、
 中心座標（`0 -51 0`）の天井を開口している。
 
-`mainhall` のハブは `mc-ctl world spawn stage` が world 定義から生成した function を
-`mc-ctl world spawn apply` が `mcserver:mainhall/hub_layout` を実行して構築する。
+`mainhall` のハブは `mc-ctl spawn stage` が world 定義から生成した function を
+`mc-ctl spawn apply` が `mcserver:mainhall/hub_layout` を実行して構築する。
 `residence` / `resource` / `factory` の小ハブは
-`mc-ctl world spawn apply` が profile 座標を基準に `hub.schem` を貼り付けて構築する。
+`mc-ctl spawn apply` が profile 座標を基準に `hub.schem` を貼り付けて構築する。
 小ハブは施工前に `HubTerraform` で次を実行する。
 
 - `x,z=-32..32` を profile の `surfaceY` 高さへ平準化する
@@ -200,9 +200,9 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 `Multiverse-Portals` のテンプレート反映と `WorldGuard` の設定反映:
 
 ```console
-mc-ctl world spawn profile
-mc-ctl world spawn stage
-mc-ctl world spawn apply
+mc-ctl spawn profile
+mc-ctl spawn stage
+mc-ctl spawn apply
 ```
 
 `mainhall` の入口ポータルは北側の1辺（`z=-9` 面）に並べて定義する。
