@@ -115,9 +115,9 @@ mc-ctl world delete --yes resource
 - `drop` は unload + remove だけ実行し、ワールドディスクは残す。
 - `delete` は `drop` に加えてワールドディスクを削除する。
 - `mainhall` は保護され、`drop`/`delete` できない。
-- `delete` は `world.env.yml` の `deletable: true` が必要。
+- `delete` は `config.toml` の `deletable: true` が必要。
 - `world ensure` / `world setup --world mainhall` 実行時は、`mainhall_nether` と `mainhall_the_end` を自動で drop する。
-- `world setup --world mainhall` は `world.policy.yml` の `mv_set` を適用し、Hub の運用ポリシーを固定する。
+- `world setup --world mainhall` は `config.toml` の `mv_set` を適用し、Hub の運用ポリシーを固定する。
 
 ## 任意 function 実行
 

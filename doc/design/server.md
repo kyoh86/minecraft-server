@@ -186,10 +186,8 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - ワールド初期化用 Datapack（runtime へそのままコピー）
 - `worlds`
     - Multiverse 管理ワールドの各種定義
-    - `worlds/*/world.env.yml`
-        - Multiverse 管理ワールド（`residence/resource/factory`）の作成/import用定義
-    - `worlds/*/world.policy.yml`
-        - ワールド運用ポリシー（`mv modify` で適用）
+    - `worlds/*/config.toml`
+        - ワールド作成/import用定義と運用ポリシー（`mv modify`）の統合定義
     - `worlds/*/setup.commands`
         - ワールド初期化コマンド（1行1コマンド）
     - `worlds/mainhall/worldguard.regions.yml.tmpl`
@@ -211,7 +209,7 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - サーバーの起動、停止、リスタート、状態やログの確認
     - `mc-ctl server restart <service> --build` で image 再ビルド + 再作成を実行できる
 - `mc-ctl world ensure|regenerate|setup|function run`
-    - `mc-ctl world setup` は固定値適用（`setup.commands` と `world.policy.yml`）のみを扱う。
+    - `mc-ctl world setup` は固定値適用（`setup.commands` と `config.toml`）のみを扱う。
     - 座標依存の反映は `mc-ctl spawn profile/stage/apply` で行い、ポータル定義などを読み込む。
 - `mc-ctl spawn profile|stage|apply`
     - スポーン基準のプロファイル取得、テンプレート描画、反映を行う。

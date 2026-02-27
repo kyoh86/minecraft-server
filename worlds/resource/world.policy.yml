@@ -1,6 +1,0 @@
-# yaml-language-server: $schema=../policy.schema.json
-name: resource
-mv_set:
-  gamemode: survival
-  pvp: true
-  difficulty: hard

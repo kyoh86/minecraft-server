@@ -1,0 +1,15 @@
+#:schema ../config.schema.json
+name = "residence"
+display_name = "建築・居住"
+display_color = "green"
+world_type = "normal"
+deletable = false
+
+[dimensions.nether]
+
+[dimensions.end]
+
+[mv_set]
+gamemode = "survival"
+pvp = "true"
+difficulty = "normal"

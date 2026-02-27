@@ -9,28 +9,29 @@ import (
 )
 
 type worldConfig struct {
-	Name         string          `yaml:"name"`
-	DisplayName  string          `yaml:"display_name"`
-	DisplayColor string          `yaml:"display_color"`
-	WorldType    string          `yaml:"world_type"`
-	Seed         any             `yaml:"seed"`
-	Deletable    bool            `yaml:"deletable"`
-	Dimensions   worldDimensions `yaml:"dimensions"`
+	Name         string            `toml:"name"`
+	DisplayName  string            `toml:"display_name"`
+	DisplayColor string            `toml:"display_color"`
+	WorldType    string            `toml:"world_type"`
+	Seed         any               `toml:"seed"`
+	Deletable    bool              `toml:"deletable"`
+	Dimensions   worldDimensions   `toml:"dimensions"`
+	MVSet        map[string]string `toml:"mv_set"`
 }
 
 type worldDimensions struct {
-	Nether *worldDimension `yaml:"nether"`
-	End    *worldDimension `yaml:"end"`
+	Nether *worldDimension `toml:"nether"`
+	End    *worldDimension `toml:"end"`
 }
 
 type worldDimension struct {
-	Name string `yaml:"name"`
-	Seed any    `yaml:"seed"`
+	Name string `toml:"name"`
+	Seed any    `toml:"seed"`
 }
 
 type worldPolicy struct {
-	Name  string            `yaml:"name"`
-	MVSet map[string]string `yaml:"mv_set"`
+	Name  string            `toml:"name"`
+	MVSet map[string]string `toml:"mv_set"`
 }
 
 type app struct {
@@ -82,7 +83,7 @@ func findRepoRoot() (string, error) {
 	}
 	for dir := cwd; ; dir = filepath.Dir(dir) {
 		if fileExists(filepath.Join(dir, "infra", "docker-compose.yml")) &&
-			fileExists(filepath.Join(dir, "worlds", "env.schema.json")) {
+			fileExists(filepath.Join(dir, "worlds", "config.schema.json")) {
 			return dir, nil
 		}
 		parent := filepath.Dir(dir)

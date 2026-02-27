@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "./env.schema.json",
-  "title": "Minecraft world.env.yml schema",
+  "$id": "./config.schema.json",
+  "title": "Minecraft config.toml schema",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "name",
-    "deletable"
+    "name"
   ],
   "properties": {
     "name": {
@@ -97,7 +96,16 @@
     },
     "deletable": {
       "type": "boolean",
-      "description": "Whether this world can be regenerated/deleted by world commands"
+      "description": "Whether this world can be regenerated/deleted by world commands",
+      "default": false
+    },
+    "mv_set": {
+      "type": "object",
+      "description": "Key-value pairs passed to `mv modify <world> set <key> <value>`",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   }
 }

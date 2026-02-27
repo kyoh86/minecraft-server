@@ -1,0 +1,15 @@
+#:schema ../config.schema.json
+name = "factory"
+display_name = "工場・自動化"
+display_color = "red"
+world_type = "normal"
+deletable = false
+
+[dimensions.nether]
+
+[dimensions.end]
+
+[mv_set]
+gamemode = "survival"
+pvp = "true"
+difficulty = "normal"

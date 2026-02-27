@@ -15,23 +15,24 @@ import (
 	"time"
 
 	"github.com/goccy/go-yaml"
+	"github.com/pelletier/go-toml/v2"
 )
 
 const (
 	primaryWorldName = "mainhall"
-	spawnProfilePath = "runtime/world/.mc-ctl/spawn-profile.yml"
+	spawnProfilePath = "runtime/world/.mc-ctl/spawn-profile.toml"
 	hubSchematicName = "hub.schem"
 )
 
 var reHexDisplayColor = regexp.MustCompile(`^#[0-9a-f]{6}$`)
 
 type spawnProfile struct {
-	Worlds map[string]spawnProfileWorld `yaml:"worlds"`
+	Worlds map[string]spawnProfileWorld `toml:"worlds"`
 }
 
 type spawnProfileWorld struct {
-	SurfaceY int `yaml:"surface_y"`
-	AnchorY  int `yaml:"anchor_y"`
+	SurfaceY int `toml:"surface_y"`
+	AnchorY  int `toml:"anchor_y"`
 }
 
 type spawnTemplateData struct {
@@ -132,7 +133,7 @@ func (a app) worldRegenerate(target string) error {
 		return err
 	}
 
-	cfgPath := filepath.Join(a.baseDir, "worlds", target, "world.env.yml")
+	cfgPath := filepath.Join(a.baseDir, "worlds", target, "config.toml")
 	cfg, err := loadWorldConfig(cfgPath)
 	if err != nil {
 		return err
@@ -219,7 +220,7 @@ func (a app) worldDelete(target string, yes bool) error {
 		return errors.New("delete requires --yes")
 	}
 
-	cfgPath := filepath.Join(a.baseDir, "worlds", target, "world.env.yml")
+	cfgPath := filepath.Join(a.baseDir, "worlds", target, "config.toml")
 	cfg, err := loadWorldConfig(cfgPath)
 	if err != nil {
 		return err
@@ -266,7 +267,7 @@ func (a app) worldSetup(target string) error {
 	}
 	if target != "" {
 		if target != primaryWorldName {
-			cfgPath := filepath.Join(a.baseDir, "worlds", target, "world.env.yml")
+			cfgPath := filepath.Join(a.baseDir, "worlds", target, "config.toml")
 			cfg, err := loadWorldConfig(cfgPath)
 			if err != nil {
 				return err
@@ -277,7 +278,7 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldSetupCommands(target); err != nil {
 			return err
 		}
-		fmt.Printf("world setup: applying world.policy.yml to %s...\n", target)
+		fmt.Printf("world setup: applying config.toml to %s...\n", target)
 		if err := a.applyWorldPolicy(target); err != nil {
 			return err
 		}
@@ -305,12 +306,12 @@ func (a app) worldSetup(target string) error {
 		if err := a.applyWorldSetupCommands(cfg.Name); err != nil {
 			return err
 		}
-		fmt.Printf("world setup: applying world.policy.yml to %s...\n", cfg.Name)
+		fmt.Printf("world setup: applying config.toml to %s...\n", cfg.Name)
 		if err := a.applyWorldPolicy(cfg.Name); err != nil {
 			return err
 		}
 	}
-	fmt.Printf("world setup: applying world.policy.yml to %s...\n", primaryWorldName)
+	fmt.Printf("world setup: applying config.toml to %s...\n", primaryWorldName)
 	if err := a.applyWorldPolicy(primaryWorldName); err != nil {
 		return err
 	}
@@ -866,7 +867,7 @@ func (a app) listManagedWorldNames(target string) ([]string, error) {
 func (a app) loadWorldConfigsByNames(worldNames []string) (map[string]worldConfig, error) {
 	cfgs := make(map[string]worldConfig, len(worldNames))
 	for _, worldName := range worldNames {
-		cfgPath := filepath.Join(a.baseDir, "worlds", worldName, "world.env.yml")
+		cfgPath := filepath.Join(a.baseDir, "worlds", worldName, "config.toml")
 		cfg, err := loadWorldConfig(cfgPath)
 		if err != nil {
 			return nil, err
@@ -886,7 +887,7 @@ func (a app) loadSpawnProfile() (spawnProfile, error) {
 		return spawnProfile{}, err
 	}
 	var p spawnProfile
-	if err := yaml.Unmarshal(b, &p); err != nil {
+	if err := toml.Unmarshal(b, &p); err != nil {
 		return spawnProfile{}, fmt.Errorf("parse spawn profile %s: %w", path, err)
 	}
 	if p.Worlds == nil {
@@ -900,7 +901,7 @@ func (a app) saveSpawnProfile(p spawnProfile) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	b, err := yaml.Marshal(p)
+	b, err := toml.Marshal(p)
 	if err != nil {
 		return err
 	}
@@ -1145,7 +1146,10 @@ func (a app) listWorldConfigs() ([]string, error) {
 		if !e.IsDir() {
 			continue
 		}
-		cfg := filepath.Join(root, e.Name(), "world.env.yml")
+		if e.Name() == primaryWorldName {
+			continue
+		}
+		cfg := filepath.Join(root, e.Name(), "config.toml")
 		if fileExists(cfg) {
 			cfgs = append(cfgs, cfg)
 		}

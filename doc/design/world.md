@@ -33,11 +33,11 @@
 
 ## 定義場所
 
-- `worlds/<name>/world.env.yml`
-    - ワールド生成に必要な情報群
-    - `mainhall` は `LEVEL` 基底ワールドのため `world.env.yml` は持たない（全て固定値）
-    - 対象は Multiverse 管理ワールド（`residence` / `resource` / `factory`）
-    - 先頭に `# yaml-language-server: $schema=../env.schema.json` を記述
+- `worlds/<name>/config.toml`
+    - ワールド生成・運用ポリシー情報群
+    - 対象は全ワールド（`mainhall` / `residence` / `resource` / `factory`）
+    - `mainhall` では主に `mv_set` を使用し、生成系項目（`deletable` / `dimensions` など）は省略できる
+    - 先頭に `#:schema ../config.schema.json` を記述
     - `name` / `world_type` / `seed` / `deletable`
     - `world_type` は任意。未指定時は `normal` として扱う
     - `display_name`（任意）で `mainhall` ゲートの表示名を指定できる（未指定時は `name`）
@@ -51,10 +51,6 @@
     - `seed` の優先順位は `dimensions.<dim>.seed` > ルート `seed` > random
     - `dimensions.<dim>.seed` は任意。未指定（キー省略）の場合は次順位へフォールバックする
     - `seed` / `dimensions.<dim>.seed` は空文字を許可しない（random を使う場合は未指定）
-- `worlds/<name>/world.policy.yml`
-    - MultiVerse で設定するワールドごとの特性情報群
-    - 対象は`mainhall` を含む全ワールド
-    - 先頭に `# yaml-language-server: $schema=../policy.schema.json` を記述
     - `mv_set` に `mv modify <world> set ...` の項目を記述する
     - `mainhall` は `gamemode=adventure` などの Hub 制約を管理し、
       `residence/resource/factory` は `difficulty/pvp/gamemode` を管理する
@@ -62,7 +58,7 @@
     - 対象は全ワールド（`mainhall` を含む）
     - ワールド内で発行する固定値の初期設定コマンド群。1行1コマンドで記述する
     - `mc-ctl world setup` 実行時に外側で `execute in <dimension> run <command>` を付与して実行する
-    - `mv` 系コマンドはここに書かず、`world.policy.yml` に記述する
+    - `mv` 系コマンドはここに書かず、`config.toml` に記述する
     - 座標依存の function 実行はここに書かない
 - `worlds/mainhall/worldguard.regions.yml.tmpl`
     - `mainhall` 用 `WorldGuard` リージョン定義テンプレート
@@ -88,11 +84,9 @@
     - `contains` で語を指定して系統除外できる（例: `SANDSTONE` で砂岩系全般）
     - `surface.probe.*` で profile 用サンプリングの半径・刻み・下限を管理する
     - プラグイン内部に同等の除外リストは持たず、挙動は config のみを正として決定する
-- `worlds/env.schema.json`
-    - `world.env.yml` 用 JSON Schema
+- `worlds/config.schema.json`
+    - `config.toml` 用 JSON Schema
     - `default` はスキーマ補完ではなく、`mc-ctl` 実装上の既定動作を明示するために記述する
-- `worlds/policy.schema.json`
-    - `world.policy.yml` 用 JSON Schema
 
 ## Datapack とセットアップ
 
@@ -115,7 +109,7 @@
     - `mainhall_nether` / `mainhall_the_end` は Overworld-only 方針のため自動で drop する
 - `mc-ctl world setup [--world <name>]`
     - `setup.commands` を対象次元で実行する
-    - `world.policy.yml` に定義された MV 管理項目を適用する
+    - `config.toml` に定義された MV 管理項目を適用する
     - `world-base` datapack を runtime へそのままコピーする
 - `mc-ctl spawn profile [--world <name>]`
     - `HubTerraform` の `hubterraform probe <world>` を使って地表Y（`motion_blocking_no_leaves`）を中心周辺の複数点で検出する
@@ -161,7 +155,7 @@ mc-ctl world function run mcserver:mainhall/hub_layout
 この function は、御殿風の簡易ハブと管理対象ワールド行きの
 案内表示を設置する。
 各ゲートは北側の1辺に並べ、背面を塞ぎ、フレーム中央に銅電球とレッドストーン入力を配置する。
-ゲート名は `text_display` で表示し、`world.env.yml` の `display_name` / `display_color` を使う。
+ゲート名は `text_display` で表示し、`config.toml` の `display_name` / `display_color` を使う。
 表示は一律で `transformation.scale=[1.4,1.4,1.4]` を適用する。
 配置座標は `x=<ゲート中央>, y=-56.5, z=-7.5`（ゲート面 `z=-9` から 1.5 ブロック手前）とする。
 初回ログイン時の安全スポーン補正で屋根上に出ないよう、
