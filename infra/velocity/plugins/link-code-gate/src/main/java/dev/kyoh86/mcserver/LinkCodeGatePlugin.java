@@ -15,14 +15,10 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.slf4j.Logger;
+import redis.clients.jedis.Jedis;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
@@ -35,6 +31,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 import org.yaml.snakeyaml.Yaml;
 
 @Plugin(
@@ -172,25 +169,22 @@ public final class LinkCodeGatePlugin {
 
   private void appendEntry(String code, String type, String value, long expiresAt) throws IOException {
     String key = "mc-link:code:" + code;
-    try (Socket socket = new Socket()) {
-      socket.connect(new InetSocketAddress(redisHost, redisPort), REDIS_CONNECT_TIMEOUT_MILLIS);
-      socket.setSoTimeout(REDIS_READ_TIMEOUT_MILLIS);
-      try (BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
-           BufferedInputStream in = new BufferedInputStream(socket.getInputStream())) {
+    try (Jedis jedis = new Jedis(redisHost, redisPort, REDIS_CONNECT_TIMEOUT_MILLIS, REDIS_READ_TIMEOUT_MILLIS)) {
       if (redisDB != 0) {
-        sendAndExpectOK(out, in, "SELECT", Integer.toString(redisDB));
+        jedis.select(redisDB);
       }
-      sendAndExpectInt(out, in,
-        "HSET", key,
+      jedis.hset(key, Map.of(
         "code", code,
         "type", type,
         "value", value,
         "expires_unix", Long.toString(expiresAt),
         "claimed", "false",
         "claimed_by", "",
-        "claimed_at_unix", "0");
-      sendAndExpectInt(out, in, "EXPIREAT", key, Long.toString(expiresAt));
-      }
+        "claimed_at_unix", "0"
+      ));
+      jedis.expireAt(key, expiresAt);
+    } catch (RuntimeException e) {
+      throw new IOException("failed to write code entry to redis", e);
     }
   }
 
@@ -221,51 +215,6 @@ public final class LinkCodeGatePlugin {
   }
 
   private record WhitelistEntries(Set<String> uuidSet) {}
-
-  private static void sendAndExpectOK(BufferedOutputStream out, BufferedInputStream in, String... parts) throws IOException {
-    sendCommand(out, parts);
-    String line = readLine(in);
-    if (!"+OK".equals(line)) {
-      throw new IOException("redis response was not OK: " + line);
-    }
-  }
-
-  private static void sendAndExpectInt(BufferedOutputStream out, BufferedInputStream in, String... parts) throws IOException {
-    sendCommand(out, parts);
-    String line = readLine(in);
-    if (line == null || line.isEmpty() || line.charAt(0) != ':') {
-      throw new IOException("redis response was not integer: " + line);
-    }
-  }
-
-  private static void sendCommand(BufferedOutputStream out, String... parts) throws IOException {
-    out.write(("*" + parts.length + "\r\n").getBytes(StandardCharsets.UTF_8));
-    for (String part : parts) {
-      byte[] bytes = part.getBytes(StandardCharsets.UTF_8);
-      out.write(("$" + bytes.length + "\r\n").getBytes(StandardCharsets.UTF_8));
-      out.write(bytes);
-      out.write("\r\n".getBytes(StandardCharsets.UTF_8));
-    }
-    out.flush();
-  }
-
-  private static String readLine(BufferedInputStream in) throws IOException {
-    StringBuilder sb = new StringBuilder();
-    while (true) {
-      int b = in.read();
-      if (b < 0) {
-        throw new IOException("redis connection closed");
-      }
-      if (b == '\r') {
-        int next = in.read();
-        if (next != '\n') {
-          throw new IOException("invalid redis line ending");
-        }
-        return sb.toString();
-      }
-      sb.append((char) b);
-    }
-  }
 
   private static String envOr(String key, String fallback) {
     String value = System.getenv(key);
