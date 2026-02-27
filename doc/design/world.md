@@ -208,8 +208,9 @@ mc-ctl spawn apply
 `ClickMobsRegionGuard.jar` を導入し、
 `infra/world/plugins/clickmobs-region-guard/config/config.yml` の
 `allowed_region_ids` に許可リージョンIDを列挙する。
-運用時に反映される設定は上記 `config/config.yml` であり、
-`src/main/resources/config.yml` は jar 同梱の初期値としてのみ扱う。
+`config/config.yml` が運用時の唯一の設定ソースであり、
+`plugins/ClickMobsRegionGuard/config.yml` が存在しない場合は
+プラグイン起動を失敗させる。
 
 ```yaml
 allowed_region_ids:

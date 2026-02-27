@@ -1,5 +1,7 @@
 package dev.kyoh86.mcserver;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -29,7 +31,13 @@ public class ClickMobsRegionGuardPlugin extends JavaPlugin implements Listener {
       return;
     }
 
-    saveDefaultConfig();
+    Path configPath = getDataFolder().toPath().resolve("config.yml");
+    if (!Files.isRegularFile(configPath)) {
+      getLogger().severe("Missing config file: " + configPath);
+      getServer().getPluginManager().disablePlugin(this);
+      return;
+    }
+    reloadConfig();
     config = ClickMobsGuardConfig.load(this);
     regionAccessService = new RegionAccessService(config.allowedRegionIds);
     permissionService = new ClickMobsPermissionService(this);

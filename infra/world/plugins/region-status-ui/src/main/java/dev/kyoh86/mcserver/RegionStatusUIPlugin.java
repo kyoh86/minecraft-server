@@ -1,5 +1,7 @@
 package dev.kyoh86.mcserver;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -24,7 +26,13 @@ public class RegionStatusUIPlugin extends JavaPlugin implements Listener {
       return;
     }
 
-    saveDefaultConfig();
+    Path configPath = getDataFolder().toPath().resolve("config.yml");
+    if (!Files.isRegularFile(configPath)) {
+      getLogger().severe("Missing config file: " + configPath);
+      getServer().getPluginManager().disablePlugin(this);
+      return;
+    }
+    reloadConfig();
     config = RegionStatusUIConfig.load(this);
     regionAccessService = new RegionAccessService(config.allowedRegionIds);
     statusBarService = new RegionStatusBarService(config);

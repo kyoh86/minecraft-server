@@ -1,5 +1,7 @@
 package dev.kyoh86.mcserver;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
@@ -12,7 +14,13 @@ public class SpawnSafetyGuardPlugin extends JavaPlugin implements Listener {
 
   @Override
   public void onEnable() {
-    saveDefaultConfig();
+    Path configPath = getDataFolder().toPath().resolve("config.yml");
+    if (!Files.isRegularFile(configPath)) {
+      getLogger().severe("Missing config file: " + configPath);
+      getServer().getPluginManager().disablePlugin(this);
+      return;
+    }
+    reloadConfig();
     config = SpawnSafetyConfig.load(this);
     loginSafetyService = new LoginSafetyService(this, config);
 
