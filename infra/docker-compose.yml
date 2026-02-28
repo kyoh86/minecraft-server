@@ -236,6 +236,40 @@ services:
           create_host_path: false
     networks:
       - mcnet
+  member-log-notifier:
+    image: timberio/vector:0.47.0-alpine
+    container_name: mc-member-log-notifier
+    restart: unless-stopped
+    depends_on:
+      - world
+    entrypoint: ["/bin/sh", "-lc"]
+    command:
+      - |
+        WEBHOOK_URL="$$(tr -d '\r\n' < /run/member_discord_webhook_url.txt)";
+        if [ -z "$$WEBHOOK_URL" ] || [ "$$WEBHOOK_URL" = "REPLACE_WITH_DISCORD_WEBHOOK_URL" ]; then
+          echo "member webhook url is missing. set secrets/member_discord_webhook_url.txt and restart member-log-notifier.";
+          sleep infinity;
+        fi;
+        export MEMBER_DISCORD_WEBHOOK_URL="$$WEBHOOK_URL";
+        exec vector --config /etc/vector/vector.toml;
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: ./member-log-notifier
+        target: /etc/vector
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../secrets/member_discord_webhook_url.txt
+        target: /run/member_discord_webhook_url.txt
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - mcnet
 
 networks:
   mcnet:

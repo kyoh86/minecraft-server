@@ -54,6 +54,7 @@ mc-ctl spawn apply
 `secrets/mc_link_discord_guild_name.txt` を含む設定ファイルを生成し、
 `secrets/ngrok_auth_token.txt` を生成し、
 `secrets/ngrok_discord_webhook_url.txt` を生成し、
+`secrets/member_discord_webhook_url.txt` を生成し、
 `secrets/limbo/server.toml` と `secrets/world/paper-global.yml` を描画する。
 あわせて `infra/.env` を補完し、`LOCAL_UID` / `LOCAL_GID` を保存する。
 また、`runtime` 配下の所有者が実行ユーザーと一致しない場合はエラーで停止する。
@@ -175,8 +176,12 @@ ngrok の TCP endpoint は、アカウント状態によってはカード登録
 `ngrok-log-notifier`（Vector）が `mc-ngrok` のログを監視し、
 起動時に出力される `tcp://...` の公開エンドポイントを Discord へ通知する。
 同一エンドポイントの重複通知は抑止される。
+`secrets/member_discord_webhook_url.txt` に Webhook URL を設定すると、
+`member-log-notifier`（Vector）が `mc-world` のログを監視し、
+`joined the game` / `left the game` を Discord へ通知する。
 設定を反映するには以下を実行する。
 
 ```console
 mc-ctl server restart ngrok-log-notifier
+mc-ctl server restart member-log-notifier
 ```

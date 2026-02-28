@@ -1,0 +1,42 @@
+#:tombi schema.strict = false
+
+[sources.world]
+type = "docker_logs"
+include_containers = ["mc-world"]
+
+[transforms.extract_member_event]
+type = "remap"
+inputs = ["world"]
+source = '''
+message = to_string(.message) ?? ""
+caps = parse_regex(message, r'\]: (?P<player>[A-Za-z0-9_]{3,16}) (?P<event>joined|left) the game') ?? {}
+if !exists(caps.player) || is_null(caps.player) || !exists(caps.event) || is_null(caps.event) {
+  abort
+}
+player = to_string!(caps.player)
+event = to_string!(caps.event)
+if event == "joined" {
+  .content = ":inbox_tray: `" + player + "` が参加しました"
+} else if event == "left" {
+  .content = ":outbox_tray: `" + player + "` が退出しました"
+} else {
+  abort
+}
+'''
+
+[transforms.serialize_discord_payload]
+type = "remap"
+inputs = ["extract_member_event"]
+source = '''
+. = encode_json({ "content": .content })
+'''
+
+[sinks.discord_webhook]
+type = "http"
+inputs = ["serialize_discord_payload"]
+uri = "${MEMBER_DISCORD_WEBHOOK_URL}"
+method = "post"
+encoding.codec = "text"
+request.headers.content-type = "application/json"
+batch.max_events = 1
+batch.timeout_secs = 1

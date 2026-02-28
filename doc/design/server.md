@@ -37,6 +37,10 @@
     - 外部非公開
     - Docker socket から `mc-ngrok` のログを購読
     - `ngrok` URL を抽出して Discord Webhook へ通知
+- `member-log-notifier`（Vector ログ監視）
+    - 外部非公開
+    - Docker socket から `mc-world` のログを購読
+    - `joined the game` / `left the game` を抽出して Discord Webhook へ通知
 
 ## 導入プラグイン
 
@@ -163,9 +167,14 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - ngrok 接続用 Authtoken
 - `secrets/ngrok_discord_webhook_url.txt`
     - ngrok URL 通知用 Discord Webhook URL
+- `secrets/member_discord_webhook_url.txt`
+    - join/leave 通知用 Discord Webhook URL
 - `infra/ngrok-log-notifier/vector.toml`
     - `mc-ngrok` ログの監視設定
     - `tcp://...` URL 抽出・重複抑止・Discord Webhook POST を定義
+- `infra/member-log-notifier/vector.toml`
+    - `mc-world` ログの監視設定
+    - `joined the game` / `left the game` 抽出・Discord Webhook POST を定義
 - `infra/docker-compose.yml`
     - 各種サービス定義
     - `world` コンテナ（`itzg/minecraft-server:java25`、内部向け）
@@ -184,6 +193,11 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
         - `/var/run/docker.sock` を read-write mount し、`docker_logs` source で `mc-ngrok` ログを購読する
         - `infra/ngrok-log-notifier/vector.toml` を `/etc/vector/vector.toml` として read-only mount する
         - `tcp://...` URL を抽出し、重複URLを抑止した上で Discord Webhook へ通知する
+    - `member-log-notifier` コンテナ（Vector）
+        - `secrets/member_discord_webhook_url.txt` を `/run/member_discord_webhook_url.txt` に read-only bind mount する
+        - `/var/run/docker.sock` を read-write mount し、`docker_logs` source で `mc-world` ログを購読する
+        - `infra/member-log-notifier/vector.toml` を `/etc/vector/vector.toml` として read-only mount する
+        - `joined the game` / `left the game` を抽出し、Discord Webhook へ通知する
     - 各種ローカル / リモートプラグイン の導入
         - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `FastAsyncWorldEdit` / `WorldGuard` / `HubTerraform`
     - healthcheck
