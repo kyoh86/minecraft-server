@@ -22,6 +22,7 @@ const (
 	ngrokAuthTokenPlaceholder   = "REPLACE_WITH_NGROK_AUTHTOKEN"
 	ngrokWebhookPlaceholder     = "REPLACE_WITH_DISCORD_WEBHOOK_URL"
 	memberWebhookPlaceholder    = "REPLACE_WITH_DISCORD_WEBHOOK_URL"
+	healthchecksURLPlaceholder  = "REPLACE_WITH_HEALTHCHECKS_PING_URL"
 )
 
 type mcLinkDiscordSecret struct {
@@ -61,6 +62,10 @@ func (a app) ensureSecrets() error {
 	}
 	memberWebhookPath := filepath.Join(secretsDir, "member_discord_webhook_url.txt")
 	if err := ensureMemberWebhook(memberWebhookPath); err != nil {
+		return err
+	}
+	healthchecksPath := filepath.Join(secretsDir, "healthchecks_heartbeat_url.txt")
+	if err := ensureHealthchecksHeartbeatURL(healthchecksPath); err != nil {
 		return err
 	}
 	return nil
@@ -304,6 +309,34 @@ func ensureMemberWebhook(path string) error {
 		return nil
 	}
 	url, err := promptSecret("join/leave通知用 Discord Webhook URLが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
+	if err != nil {
+		return err
+	}
+	if url == "" {
+		return nil
+	}
+	return os.WriteFile(path, []byte(url+"\n"), 0o600)
+}
+
+func ensureHealthchecksHeartbeatURL(path string) error {
+	if !fileExists(path) {
+		url, err := promptSecret("Healthchecks.io ping URLを入力してください（未設定のままにする場合はEnter）: ")
+		if err != nil {
+			return err
+		}
+		if url == "" {
+			url = healthchecksURLPlaceholder
+		}
+		return os.WriteFile(path, []byte(url+"\n"), 0o600)
+	}
+	current, err := readTrimmed(path)
+	if err != nil {
+		return err
+	}
+	if current != "" && current != healthchecksURLPlaceholder {
+		return nil
+	}
+	url, err := promptSecret("Healthchecks.io ping URLが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
 	if err != nil {
 		return err
 	}

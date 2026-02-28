@@ -275,6 +275,32 @@ services:
           create_host_path: false
     networks:
       - mcnet
+  health-heartbeat:
+    image: docker:27-cli
+    container_name: mc-health-heartbeat
+    restart: unless-stopped
+    environment:
+      HEARTBEAT_INTERVAL_SECONDS: "60"
+      HEARTBEAT_TARGET_CONTAINERS: "mc-world mc-velocity mc-ngrok"
+    entrypoint: ["/bin/sh", "/opt/heartbeat/heartbeat.sh"]
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: ./health-heartbeat
+        target: /opt/heartbeat
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../secrets/healthchecks_heartbeat_url.txt
+        target: /run/healthchecks_heartbeat_url.txt
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - mcnet
 
 networks:
   mcnet:

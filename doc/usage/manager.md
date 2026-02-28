@@ -55,6 +55,7 @@ mc-ctl spawn apply
 `secrets/ngrok_auth_token.txt` を生成し、
 `secrets/ngrok_discord_webhook_url.txt` を生成し、
 `secrets/member_discord_webhook_url.txt` を生成し、
+`secrets/healthchecks_heartbeat_url.txt` を生成し、
 `secrets/limbo/server.toml` と `secrets/world/paper-global.yml` を描画する。
 あわせて `infra/.env` を補完し、`LOCAL_UID` / `LOCAL_GID` を保存する。
 また、`runtime` 配下の所有者が実行ユーザーと一致しない場合はエラーで停止する。
@@ -179,9 +180,14 @@ ngrok の TCP endpoint は、アカウント状態によってはカード登録
 `secrets/member_discord_webhook_url.txt` に Webhook URL を設定すると、
 `member-log-notifier`（Vector）が `mc-world` のログを監視し、
 `joined the game` / `left the game` を Discord へ通知する。
+`secrets/healthchecks_heartbeat_url.txt` に Healthchecks.io の ping URL を設定すると、
+`health-heartbeat` が `mc-world` / `mc-velocity` / `mc-ngrok` の稼働状態と
+healthcheck を60秒間隔で確認し、正常時に ping を送信する。
+異常検出時は `.../fail` を送信し、復旧後は通常 ping に戻る。
 設定を反映するには以下を実行する。
 
 ```console
 mc-ctl server restart ngrok-log-notifier
 mc-ctl server restart member-log-notifier
+mc-ctl server restart health-heartbeat
 ```
