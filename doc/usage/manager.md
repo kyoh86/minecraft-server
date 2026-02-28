@@ -183,6 +183,8 @@ ngrok の TCP endpoint は、アカウント状態によってはカード登録
 `secrets/healthchecks_heartbeat_url.txt` に Healthchecks.io の ping URL を設定すると、
 `health-heartbeat` が `mc-world` / `mc-velocity` / `mc-ngrok` の稼働状態と
 healthcheck を60秒間隔で確認し、正常時に ping を送信する。
+起動直後は対象コンテナが `running/healthy` になるまで待機し、
+初期化中の `down` を通知しない。
 異常検出時は `.../fail` を送信し、復旧後は通常 ping に戻る。
 設定を反映するには以下を実行する。
 

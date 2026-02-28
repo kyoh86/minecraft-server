@@ -7,8 +7,9 @@ if [ -z "$PING_URL" ] || [ "$PING_URL" = "REPLACE_WITH_HEALTHCHECKS_PING_URL" ];
   sleep infinity
 fi
 
-INTERVAL="${HEARTBEAT_INTERVAL_SECONDS:-50}"
+INTERVAL="${HEARTBEAT_INTERVAL_SECONDS:-60}"
 TARGET_CONTAINERS="${HEARTBEAT_TARGET_CONTAINERS:-mc-world mc-velocity mc-ngrok}"
+STARTUP_CHECK_INTERVAL="${HEARTBEAT_STARTUP_CHECK_INTERVAL_SECONDS:-5}"
 LAST_STATE="unknown"
 
 check_one() {
@@ -24,6 +25,22 @@ check_one() {
     return 1
   fi
 }
+
+while true; do
+  # Avoid false down alert on startup: start monitoring only after all targets are ready once.
+  READY="yes"
+  for container in $TARGET_CONTAINERS; do
+    if ! reason="$(check_one "$container")"; then
+      READY="no"
+      echo "waiting for startup readiness: $reason"
+      break
+    fi
+  done
+  if [ "$READY" = "yes" ]; then
+    break
+  fi
+  sleep "$STARTUP_CHECK_INTERVAL"
+done
 
 while true; do
   STATE="ok"

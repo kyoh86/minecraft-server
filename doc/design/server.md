@@ -47,6 +47,7 @@
     - 外部非公開
     - Docker socket から `mc-world` / `mc-velocity` / `mc-ngrok` の状態を確認する
     - `running` および（healthcheck 定義時）`healthy` を確認し、正常時に Healthchecks.io ping を送信する
+    - 起動直後は対象コンテナが `running/healthy` になるまで待機し、初期化中の `fail` は送信しない
     - 異常時は `.../fail` を送信し、復旧後は通常 ping に戻す
 
 ## 導入プラグイン

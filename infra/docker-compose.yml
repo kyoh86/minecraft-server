@@ -177,6 +177,7 @@ services:
     image: ngrok/ngrok:3
     container_name: mc-ngrok
     restart: unless-stopped
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     depends_on:
       velocity:
         condition: service_healthy
