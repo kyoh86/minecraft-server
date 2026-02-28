@@ -37,10 +37,12 @@
     - 外部非公開
     - Docker socket から `mc-ngrok` のログを購読
     - `ngrok` URL を抽出して Discord Webhook へ通知
+    - 起動順は `ngrok-log-notifier` を先行し、`ngrok` は `velocity` と `ngrok-log-notifier` の `service_healthy` を待って起動する
 - `member-log-notifier`（Vector ログ監視）
     - 外部非公開
     - Docker socket から `mc-world` のログを購読
     - `joined the game` / `left the game` を抽出して Discord Webhook へ通知
+    - `world` への `depends_on` は持たず、単独で常時待機する
 
 ## 導入プラグイン
 
@@ -193,6 +195,7 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
         - `/var/run/docker.sock` を read-write mount し、`docker_logs` source で `mc-ngrok` ログを購読する
         - `infra/ngrok-log-notifier/vector.toml` を `/etc/vector/vector.toml` として read-only mount する
         - `tcp://...` URL を抽出し、重複URLを抑止した上で Discord Webhook へ通知する
+        - `ngrok` への `depends_on` は持たず、単独で常時待機する
     - `member-log-notifier` コンテナ（Vector）
         - `secrets/member_discord_webhook_url.txt` を `/run/member_discord_webhook_url.txt` に read-only bind mount する
         - `/var/run/docker.sock` を read-write mount し、`docker_logs` source で `mc-world` ログを購読する

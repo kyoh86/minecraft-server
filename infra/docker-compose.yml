@@ -178,7 +178,10 @@ services:
     container_name: mc-ngrok
     restart: unless-stopped
     depends_on:
-      - velocity
+      velocity:
+        condition: service_healthy
+      ngrok-log-notifier:
+        condition: service_healthy
     entrypoint: ["/bin/sh", "-lc"]
     command:
       - |
@@ -206,8 +209,12 @@ services:
     image: timberio/vector:0.47.0-alpine
     container_name: mc-ngrok-log-notifier
     restart: unless-stopped
-    depends_on:
-      - ngrok
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f vector >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
     entrypoint: ["/bin/sh", "-lc"]
     command:
       - |
@@ -240,8 +247,6 @@ services:
     image: timberio/vector:0.47.0-alpine
     container_name: mc-member-log-notifier
     restart: unless-stopped
-    depends_on:
-      - world
     entrypoint: ["/bin/sh", "-lc"]
     command:
       - |
