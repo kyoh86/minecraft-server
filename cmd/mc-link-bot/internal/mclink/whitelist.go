@@ -19,8 +19,6 @@ import (
 
 type Allowlist struct {
 	UUIDs []string `yaml:"uuids"`
-	// Backward-compatibility input field. Nick entries are ignored and dropped on write.
-	Nicks []string `yaml:"nicks,omitempty"`
 }
 
 func AddAllowlistEntry(ctx context.Context, cli *redis.Client, path string, typ EntryType, value string) error {
@@ -66,7 +64,6 @@ func addAllowlistEntryUnlocked(path string, typ EntryType, value string) error {
 	default:
 		return errors.New("unsupported entry type")
 	}
-	cfg.Nicks = nil
 	slices.Sort(cfg.UUIDs)
 
 	out, err := yaml.Marshal(cfg)
