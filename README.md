@@ -3,6 +3,9 @@
 このリポジトリは、Docker で Minecraft Java サーバー（Paper 1.21.11）を
 運用するための構成を管理する。
 
+サーバーに参加したい人は kyoh86 までご連絡を。
+専用Discordサーバーに招待します。
+
 ## ドキュメント
 
 - セットアップ手順: `doc/usage/manager.md`
