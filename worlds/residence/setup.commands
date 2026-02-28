@@ -3,7 +3,6 @@ gamerule advance_time true
 gamerule advance_weather true
 gamerule spawn_mobs true
 gamerule respawn_radius 0
-weather clear
-time set noon
+gamerule fire_spread_radius_around_player 0
 worldborder center 0 0
 worldborder set 10000
