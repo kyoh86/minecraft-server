@@ -86,7 +86,9 @@
     - `secrets/mc_link_discord_guild_name.txt`（または `MC_LINK_DISCORD_GUILD_NAME`）を参照し、
       値がある場合は案内文へ Discord サーバー名を埋め込む
     - `runtime/allowlist/allowlist.yml` は `SnakeYAML` で読み取り、`uuids` 配列を正規パースする
+    - `allowlist.yml` の読込/パースに失敗した場合は起動時にエラーで停止する
     - Redis へのワンタイムコード書き込みは `Jedis` クライアントで実行する
+    - `MC_LINK_REDIS_ADDR` / `MC_LINK_REDIS_DB` の不正値は既定値へ丸めず、起動時にエラーで停止する
     - 実装責務は以下に分割する
         - `LinkCodeGatePlugin`: イベント配線と非同期発行フロー制御
         - `LinkCodeGateConfig`: 環境変数/secretの解決
@@ -140,6 +142,7 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - 認可リスト保存ディレクトリ
     - `runtime/allowlist/allowlist.yml`
         - 認可リスト
+    - 旧パス `runtime/velocity/allowlist.yml` との互換コピーは行わない
 - `runtime/redis`
     - Redis データ
     - `/mc link` ワンタイムコードの保存先として利用

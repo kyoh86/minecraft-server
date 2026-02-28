@@ -38,14 +38,7 @@ func (a app) ensureRuntimeLayout() error {
 		_ = os.Remove(probePath)
 	}
 	allowlistPath := filepath.Join(a.baseDir, "runtime", "allowlist", "allowlist.yml")
-	legacyAllowlistPath := filepath.Join(a.baseDir, "runtime", "velocity", "allowlist.yml")
 	if !fileExists(allowlistPath) {
-		if fileExists(legacyAllowlistPath) {
-			if err := copyFile(legacyAllowlistPath, allowlistPath); err != nil {
-				return err
-			}
-			return nil
-		}
 		const defaultAllowlist = "uuids: []\n"
 		if err := os.WriteFile(allowlistPath, []byte(defaultAllowlist), 0o644); err != nil {
 			return err

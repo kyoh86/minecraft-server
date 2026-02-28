@@ -18,9 +18,12 @@ record LinkCodeGateConfig(
   static LinkCodeGateConfig load(Logger logger) {
     String addr = envOr("MC_LINK_REDIS_ADDR", "redis:6379");
     String[] hp = addr.split(":", 2);
-    String redisHost = hp[0];
-    int redisPort = hp.length == 2 ? parseIntOr(hp[1], 6379) : 6379;
-    int redisDB = parseIntOr(envOr("MC_LINK_REDIS_DB", "0"), 0);
+    if (hp.length != 2 || hp[0].isBlank() || hp[1].isBlank()) {
+      throw new IllegalArgumentException("MC_LINK_REDIS_ADDR must be host:port");
+    }
+    String redisHost = hp[0].trim();
+    int redisPort = parseIntStrict("MC_LINK_REDIS_ADDR port", hp[1]);
+    int redisDB = parseIntStrict("MC_LINK_REDIS_DB", envOr("MC_LINK_REDIS_DB", "0"));
     Path allowlistPath = Path.of(envOr("MC_LINK_ALLOWLIST_PATH", DEFAULT_ALLOWLIST_PATH));
     String discordGuildName = resolveDiscordGuildName(logger);
     return new LinkCodeGateConfig(redisHost, redisPort, redisDB, allowlistPath, discordGuildName);
@@ -55,11 +58,11 @@ record LinkCodeGateConfig(
     return value.trim();
   }
 
-  private static int parseIntOr(String value, int fallback) {
+  private static int parseIntStrict(String label, String value) {
     try {
       return Integer.parseInt(value.trim());
-    } catch (Exception ignored) {
-      return fallback;
+    } catch (Exception e) {
+      throw new IllegalArgumentException(label + " must be an integer: " + value, e);
     }
   }
 

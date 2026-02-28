@@ -945,10 +945,14 @@ func buildSpawnTemplateData(worldNames []string, cfgs map[string]worldConfig, pr
 		returnGateCenterX := -1
 		gateMinX, gateMaxX := mainhallGateXForIndex(i, len(worldNames))
 		centerX := (gateMinX + gateMaxX) / 2
+		displayColor, err := normalizeDisplayColor(cfg.DisplayColor)
+		if err != nil {
+			return spawnTemplateData{}, fmt.Errorf("world %q: %w", worldName, err)
+		}
 		data.WorldItems = append(data.WorldItems, spawnTemplateWorldItem{
 			Name:                worldName,
 			DisplayName:         normalizeDisplayName(cfg.DisplayName, worldName),
-			DisplayColor:        normalizeDisplayColor(cfg.DisplayColor),
+			DisplayColor:        displayColor,
 			MainhallGateMinX:    gateMinX,
 			MainhallGateMaxX:    gateMaxX,
 			MainhallGateCenterX: centerX,
@@ -1018,20 +1022,20 @@ func normalizeDisplayName(displayName, fallback string) string {
 	return displayName
 }
 
-func normalizeDisplayColor(color string) string {
+func normalizeDisplayColor(color string) (string, error) {
 	color = strings.TrimSpace(strings.ToLower(color))
 	if color == "" {
-		return "gold"
+		return "gold", nil
 	}
 	if reHexDisplayColor.MatchString(color) {
-		return color
+		return color, nil
 	}
 	switch color {
 	case "black", "dark_blue", "dark_green", "dark_aqua", "dark_red", "dark_purple", "gold",
 		"gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white":
-		return color
+		return color, nil
 	default:
-		return "gold"
+		return "", fmt.Errorf("invalid display_color %q", color)
 	}
 }
 

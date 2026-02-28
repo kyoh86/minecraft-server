@@ -43,6 +43,7 @@
     - `display_name`（任意）で `mainhall` ゲートの表示名を指定できる（未指定時は `name`）
     - `display_color`（任意）で `mainhall` ゲート表示色を指定できる（未指定時は `gold`）
     - `display_color` は Minecraft の色名（`green` など）または `#RRGGBB` を使用する
+    - `display_color` に不正値を指定した場合、`mc-ctl spawn` 系コマンドはエラーで停止する
     - 基底ワールドは常に `normal` 環境として作成する
     - `name` / `display_name` / `dimensions.<dim>.name` は指定時に空文字不可
     - `dimensions` を記述する場合は `nether` または `end` の少なくとも一方が必須

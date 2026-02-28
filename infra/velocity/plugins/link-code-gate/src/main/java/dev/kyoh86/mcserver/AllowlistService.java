@@ -19,6 +19,8 @@ final class AllowlistService {
   AllowlistService(Path allowlistPath, Logger logger) {
     this.allowlistPath = allowlistPath;
     this.logger = logger;
+    // Fail fast at startup if allowlist cannot be read or parsed.
+    loadWhitelistEntries();
   }
 
   boolean isAllowed(UUID playerUUID) {
@@ -41,9 +43,9 @@ final class AllowlistService {
         uuids.add(uuid.trim().toLowerCase());
       }
     } catch (IOException e) {
-      logger.warn("failed to read allowlist file: {}", allowlistPath, e);
+      throw new IllegalStateException("failed to read allowlist file: " + allowlistPath, e);
     } catch (Exception e) {
-      logger.warn("failed to parse allowlist file: {}", allowlistPath, e);
+      throw new IllegalStateException("failed to parse allowlist file: " + allowlistPath, e);
     }
     return new WhitelistEntries(uuids);
   }
