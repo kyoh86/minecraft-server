@@ -19,7 +19,8 @@ const (
 	discordBotTokenPlaceholder  = "REPLACE_WITH_DISCORD_BOT_TOKEN"
 	discordGuildIDPlaceholder   = "REPLACE_WITH_DISCORD_GUILD_ID"
 	discordGuildNamePlaceholder = "REPLACE_WITH_DISCORD_GUILD_NAME"
-	playitSecretPlaceholder     = "REPLACE_WITH_PLAYIT_SECRET_KEY"
+	ngrokAuthTokenPlaceholder   = "REPLACE_WITH_NGROK_AUTHTOKEN"
+	ngrokWebhookPlaceholder     = "REPLACE_WITH_DISCORD_WEBHOOK_URL"
 )
 
 type mcLinkDiscordSecret struct {
@@ -49,8 +50,12 @@ func (a app) ensureSecrets() error {
 		return err
 	}
 
-	playitSecretPath := filepath.Join(secretsDir, "playit_secret_key.txt")
-	if err := ensurePlayitSecret(playitSecretPath); err != nil {
+	ngrokAuthTokenPath := filepath.Join(secretsDir, "ngrok_auth_token.txt")
+	if err := ensureNgrokAuthToken(ngrokAuthTokenPath); err != nil {
+		return err
+	}
+	ngrokWebhookPath := filepath.Join(secretsDir, "ngrok_discord_webhook_url.txt")
+	if err := ensureNgrokWebhook(ngrokWebhookPath); err != nil {
 		return err
 	}
 	return nil
@@ -219,14 +224,14 @@ func ensureForwardingSecret(path string) error {
 	return os.WriteFile(path, []byte(secret+"\n"), 0o600)
 }
 
-func ensurePlayitSecret(path string) error {
+func ensureNgrokAuthToken(path string) error {
 	if !fileExists(path) {
-		secret, err := promptSecret("playit.gg Secret Keyを入力してください（未設定のままにする場合はEnter）: ")
+		secret, err := promptSecret("ngrok Authtokenを入力してください（未設定のままにする場合はEnter）: ")
 		if err != nil {
 			return err
 		}
 		if secret == "" {
-			secret = playitSecretPlaceholder
+			secret = ngrokAuthTokenPlaceholder
 		}
 		return os.WriteFile(path, []byte(secret+"\n"), 0o600)
 	}
@@ -234,10 +239,10 @@ func ensurePlayitSecret(path string) error {
 	if err != nil {
 		return err
 	}
-	if current != "" && current != playitSecretPlaceholder {
+	if current != "" && current != ngrokAuthTokenPlaceholder {
 		return nil
 	}
-	secret, err := promptSecret("playit.gg Secret Keyが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
+	secret, err := promptSecret("ngrok Authtokenが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
 	if err != nil {
 		return err
 	}
@@ -245,6 +250,34 @@ func ensurePlayitSecret(path string) error {
 		return nil
 	}
 	return os.WriteFile(path, []byte(secret+"\n"), 0o600)
+}
+
+func ensureNgrokWebhook(path string) error {
+	if !fileExists(path) {
+		url, err := promptSecret("ngrok通知用 Discord Webhook URLを入力してください（未設定のままにする場合はEnter）: ")
+		if err != nil {
+			return err
+		}
+		if url == "" {
+			url = ngrokWebhookPlaceholder
+		}
+		return os.WriteFile(path, []byte(url+"\n"), 0o600)
+	}
+	current, err := readTrimmed(path)
+	if err != nil {
+		return err
+	}
+	if current != "" && current != ngrokWebhookPlaceholder {
+		return nil
+	}
+	url, err := promptSecret("ngrok通知用 Discord Webhook URLが未設定です。入力して更新しますか？（空Enterでスキップ）: ")
+	if err != nil {
+		return err
+	}
+	if url == "" {
+		return nil
+	}
+	return os.WriteFile(path, []byte(url+"\n"), 0o600)
 }
 
 func promptSecret(prompt string) (string, error) {

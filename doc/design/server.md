@@ -2,7 +2,7 @@
 
 ## 概要
 
-このプロジェクトにおける各サーバーは以下の6コンテナで動作する。
+このプロジェクトにおける各サーバーは以下の7コンテナで動作する。
 
 - `velocity`（公開入口）
     - 公開ポート: `25565`
@@ -29,10 +29,14 @@
 - `redis`（link-code 一時コード保存）
     - 外部非公開
     - `velocity` / `mc-link` から内部ネットワーク接続のみ許可
-- `playit`（playit.gg トンネルエージェント）
+- `ngrok`（ngrok トンネルエージェント）
     - 外部非公開
-    - `velocity` と同じネットワーク名前空間で動作
-    - playit.gg への外向き接続のみを使って `velocity` を公開
+    - `velocity` と同一の内部ネットワーク上で動作
+    - ngrok への外向き接続のみを使って `velocity:25565` を公開
+- `ngrok-log-notifier`（Vector ログ監視）
+    - 外部非公開
+    - Docker socket から `mc-ngrok` のログを購読
+    - `ngrok` URL を抽出して Discord Webhook へ通知
 
 ## 導入プラグイン
 
@@ -139,8 +143,8 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
 - `runtime/redis`
     - Redis データ
     - `/mc link` ワンタイムコードの保存先として利用
-- `runtime/playit`
-    - playit エージェント設定（`playit.toml`）の保存先
+- `runtime/ngrok`
+    - ngrok クライアント設定の保存先
 - `infra/.env`
     - `mc-ctl init` が補完する compose 変数ファイル
     - `LOCAL_UID` / `LOCAL_GID` を保持し、compose の標準 `.env` 読込で使用する
@@ -152,8 +156,13 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
 - `secrets/mc_link_discord_guild_name.txt`
     - Discord サーバー表示名
     - `velocity` の LinkCodeGate 案内文に利用する
-- `secrets/playit_secret_key.txt`
-    - playit.gg トンネル接続用 secret key
+- `secrets/ngrok_auth_token.txt`
+    - ngrok 接続用 Authtoken
+- `secrets/ngrok_discord_webhook_url.txt`
+    - ngrok URL 通知用 Discord Webhook URL
+- `infra/ngrok-log-notifier/vector.toml`
+    - `mc-ngrok` ログの監視設定
+    - `tcp://...` URL 抽出・重複抑止・Discord Webhook POST を定義
 - `infra/docker-compose.yml`
     - 各種サービス定義
     - `world` コンテナ（`itzg/minecraft-server:java25`、内部向け）
@@ -163,10 +172,15 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - `mc-link` コンテナ（Discord `/mc link` 連携）
         - `mc_link_discord.toml` を Docker secrets 経由で `/run/secrets/mc_link_discord` に注入する
         - `../runtime/allowlist` を `/allowlist` として書き込みマウントし、`/allowlist/allowlist.yml` を更新する
-    - `playit` コンテナ（playit.gg トンネル）
-        - `runtime/playit` を `/playit-state` へ bind し、`playit.toml` を永続化する
-        - `playit_secret_key` を Docker secrets 経由で `/run/secrets/playit_secret_key` に注入する
-        - `network_mode: service:velocity` により、トンネル先を `127.0.0.1:25565` として固定できる
+    - `ngrok` コンテナ（ngrok トンネル）
+        - `runtime/ngrok` を `/home/ngrok/.config/ngrok` へ bind し、設定を保持する
+        - `secrets/ngrok_auth_token.txt` を `/run/ngrok_auth_token.txt` に read-only bind mount する
+        - `ngrok tcp velocity:25565` で公開トンネルを起動する
+    - `ngrok-log-notifier` コンテナ（Vector）
+        - `secrets/ngrok_discord_webhook_url.txt` を `/run/ngrok_discord_webhook_url.txt` に read-only bind mount する
+        - `/var/run/docker.sock` を read-write mount し、`docker_logs` source で `mc-ngrok` ログを購読する
+        - `infra/ngrok-log-notifier/vector.toml` を `/etc/vector/vector.toml` として read-only mount する
+        - `tcp://...` URL を抽出し、重複URLを抑止した上で Discord Webhook へ通知する
     - 各種ローカル / リモートプラグイン の導入
         - `LinkCodeGate` / `LuckPerms` / `Multiverse-Core` / `Multiverse-Portals` / `FastAsyncWorldEdit` / `WorldGuard` / `HubTerraform`
     - healthcheck

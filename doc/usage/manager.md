@@ -2,12 +2,21 @@
 
 このプロジェクトで構築されるMinecraftサーバーの管理方法をここに示す。
 
-## 事前準備
+## 事前準備: Discordサーバー＋アプリの準備
 
 1. Discord サーバーを用意する（認証運用を行う場合）。
-2. Discord Developer Portal でアプリを作成し、Bot token を発行する。
-3. 作成したアプリを対象 Discord サーバーへインストールする
-   （`applications.commands` と `bot` スコープを付与）。
+1. Discord アプリを作成し、サーバーにインストールする。
+
+### Discord アプリの作成
+
+Bot Tokenを得て、サーバーに招待するためのアプリを作っておく必要がある。
+
+1. [Discord Developer Portal](https://discord.com/developers/home) を開く
+1. `Applications` メニューからアプリを作成する。
+1. `Installation` メニューで `User Install` を無効化、 `Install Link` を `None` にしておく。
+1. `Bot` メニューで `Plubic Bot` をOffにしておく。
+1. `OAuth` メニューで`applications.commands` と `bot` スコープを付与したURLを発行、アクセスする。
+1. インストール対称の Discord サーバーを選ぶ画面になるので、インストールする。
 
 ## `mc-ctl`
 
@@ -43,7 +52,8 @@ mc-ctl spawn apply
 未入力のまま進めた場合は `secrets/mc_link_discord.toml`（`bot_token` / `guild_id` / `allowed_role_ids`）に
 プレースホルダを設定し、`secrets/mc_forwarding_secret.txt` に自動生成値を設定し、
 `secrets/mc_link_discord_guild_name.txt` を含む設定ファイルを生成し、
-`secrets/playit_secret_key.txt` を生成し、
+`secrets/ngrok_auth_token.txt` を生成し、
+`secrets/ngrok_discord_webhook_url.txt` を生成し、
 `secrets/limbo/server.toml` と `secrets/world/paper-global.yml` を描画する。
 あわせて `infra/.env` を補完し、`LOCAL_UID` / `LOCAL_GID` を保存する。
 また、`runtime` 配下の所有者が実行ユーザーと一致しない場合はエラーで停止する。
@@ -147,18 +157,26 @@ mc-ctl player delink <uuid>
 mc-ctl server down
 ```
 
-## playit.gg トンネルの初期設定
+## ngrok トンネルの初期設定
 
-`mc-ctl server up` 後、`playit` コンテナのログに claim 用URLが表示される。
+`mc-ctl server up` 後、`ngrok` コンテナが起動する。
 
 ```console
-mc-ctl server logs playit
+mc-ctl server logs ngrok
 ```
 
-claim 完了後、playit.gg 側で Minecraft(Java) 用トンネルを作成し、
-ローカル宛先を `127.0.0.1:25565` に設定する。
+事前に ngrok ダッシュボードで Authtoken を取得し、
+`secrets/ngrok_auth_token.txt` に設定する。
+ngrok の TCP endpoint は、アカウント状態によってはカード登録（`ERR_NGROK_8013`）が必要。
 
-`playit` の設定は `runtime/playit/playit.toml` に保存されるため、
-再起動後も再claimは不要。
-`secrets/playit_secret_key.txt` が未設定（プレースホルダ）の場合、`playit` は待機状態となり
+`secrets/ngrok_auth_token.txt` が未設定（プレースホルダ）の場合、`ngrok` は待機状態となり
 ログに設定不足メッセージを出力する。
+`secrets/ngrok_discord_webhook_url.txt` に Webhook URL を設定すると、
+`ngrok-log-notifier`（Vector）が `mc-ngrok` のログを監視し、
+起動時に出力される `tcp://...` の公開エンドポイントを Discord へ通知する。
+同一エンドポイントの重複通知は抑止される。
+設定を反映するには以下を実行する。
+
+```console
+mc-ctl server restart ngrok-log-notifier
+```

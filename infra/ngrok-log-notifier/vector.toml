@@ -1,0 +1,54 @@
+#:tombi schema.strict = false
+
+[sources.ngrok]
+type = "docker_logs"
+include_containers = ["mc-ngrok"]
+
+[transforms.extract_ngrok_endpoint]
+type = "remap"
+inputs = ["ngrok"]
+source = '''
+message = to_string(.message) ?? ""
+caps = parse_regex(message, r'url=(?P<url>tcp://\S+)') ?? {}
+if !exists(caps.url) || is_null(caps.url) {
+  abort
+}
+.url = to_string!(caps.url)
+'''
+
+[transforms.dedupe]
+type = "dedupe"
+inputs = ["extract_ngrok_endpoint"]
+fields.match = ["url"]
+cache.num_events = 16
+
+[transforms.to_discord_payload]
+type = "remap"
+inputs = ["dedupe"]
+source = '''
+caps = parse_regex(to_string!(.url), r'^tcp://(?P<host>[^:]+):(?P<port>\d+)$') ?? {}
+address = to_string!(.url)
+if exists(caps.host) && exists(caps.port) && !is_null(caps.host) && !is_null(caps.port) {
+  address = to_string!(caps.host) + ":" + to_string!(caps.port)
+}
+. = {
+  "content": "Minecraft Java 接続先が変わりました: `" + address
+}
+'''
+
+[transforms.serialize_discord_payload]
+type = "remap"
+inputs = ["to_discord_payload"]
+source = '''
+. = encode_json(.)
+'''
+
+[sinks.discord_webhook]
+type = "http"
+inputs = ["serialize_discord_payload"]
+uri = "${NGROK_DISCORD_WEBHOOK_URL}"
+method = "post"
+encoding.codec = "text"
+request.headers.content-type = "application/json"
+batch.max_events = 1
+batch.timeout_secs = 1

@@ -173,30 +173,69 @@ services:
           create_host_path: false
     networks:
       - mcnet
-  playit:
-    image: ghcr.io/playit-cloud/playit-agent:0.17
-    container_name: mc-playit
+  ngrok:
+    image: ngrok/ngrok:3
+    container_name: mc-ngrok
     restart: unless-stopped
     depends_on:
       - velocity
     entrypoint: ["/bin/sh", "-lc"]
     command:
       - |
-        SECRET_KEY="$$(tr -d '\r\n' < /run/secrets/playit_secret_key)";
-        if [ -z "$$SECRET_KEY" ] || [ "$$SECRET_KEY" = "REPLACE_WITH_PLAYIT_SECRET_KEY" ]; then
-          echo "playit secret is missing. set secrets/playit_secret_key.txt and restart playit.";
+        AUTH_TOKEN="$$(tr -d '\r\n' < /run/ngrok_auth_token.txt)";
+        if [ -z "$$AUTH_TOKEN" ] || [ "$$AUTH_TOKEN" = "REPLACE_WITH_NGROK_AUTHTOKEN" ]; then
+          echo "ngrok auth token is missing. set secrets/ngrok_auth_token.txt and restart ngrok.";
           sleep infinity;
         fi;
-        exec playit -s --secret "$$SECRET_KEY" --platform_docker start;
-    secrets:
-      - playit_secret_key
+        exec ngrok tcp --log stdout --log-format logfmt --authtoken "$$AUTH_TOKEN" velocity:25565;
     volumes:
       - type: bind
-        source: ../runtime/playit
-        target: /playit-state
+        source: ../runtime/ngrok
+        target: /home/ngrok/.config/ngrok
         bind:
           create_host_path: false
-    network_mode: "service:velocity"
+      - type: bind
+        source: ../secrets/ngrok_auth_token.txt
+        target: /run/ngrok_auth_token.txt
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - mcnet
+  ngrok-log-notifier:
+    image: timberio/vector:0.47.0-alpine
+    container_name: mc-ngrok-log-notifier
+    restart: unless-stopped
+    depends_on:
+      - ngrok
+    entrypoint: ["/bin/sh", "-lc"]
+    command:
+      - |
+        WEBHOOK_URL="$$(tr -d '\r\n' < /run/ngrok_discord_webhook_url.txt)";
+        if [ -z "$$WEBHOOK_URL" ] || [ "$$WEBHOOK_URL" = "REPLACE_WITH_DISCORD_WEBHOOK_URL" ]; then
+          echo "ngrok webhook url is missing. set secrets/ngrok_discord_webhook_url.txt and restart ngrok-log-notifier.";
+          sleep infinity;
+        fi;
+        export NGROK_DISCORD_WEBHOOK_URL="$$WEBHOOK_URL";
+        exec vector --config /etc/vector/vector.toml;
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: ./ngrok-log-notifier
+        target: /etc/vector
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../secrets/ngrok_discord_webhook_url.txt
+        target: /run/ngrok_discord_webhook_url.txt
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - mcnet
 
 networks:
   mcnet:
@@ -205,5 +244,3 @@ networks:
 secrets:
   mc_link_discord:
     file: ../secrets/mc_link_discord.toml
-  playit_secret_key:
-    file: ../secrets/playit_secret_key.txt

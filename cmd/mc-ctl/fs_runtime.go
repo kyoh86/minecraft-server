@@ -17,7 +17,7 @@ func (a app) ensureRuntimeLayout() error {
 		filepath.Join(a.baseDir, "runtime", "mc-link"),
 		filepath.Join(a.baseDir, "runtime", "limbo"),
 		filepath.Join(a.baseDir, "runtime", "redis"),
-		filepath.Join(a.baseDir, "runtime", "playit"),
+		filepath.Join(a.baseDir, "runtime", "ngrok"),
 		filepath.Join(a.baseDir, "runtime", "world"),
 		filepath.Join(a.baseDir, "runtime", "world", "config"),
 		filepath.Join(a.baseDir, "runtime", "world", "plugins"),
