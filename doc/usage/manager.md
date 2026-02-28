@@ -72,6 +72,8 @@ Redis/allowlist の環境変数名は `MC_LINK_*` に統一されており、旧
 `mc-ctl server restart <service> --build` は image 再ビルド + コンテナ再作成を行ってから
 同じ readiness 待機を行う。`infra/world/**` や `infra/velocity/**`（ローカルプラグイン含む）
 を変更した場合はこちらを使う。
+`mc-ctl server restart <service> --recreate` は image 再ビルドなしで
+コンテナ再作成を行ってから同じ readiness 待機を行う。
 `world` は起動時に image 同梱プラグイン資産を `/data` 側へ反映し、
 `/config/paper-global.yml`（`secrets/world/paper-global.yml` を bind）を `/data/config` へ同期する。
 

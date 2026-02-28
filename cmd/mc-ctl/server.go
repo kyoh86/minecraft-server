@@ -20,9 +20,13 @@ func (a app) serverDown() error {
 	return a.compose("down")
 }
 
-func (a app) serverRestart(service string, build bool) error {
+func (a app) serverRestart(service string, build, recreate bool) error {
 	if build {
 		if err := a.compose("up", "-d", "--build", "--force-recreate", service); err != nil {
+			return err
+		}
+	} else if recreate {
+		if err := a.compose("up", "-d", "--force-recreate", service); err != nil {
 			return err
 		}
 	} else {
