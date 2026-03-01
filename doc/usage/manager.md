@@ -14,7 +14,7 @@ Bot Tokenを得て、サーバーに招待するためのアプリを作って�
 1. [Discord Developer Portal](https://discord.com/developers/home) を開く
 1. `Applications` メニューからアプリを作成する。
 1. `Installation` メニューで `User Install` を無効化、 `Install Link` を `None` にしておく。
-1. `Bot` メニューで `Plubic Bot` をOffにしておく。
+1. `Bot` メニューで `Public Bot` をOffにしておく。
 1. `OAuth` メニューで`applications.commands` と `bot` スコープを付与したURLを発行、アクセスする。
 1. インストール対称の Discord サーバーを選ぶ画面になるので、インストールする。
 
