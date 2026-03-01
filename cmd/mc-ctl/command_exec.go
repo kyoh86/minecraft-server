@@ -13,19 +13,14 @@ func runCommand(name string, args ...string) error {
 	return cmd.Run()
 }
 
-func runCommandOutput(name string, args ...string) (string, error) {
+func runCommandOutput(name string, args ...string) (stdout string, stderr string, err error) {
 	cmd := exec.Command(name, args...)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	out := stdout.String()
-	if serr := stderr.String(); serr != "" {
-		if out != "" {
-			out += "\n"
-		}
-		out += serr
-	}
-	return out, err
+	var stdoutBuf bytes.Buffer
+	var stderrBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
+	err = cmd.Run()
+	stdout = stdoutBuf.String()
+	stderr = stderrBuf.String()
+	return stdout, stderr, err
 }

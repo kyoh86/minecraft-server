@@ -23,14 +23,15 @@ func (a app) compose(args ...string) error {
 func (a app) composeOutput(args ...string) (string, error) {
 	base := a.composeBaseArgs()
 	base = append(base, args...)
-	return runCommandOutput("docker", base...)
+	stdout, _, err := runCommandOutput("docker", base...)
+	return stdout, err
 }
 
 func dockerInspect(containerID string) (string, error) {
-	state, err := runCommandOutput(
+	stdout, _, err := runCommandOutput(
 		"docker", "inspect",
 		"--format", "{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
 		containerID,
 	)
-	return state, err
+	return stdout, err
 }
