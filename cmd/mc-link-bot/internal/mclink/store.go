@@ -112,7 +112,13 @@ func parseHash(raw map[string]string) (CodeEntry, bool) {
 	if err != nil {
 		return CodeEntry{}, false
 	}
-	claimedAtUnix, _ := strconv.ParseInt(raw["claimed_at_unix"], 10, 64)
+	claimedAtUnix := int64(0)
+	if claimed {
+		claimedAtUnix, err = strconv.ParseInt(raw["claimed_at_unix"], 10, 64)
+		if err != nil {
+			return CodeEntry{}, false
+		}
+	}
 	code := strings.ToUpper(strings.TrimSpace(raw["code"]))
 	if code == "" {
 		return CodeEntry{}, false
