@@ -230,6 +230,7 @@ services:
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
+        read_only: true
       - type: bind
         source: ./ngrok-log-notifier
         target: /etc/vector
@@ -262,6 +263,7 @@ services:
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
+        read_only: true
       - type: bind
         source: ./member-log-notifier
         target: /etc/vector
@@ -288,6 +290,7 @@ services:
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
+        read_only: true
       - type: bind
         source: ./health-heartbeat
         target: /opt/heartbeat
