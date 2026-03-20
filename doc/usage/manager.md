@@ -76,6 +76,28 @@ Redis/allowlist の環境変数名は `MC_LINK_*` に統一されており、旧
 コンテナ再作成を行ってから同じ readiness 待機を行う。
 `world` は起動時に image 同梱プラグイン資産を `/data` 側へ反映し、
 `/config/paper-global.yml`（`secrets/world/paper-global.yml` を bind）を `/data/config` へ同期する。
+`velocity` は `infra/velocity/config/velocity.toml` を `/config/velocity.toml` として bind mount しているため、
+設定変更のみであれば `mc-ctl server restart velocity --recreate` で反映できる。
+
+## Velocity 接続設定変更の反映
+
+`infra/velocity/config/velocity.toml` を変更した場合は、次を実行する。
+
+```console
+mc-ctl server restart velocity --recreate
+```
+
+`velocity` コンテナを再作成し、bind mount された設定を読み直す。
+ローカル Velocity プラグイン実装を変更していない限り `--build` は不要。
+
+反映確認は次で行う。
+
+```console
+mc-ctl server logs velocity
+```
+
+再接続試験時は、接続直後に `connected player` / `server connection` / `issued link code`
+のいずれが出るかを確認する。
 
 ## 各種ワールド設定変更の反映
 

@@ -231,6 +231,7 @@ allowlist 更新に失敗した場合は、同一ユーザーによる当該 cla
     - `infra/velocity/plugins/link-code-gate/src` を Maven でビルドし、生成JARを `/plugins/LinkCodeGate.jar` へ同梱する
 - `infra/velocity/config/velocity.toml`
     - Velocity のルーティング設定
+    - `prevent-client-proxy-connections = false` とし、回線経路差異による正規クライアントの誤拒否を避ける
     - `mainhall = "world:25565"` へ転送
     - `secrets/mc_forwarding_secret.txt`
         - Velocity modern forwarding の共有シークレット
