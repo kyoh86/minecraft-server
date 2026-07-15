@@ -1,12 +1,12 @@
 module github.com/kyoh86/minecraft-server
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/bwmarrin/discordgo v0.29.0
 	github.com/goccy/go-yaml v1.19.2
-	github.com/pelletier/go-toml/v2 v2.2.4
-	github.com/redis/go-redis/v9 v9.18.0
+	github.com/pelletier/go-toml/v2 v2.4.3
+	github.com/redis/go-redis/v9 v9.21.0
 	github.com/spf13/cobra v1.10.2
 )
 
@@ -17,6 +17,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 )
